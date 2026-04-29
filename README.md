@@ -57,7 +57,7 @@ Your favorite Discord bot's open-source alternative.
 - Lock/unlock voice channels, kick users from channels, rename channels
 - Usable by any server member
 
-## Downloading
+### Downloading
 - Pretty much [any video service](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
 
 ### Stats
