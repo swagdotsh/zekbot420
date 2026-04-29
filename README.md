@@ -51,7 +51,7 @@ Your favorite Discord bot's open-source alternative.
 - Queue system
 - Skip, stop, pause, resume controls
 
-## Downloading
+### Downloading
 - Pretty much [any video service](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
 
 ### Stats
