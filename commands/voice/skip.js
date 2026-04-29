@@ -1,6 +1,6 @@
 function getTrackName(track) {
     if (!track) return 'track';
-    if (track.title && track.uploader) return `${track.title} - ${track.uploader}`;
+    if (track.title && track.uploader) return ""+track.title+" - "+track.uploader;
     return track.attachment?.name || track.title || 'track';
 }
 

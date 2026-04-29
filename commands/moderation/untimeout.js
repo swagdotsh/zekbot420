@@ -28,7 +28,7 @@ module.exports = {
         .setDescription(`Your timeout has been removed in **${message.guild.name}**.`)
         .addFields(
           { name: 'Unmuted By', value: message.author.tag, inline: true },
-          { name: 'Unmuted On', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+          { name: 'Unmuted On', value: "<t:"+Math.floor(Date.now() / 1000)+":R>", inline: true }
         )
         .setFooter({ text: `Server ID: ${message.guild.id}` })
         .setTimestamp();

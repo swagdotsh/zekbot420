@@ -25,7 +25,7 @@ async function main() {
 
     const commands = files.map((file) => {
         const cmd = require(file);
-        if (!cmd?.data?.toJSON) throw new Error(`Slash command missing "data" (SlashCommandBuilder) in: ${file}`);
+        if (!cmd?.data?.toJSON) throw new Error("Slash command missing \"data\" (SlashCommandBuilder) in: "+file);
         return cmd.data.toJSON();
     });
 

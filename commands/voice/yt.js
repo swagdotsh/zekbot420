@@ -27,7 +27,7 @@ function formatDuration(seconds) {
     const secs = total % 60;
 
     if (hours > 0) {
-        return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        return ""+hours+":"+String(minutes).padStart(2, '0')+":"+String(secs).padStart(2, '0');
     }
 
     return `${minutes}:${String(secs).padStart(2, '0')}`;
@@ -56,7 +56,7 @@ async function getTrackInfo(input) {
 
     const firstJsonLine = stdout
         .split('\n')
-        .map((line) => line.trim())
+        .map(function(line) { return line.trim() })
         .find(Boolean);
 
     if (!firstJsonLine) return null;

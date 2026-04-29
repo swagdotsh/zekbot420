@@ -45,7 +45,7 @@ module.exports = {
             const albumInfoUrl =
                 `https://ws.audioscrobbler.com/2.0/?method=album.getInfo` +
                 `&api_key=${encodeURIComponent(apiKey)}` +
-                `&format=json` +
+                "&format=json" +
                 `&artist=${encodeURIComponent(artist)}` +
                 `&album=${encodeURIComponent(album)}`;
 

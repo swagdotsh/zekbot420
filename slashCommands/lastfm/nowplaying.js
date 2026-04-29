@@ -44,7 +44,7 @@ module.exports = {
             const { data } = await axios.get(url);
             const track = data?.recenttracks?.track?.[0];
 
-            if (!track) return interaction.editReply(`No recent tracks found for **${username}**.`);
+            if (!track) return interaction.editReply("No recent tracks found for **"+username+"**.");
 
             const isPlaying = track['@attr']?.nowplaying === 'true';
             const song = track?.name;

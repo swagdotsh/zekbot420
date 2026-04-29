@@ -20,7 +20,7 @@ module.exports = {
         .setDescription(`You’ve been kicked from **${message.guild.name}**.`)
         .addFields(
           { name: 'Mod', value: message.author.tag, inline: true },
-          { name: 'Kicked on', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
+          { name: 'Kicked on', value: "<t:"+Math.floor(Date.now() / 1000)+":R>", inline: true },
           { name: 'Reason', value: reason, inline: false }
         )
         .setFooter({ text: `Server ID: ${message.guild.id}` })

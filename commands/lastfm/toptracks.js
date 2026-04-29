@@ -57,7 +57,7 @@ module.exports = {
             `&api_key=${encodeURIComponent(apiKey)}` +
             `&format=json` +
             `&period=${encodeURIComponent(period)}` +
-            `&limit=10`;
+            "&limit=10";
 
         try {
             const { data } = await axios.get(topUrl);

@@ -80,7 +80,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor('#43b581')
                 .setTitle('Reaction Unmuted')
-                .setDescription(`Your reaction mute has been removed in **${message.guild.name}**.`)
+                .setDescription("Your reaction mute has been removed in **"+message.guild.name+"**.")
                 .addFields(
                     { name: 'Removed By', value: message.author.tag, inline: true },
                     { name: 'Removed At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },

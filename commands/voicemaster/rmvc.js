@@ -37,7 +37,7 @@ module.exports = {
             return message.reply('VC name must be **100 characters or fewer**.');
         }
 
-        await voiceChannel.setName(newName, `VoiceMaster VC renamed by ${message.author.tag}`);
+        await voiceChannel.setName(newName, "VoiceMaster VC renamed by "+message.author.tag);
 
         if (!newNameInput) {
             return message.reply(`VC name reset to **${newName}**.`);

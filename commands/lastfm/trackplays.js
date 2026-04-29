@@ -33,12 +33,12 @@ async function getRecentTrack({ apiKey, username }) {
     const track = t?.name || null;
     const artist = t?.artist?.['#text'] || null;
 
-    return { track, artist, raw: t || null };
+    return { track: track, artist, raw: t || null };
 }
 
 async function getTrackInfo({ apiKey, username, artist, track }) {
     const infoUrl =
-        `https://ws.audioscrobbler.com/2.0/?method=track.getInfo` +
+        "https://ws.audioscrobbler.com/2.0/?method=track.getInfo" +
         `&api_key=${encodeURIComponent(apiKey)}` +
         `&format=json` +
         `&username=${encodeURIComponent(username)}` +

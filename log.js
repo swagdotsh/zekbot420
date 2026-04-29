@@ -23,7 +23,7 @@ function debugCreated(label, createdPath) {
 async function ensureDir(dirPath, labelForDebug = 'directory') {
   const existed = await fsp
     .stat(dirPath)
-    .then((s) => s.isDirectory())
+    .then(function(s) { return s.isDirectory() })
     .catch(() => false);
 
   await fsp.mkdir(dirPath, { recursive: true });
@@ -54,7 +54,7 @@ function guildModlogConfigPath(guildId) {
 async function migrateLegacyModlogConfigOnce() {
   // Moves data/modlogConfig.json (mapping) into per-guild folders as data/<guildId>/modlog.json
   // Safe to call often; it only migrates if legacy exists.
-  const legacyStat = await fsp.stat(LEGACY_MODLOG_CONFIG_PATH).catch(() => null);
+  const legacyStat = await fsp.stat(LEGACY_MODLOG_CONFIG_PATH).catch(function() { return null });
   if (!legacyStat) return;
 
   try {

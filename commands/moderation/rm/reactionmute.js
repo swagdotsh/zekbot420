@@ -69,8 +69,7 @@ module.exports = {
         }
 
         if (target.roles.cache.has(role.id)) {
-            return message.reply(`${target.user.tag} is already reaction muted.`);
-        }
+            return message.reply(""+target.user.tag+" is already reaction muted.");        }
 
         if (message.member.id !== message.guild.ownerId && target.roles.highest.position >= message.member.roles.highest.position) {
             return message.reply("You can't reaction mute a member with the same or higher role than you.");

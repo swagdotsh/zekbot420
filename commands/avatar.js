@@ -10,7 +10,7 @@ module.exports = {
       .setTitle(`${user.username}'s Avatar`)
       .setImage(user.displayAvatarURL({ extension: 'png', dynamic: true, size: 512 }))
       .setColor('#3498db')
-      .setFooter({ text: `Requested by ${message.author.tag}`, iconURL: message.author.displayAvatarURL({ dynamic: true }) })
+      .setFooter({ text: "Requested by "+message.author.tag, iconURL: message.author.displayAvatarURL({ dynamic: true }) })
       .setTimestamp();
 
     message.reply({ embeds: [embed] });

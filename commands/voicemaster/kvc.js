@@ -47,8 +47,8 @@ module.exports = {
             return message.reply('That user is not in your VoiceMaster VC.');
         }
 
-        await target.voice.disconnect(`Kicked from VoiceMaster VC by ${message.author.tag}`);
+        await target.voice.disconnect("Kicked from VoiceMaster VC by "+message.author.tag);
 
-        return message.reply(`Kicked **${target.displayName}** from the VC.`);
+        return message.reply("Kicked **"+target.displayName+"** from the VC.");
     },
 };

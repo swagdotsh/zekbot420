@@ -10,7 +10,7 @@ function getTrackExtra(track) {
     const parts = [];
 
     if (track?.durationRaw && track.durationRaw !== 'Unknown') {
-        parts.push(`\`${track.durationRaw}\``);
+        parts.push("`"+track.durationRaw+"`");
     }
 
     if (track?.sourceType === 'soundcloud') {
@@ -52,12 +52,12 @@ module.exports = {
                         : 'Nothing'
                 },
                 {
-                    name: `Up Next (${upcoming.length})`,
+                    name: "Up Next ("+upcoming.length+")",
                     value: lines.length ? lines.join('\n') : 'No queued tracks'
                 },
                 {
                     name: 'Loop',
-                    value: `\`${session.loopMode || 'off'}\``,
+                    value: "`"+session.loopMode || 'off'+"`",
                     inline: true
                 }
             )

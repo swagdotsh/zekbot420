@@ -10,7 +10,7 @@ module.exports = {
         const latency = Date.now() - sentAt;
 
         await reply.edit({
-            content: `Pong! \`${latency}ms\``,
+            content: "Pong! `"+latency+"ms`",
         });
     },
 };

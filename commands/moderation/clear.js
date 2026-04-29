@@ -25,6 +25,6 @@ module.exports = {
 
     await logClearMessages(message.client, message, message.author, amount, messagesContent);
 
-    message.channel.send(`Cleared ${amount} messages.`).then(msg => msg.delete({ timeout: 5000 }));
+    message.channel.send(`Cleared ${amount} messages.`).then(function(msg) { return msg.delete({ timeout: 5000 }) });
   }
 };

@@ -11,7 +11,7 @@ module.exports = {
 
     const index = parseInt(args[0]) || 1;
     if (index < 1 || index > snipes.length) {
-      return message.reply(`Invalid snipe index. Please use a number between 1 and ${snipes.length}.`);
+      return message.reply("Invalid snipe index. Please use a number between 1 and "+snipes.length+".");
     }
 
     const snipe = snipes[index - 1];
@@ -34,7 +34,7 @@ function formatTimeAgo(ms) {
   const days = Math.floor(hours / 24);
 
   if (days > 0) return `${days} day(s) ago`;
-  if (hours > 0) return `${hours} hour(s) ago`;
+  if (hours > 0) return ""+hours+" hour(s) ago";
   if (minutes > 0) return `${minutes} minute(s) ago`;
   return `${seconds} second(s) ago`;
 }

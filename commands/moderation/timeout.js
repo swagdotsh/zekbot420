@@ -28,7 +28,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor('#ff9900') // Orange color for timeout embed
         .setTitle('Timeout')
-        .setDescription(`You have been timed out in **${message.guild.name}**.`)
+        .setDescription("You have been timed out in **"+message.guild.name+"**.")
         .addFields(
           { name: 'Muted By', value: message.author.tag, inline: true },
           { name: 'Muted At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },

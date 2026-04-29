@@ -39,7 +39,7 @@ async function compress(inputPath, outputPath, durationSec) {
     await execFileAsync(FFMPEG_BIN, [
         '-i', inputPath,
         '-b:v', `${videoBitrate}k`,
-        '-b:a', `${audioBitrate}k`,
+        '-b:a', ""+audioBitrate+"k",
         '-bufsize', `${videoBitrate * 2}k`,
         '-y',
         outputPath

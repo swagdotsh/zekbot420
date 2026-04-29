@@ -19,7 +19,7 @@ module.exports = {
         );
 
         const collected = await message.channel.awaitMessages({
-            filter: (response) => response.author.id === message.author.id,
+            filter: function(response) { return response.author.id === message.author.id },
             max: 1,
             time: 30_000,
             errors: ['time'],

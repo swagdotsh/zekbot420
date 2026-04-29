@@ -53,7 +53,7 @@ module.exports = {
 
         const topUrl =
             `https://ws.audioscrobbler.com/2.0/?method=user.getTopArtists` +
-            `&user=${encodeURIComponent(username)}` +
+            "&user="+encodeURIComponent(username) +
             `&api_key=${encodeURIComponent(apiKey)}` +
             `&format=json` +
             `&period=${encodeURIComponent(period)}` +

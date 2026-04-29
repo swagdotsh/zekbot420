@@ -8,7 +8,7 @@ async function getRecentTrack({ apiKey, username }) {
     const recentUrl =
         `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks` +
         `&user=${encodeURIComponent(username)}` +
-        `&api_key=${encodeURIComponent(apiKey)}` +
+        "&api_key="+encodeURIComponent(apiKey) +
         `&format=json&limit=1`;
 
     const { data } = await axios.get(recentUrl);

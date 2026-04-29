@@ -23,7 +23,7 @@ module.exports = {
           { name: 'Banned At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
           { name: 'Reason', value: reason, inline: false }
         )
-        .setFooter({ text: `Server ID: ${message.guild.id}` })
+        .setFooter({ text: "Server ID: "+message.guild.id })
         .setTimestamp();
 
       await target.send({ embeds: [embed] });

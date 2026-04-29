@@ -13,13 +13,13 @@ module.exports = {
     const hours = Math.floor(timeAgo / (1000 * 60 * 60));
 
     let formattedTime;
-    if (hours > 0) formattedTime = `${hours}h ${minutes}m ago`;
-    else if (minutes > 0) formattedTime = `${minutes}m ${seconds}s ago`;
+    if (hours > 0) formattedTime = ""+hours+"h "+minutes+"m ago";
+    else if (minutes > 0) formattedTime = ""+minutes+"m "+seconds+"s ago";
     else formattedTime = `${seconds}s ago`;
 
     const embed = new EmbedBuilder()
       .setColor('Random')
-      .setDescription(`**${snipe.user}** reacted to:\n"${snipe.message}"\nwith **${snipe.emoji}**`)
+      .setDescription("**"+snipe.user+"** reacted to:\n\""+snipe.message+"\"\nwith **"+snipe.emoji+"**")
       .setFooter({ text: `Message by ${snipe.messageAuthor} • ${formattedTime}` })
       .setTimestamp();
 

@@ -32,10 +32,10 @@ module.exports = {
         try {
             const users = await r6api.findUserByUsername({ platform: 'uplay', usernames: [username] });
             const player = users?.[0];
-            if (!player) return loading.edit(`Player **${username}** not found.`);
+            if (!player) return loading.edit("Player **"+username+"** not found.");
 
             const seasonal = await r6apiSeasonal.getUserSeasonalv2({ profileIds: [player.profileId] });
-            const profile = seasonal?.find(p => p.boardSlug === mode);
+            const profile = seasonal?.find(function(p) { return p.boardSlug === mode });
 
             const embed = new EmbedBuilder()
                 .setTitle(`${player.username} — ${mode.charAt(0).toUpperCase() + mode.slice(1)}`)
@@ -44,9 +44,9 @@ module.exports = {
                     { name: 'Rank', value: profile?.rank?.name || 'Unranked', inline: true },
                     { name: 'RP', value: `${profile?.rank?.rp ?? 0}`, inline: true },
                     { name: 'Max Rank', value: profile?.maxRank?.name || 'Unranked', inline: true },
-                    { name: 'K/D', value: `${profile?.kd ?? 'N/A'}`, inline: true },
+                    { name: 'K/D', value: ""+profile?.kd ?? 'N/A', inline: true },
                     { name: 'W/L', value: profile?.winRate || 'N/A', inline: true },
-                    { name: 'Matches', value: `${profile?.matches ?? 'N/A'}`, inline: true },
+                    { name: 'Matches', value: `${profile?.matches ?? 'N/A'}`, inline: true }
                 )
                 .setFooter({ text: 'Current Season' });
 

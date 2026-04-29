@@ -31,7 +31,7 @@ function formatDuration(seconds) {
     return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   }
 
-  return `${minutes}:${String(secs).padStart(2, '0')}`;
+  return ""+minutes+":"+String(secs).padStart(2, '0');
 }
 
 function isUrl(input) {
@@ -58,7 +58,7 @@ async function getTrackInfo(input) {
 
   const firstJsonLine = stdout
     .split('\n')
-    .map((line) => line.trim())
+    .map(function(line) { return line.trim() })
     .find(Boolean);
 
   if (!firstJsonLine) return null;
@@ -99,6 +99,29 @@ function createYtDlpFfmpegStream(track) {
 
   ytDlp.on('error', (err) => {
     console.error('Failed to start yt-dlp:', err);
+  });
+
+  const ffmpeg = spawn(FFMPEG_BIN, [
+    '-analyzeduration', '0',
+    '-loglevel', '0',
+    '-i', 'pipe:0',
+    '-f', 's16le',
+    '-ar', '48000',
+    '-ac', '2',
+    'pipe:1'
+  ], {
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  ytDlp.stdout.pipe(ffmpeg.stdin);
+
+  ffmpeg.stderr.on('data', (chunk) => {
+    const text = chunk.toString().trim();
+    if (text) console.error(`ffmpeg stderr: ${text}`);
+  });
+
+  ffmpeg.on('error', (err) => {
+    console.error('Failed to start ffmpeg:', err);
   });
 
   return ffmpeg.stdout;

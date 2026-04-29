@@ -44,7 +44,7 @@ module.exports = {
         const targetUser =
             mentioned ??
             (rawId
-                ? await message.client.users.fetch(rawId).catch(() => null)
+                ? await message.client.users.fetch(rawId).catch(function() { return null })
                 : message.author);
 
         if (!targetUser) {

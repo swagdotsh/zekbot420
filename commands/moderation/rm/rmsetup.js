@@ -49,7 +49,7 @@ module.exports = {
             return message.reply('I need the **Manage Channels** permission to apply reaction restrictions to channels.');
         }
 
-        let role = message.guild.roles.cache.find(role => role.name === ROLE_NAME);
+        let role = message.guild.roles.cache.find(function(role) { return role.name === ROLE_NAME });
 
         try {
             if (!role) {
@@ -83,7 +83,7 @@ module.exports = {
 
             return message.reply(
                 `# ✅ Reaction mute setup complete.\n` +
-                `Role: **${role.name}**\n` +
+                "Role: **"+role.name+"**\n" +
                 `Updated channels: **${updatedChannels}**\n` +
                 `Reaction mutes are now ready to use.`
             );

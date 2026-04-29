@@ -18,7 +18,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor('#00ff88')
-        .setTitle(`Welcome ${member.user.username}!`)
+        .setTitle("Welcome "+member.user.username+"!")
         .setDescription('Enjoy your stay!')
         .setThumbnail(member.user.displayAvatarURL())
         .setAuthor({
@@ -26,7 +26,7 @@ module.exports = {
           iconURL: member.guild.iconURL(),
         })
         .setFooter({
-          text: `${member.guild.name} is now at ${member.guild.memberCount} members.`,
+          text: ""+member.guild.name+" is now at "+member.guild.memberCount+" members.",
         });
 
       channel.send({ content: `Welcome ${member}!`, embeds: [embed] });

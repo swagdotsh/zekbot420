@@ -7,7 +7,7 @@ function formatMs(ms) {
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
+    return ""+m+":"+String(s).padStart(2, '0');
 }
 
 function formatBytes(bytes) {
@@ -19,12 +19,12 @@ function formatBytes(bytes) {
         value /= 1024;
         i++;
     }
-    return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+    return ""+value.toFixed(value >= 10 || i === 0 ? 0 : 1)+" "+units[i];
 }
 
 function getTrackName(track) {
     if (!track) return 'Unknown track';
-    if (track.title && track.uploader) return `${track.title} - ${track.uploader}`;
+    if (track.title && track.uploader) return ""+track.title+" - "+track.uploader;
     return track.attachment?.name || track.title || 'Unknown track';
 }
 

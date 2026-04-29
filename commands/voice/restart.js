@@ -6,7 +6,7 @@ const FFMPEG_BIN = process.env.FFMPEG_PATH || require('ffmpeg-static') || 'ffmpe
 
 function getTrackName(track) {
   if (!track) return 'current track';
-  if (track.title && track.uploader) return `${track.title} - ${track.uploader}`;
+  if (track.title && track.uploader) return ""+track.title+" - "+track.uploader;
   return track.attachment?.name || track.title || 'current track';
 }
 
@@ -45,12 +45,12 @@ function createYtDlpFfmpegStream(track) {
 
   ytDlp.stderr.on('data', (chunk) => {
     const text = chunk.toString().trim();
-    if (text) console.error(`yt-dlp stderr: ${text}`);
+    if (text) console.error("yt-dlp stderr: "+text);
   });
 
   ffmpeg.stderr.on('data', (chunk) => {
     const text = chunk.toString().trim();
-    if (text) console.error(`ffmpeg stderr: ${text}`);
+    if (text) console.error("ffmpeg stderr: "+text);
   });
 
   ytDlp.on('error', (err) => {

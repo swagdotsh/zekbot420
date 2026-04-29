@@ -8,7 +8,7 @@ module.exports = {
         const input = (args[0] || '').toLowerCase();
 
         if (!input) {
-            return message.reply(`Loop mode is currently \`${session.loopMode || 'off'}\`.\nUsage: \`,loop off|track|queue\``);
+            return message.reply("Loop mode is currently `"+session.loopMode || 'off'+"`.\nUsage: `,loop off|track|queue`");
         }
 
         const valid = ['off', 'track', 'queue'];

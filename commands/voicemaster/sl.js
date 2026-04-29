@@ -26,7 +26,7 @@ module.exports = {
         }
 
         if (!args[0]) {
-            await voiceChannel.setUserLimit(0, `VoiceMaster limit removed by ${message.author.tag}`);
+            await voiceChannel.setUserLimit(0, "VoiceMaster limit removed by "+message.author.tag);
             return message.reply('VC user limit removed.');
         }
 

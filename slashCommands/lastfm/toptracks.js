@@ -72,7 +72,7 @@ module.exports = {
             const list = Array.isArray(tracks) ? tracks : tracks ? [tracks] : [];
 
             if (!list.length) {
-                return interaction.editReply(`No top tracks found for **${username}** (${prettyPeriod}).`);
+                return interaction.editReply("No top tracks found for **"+username+"** ("+prettyPeriod+").");
             }
 
             const lines = list.map((t, i) => {
