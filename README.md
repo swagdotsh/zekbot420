@@ -43,7 +43,7 @@ Your favorite Discord bot's open-source alternative.
 - “Snipe” / “clearsnipe” style message recall 
 
 ### Integrations
-- Last.fm commands (optional; requires API key)
+- Last.fm login and commands (optional; requires API key)
 
 ### Voice
 #### Audio playback
@@ -76,6 +76,7 @@ Your favorite Discord bot's open-source alternative.
 
 ### Optional (depending on your use case)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (for video downloading features)
+- [Neon](https://neon.tech) (or any postgres-compatible database)
 - ffmpeg (required for audio playback in voice channel features, installs with `npm install` during install)
 - [Last.fm API key](https://www.last.fm/api) (for Last.fm integration features)
 - Ubisoft Connect account (for Rainbow Six Siege integration features, *will be deprecated in the future*)

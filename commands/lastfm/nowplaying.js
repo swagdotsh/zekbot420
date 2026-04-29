@@ -1,15 +1,20 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const dbPath = path.join(__dirname, '../../data/lastfm.json');
+const { neon } = require("@neondatabase/serverless")
+
+const sql = neon(process.env.NEON_DATABASE_URL)
 
 module.exports = {
   name: 'nowplaying',
   aliases: ['np', 'fm', 'lastplayed'],
   async execute(message, args) {
-    const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-    const username = args[0] || db[message.author.id];
-    if (!username) return message.reply('Provide a Last.fm username! e.g. `,np username`');
+    let username = args[0]
+
+    if (!username) {
+      const rows = await sql`SELECT lastfm_username FROM lastfm_connections WHERE discord_id = ${message.author.id}`
+      username = rows[0]?.lastfm_username
+    }
+
+    if (!username) return message.reply('Provide a Last.fm username or link your account with `,linklastfm`!')
 
     const url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${username}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=1`;
 
@@ -31,12 +36,12 @@ module.exports = {
 
       try {
         const infoUrl =
-          `https://ws.audioscrobbler.com/2.0/?method=track.getInfo` +
-          `&api_key=${process.env.LASTFM_API_KEY}` +
-          `&format=json` +
-          `&username=${encodeURIComponent(username)}` +
-          `&artist=${encodeURIComponent(artist)}` +
-          `&track=${encodeURIComponent(song)}`;
+            `https://ws.audioscrobbler.com/2.0/?method=track.getInfo` +
+            `&api_key=${process.env.LASTFM_API_KEY}` +
+            `&format=json` +
+            `&username=${encodeURIComponent(username)}` +
+            `&artist=${encodeURIComponent(artist)}` +
+            `&track=${encodeURIComponent(song)}`;
 
         const { data: infoData } = await axios.get(infoUrl);
 
@@ -52,9 +57,9 @@ module.exports = {
       }
 
       const playsText =
-        typeof userPlayCount === 'number' && Number.isFinite(userPlayCount)
-          ? ` • ${userPlayCount.toLocaleString()} play${userPlayCount === 1 ? '' : 's'}`
-          : '';
+          typeof userPlayCount === 'number' && Number.isFinite(userPlayCount)
+              ? ` • ${userPlayCount.toLocaleString()} play${userPlayCount === 1 ? '' : 's'}`
+              : '';
 
       const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
 
@@ -71,7 +76,7 @@ module.exports = {
       message.reply({ embeds: [embed] });
     } catch (e) {
       console.log(e.response?.data || e.message);
-      message.reply('Couldn\'t find that Last.fm user. Double-check the username!');
+      message.reply('Couldn\'t find that Last.fm user. Double-check the username!')
     }
   }
 };

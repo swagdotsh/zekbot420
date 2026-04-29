@@ -1,8 +1,7 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+const { neon } = require("@neondatabase/serverless")
 
-const dbPath = path.join(__dirname, '../../data/lastfm.json');
+const sql = neon(process.env.NEON_DATABASE_URL)
 
 const PERIOD_MAP = {
     week: '7day',
@@ -34,11 +33,15 @@ module.exports = {
         const apiKey = process.env.LASTFM_API_KEY;
         if (!apiKey) return message.reply('Missing `LASTFM_API_KEY` in the bot environment.');
 
-        const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-
         const { usernameArg, periodKey } = parseArgs(args);
 
-        const username = usernameArg || db[message.author.id];
+        let username = usernameArg
+
+        if (!username) {
+            const rows = await sql`SELECT lastfm_username FROM lastfm_connections WHERE discord_id = ${message.author.id}`
+            username = rows[0]?.lastfm_username
+        }
+
         if (!username) {
             return message.reply(
                 'Provide a Last.fm username or link yours first. e.g. `,topalbums username week` or `,ta month`'

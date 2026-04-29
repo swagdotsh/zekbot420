@@ -1,9 +1,8 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
 const { SlashCommandBuilder } = require('discord.js');
+const { neon } = require("@neondatabase/serverless")
 
-const dbPath = path.join(__dirname, '../../data/lastfm.json');
+const sql = neon(process.env.NEON_DATABASE_URL)
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,11 +20,15 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply();
 
-        const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-        const username = interaction.options.getString('username') || db[interaction.user.id];
+        let username = interaction.options.getString('username')
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link your account first.');
+            const rows = await sql`SELECT lastfm_username FROM lastfm_connections WHERE discord_id = ${interaction.user.id}`
+            username = rows[0]?.lastfm_username
+        }
+
+        if (!username) {
+            return interaction.editReply('Provide a Last.fm username or link your account with `/linklastfm`.');
         }
 
         const apiKey = process.env.LASTFM_API_KEY;

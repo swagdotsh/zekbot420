@@ -1,9 +1,8 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
 const { SlashCommandBuilder } = require('discord.js');
+const { neon } = require("@neondatabase/serverless")
 
-const dbPath = path.join(__dirname, '../../data/lastfm.json');
+const sql = neon(process.env.NEON_DATABASE_URL)
 
 async function getRecentAlbum({ apiKey, username }) {
     const recentUrl =
@@ -110,11 +109,15 @@ module.exports = {
         const apiKey = process.env.LASTFM_API_KEY;
         if (!apiKey) return interaction.editReply('Missing `LASTFM_API_KEY` in the bot environment.');
 
-        const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+        let username = interaction.options.getString('username')
 
-        const username = interaction.options.getString('username') || db[interaction.user.id];
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link yours first.');
+            const rows = await sql`SELECT lastfm_username FROM lastfm_connections WHERE discord_id = ${interaction.user.id}`
+            username = rows[0]?.lastfm_username
+        }
+
+        if (!username) {
+            return interaction.editReply('Provide a Last.fm username or link yours with `/linklastfm`.');
         }
 
         let album = interaction.options.getString('album');

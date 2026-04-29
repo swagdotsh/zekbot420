@@ -20,6 +20,7 @@
     "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.19.2",
     "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@neondatabase/serverless": "^1.1.0",
     "axios": "^1.13.6",
     "discord.js": "^14.19.3",
     "dotenv": "^17.3.1",

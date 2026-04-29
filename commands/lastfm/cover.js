@@ -1,16 +1,20 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+const { neon } = require("@neondatabase/serverless")
 
-const dbPath = path.join(__dirname, '../../data/lastfm.json');
+const sql = neon(process.env.NEON_DATABASE_URL)
 
 module.exports = {
     name: 'cover',
     aliases: ['albumcover', 'art', 'acover', 'coverart'],
     async execute(message, args) {
-        const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-        const username = args[0] || db[message.author.id];
-        if (!username) return message.reply('Provide a Last.fm username! e.g. `,cover username`');
+        let username = args[0]
+
+        if (!username) {
+            const rows = await sql`SELECT lastfm_username FROM lastfm_connections WHERE discord_id = ${message.author.id}`
+            username = rows[0]?.lastfm_username
+        }
+
+        if (!username) return message.reply('Provide a Last.fm username or link your account with `,linklastfm`!');
 
         const apiKey = process.env.LASTFM_API_KEY;
         if (!apiKey) return message.reply('Missing `LASTFM_API_KEY` in the bot environment.');
