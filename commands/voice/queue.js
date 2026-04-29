@@ -1,5 +1,25 @@
 const { EmbedBuilder } = require('discord.js');
 
+function getTrackName(track) {
+    if (!track) return 'Unknown track';
+    if (track.title && track.uploader) return `${track.title} - ${track.uploader}`;
+    return track.attachment?.name || track.title || 'Unknown track';
+}
+
+function getTrackExtra(track) {
+    const parts = [];
+
+    if (track?.durationRaw && track.durationRaw !== 'Unknown') {
+        parts.push(`\`${track.durationRaw}\``);
+    }
+
+    if (track?.sourceType === 'soundcloud') {
+        parts.push('SoundCloud');
+    }
+
+    return parts.length ? ` ${parts.join(' • ')}` : '';
+}
+
 module.exports = {
     name: 'queue',
     aliases: ['q'],
@@ -15,9 +35,10 @@ module.exports = {
         }
 
         const lines = upcoming.slice(0, 10).map((item, idx) => {
-            const name = item?.attachment?.name || 'Unknown file';
+            const name = getTrackName(item);
+            const extra = getTrackExtra(item);
             const by = item?.requestedBy || 'Unknown';
-            return `**${idx + 1}.** ${name} — requested by ${by}`;
+            return `**${idx + 1}.** ${name}${extra} — requested by ${by}`;
         });
 
         const embed = new EmbedBuilder()
@@ -27,7 +48,7 @@ module.exports = {
                 {
                     name: 'Now Playing',
                     value: current
-                        ? `**${current.attachment?.name || 'Unknown file'}**\nRequested by: ${current.requestedBy || 'Unknown'}`
+                        ? `**${getTrackName(current)}**${getTrackExtra(current)}\nRequested by: ${current.requestedBy || 'Unknown'}`
                         : 'Nothing'
                 },
                 {
@@ -42,6 +63,10 @@ module.exports = {
             )
             .setFooter({ text: upcoming.length > 10 ? `Showing first 10 of ${upcoming.length}` : `Total queued: ${upcoming.length}` })
             .setTimestamp();
+
+        if (current?.thumbnail) {
+            embed.setThumbnail(current.thumbnail);
+        }
 
         return message.reply({ embeds: [embed] });
     }

@@ -1,222 +1,299 @@
 // same as play.js but for soundcloud.
-// This doesn't work. I'm assuming I need Next Pro to access the SoundCloud API? Fairs bro
 const {
-    joinVoiceChannel,
-    createAudioPlayer,
-    createAudioResource,
-    AudioPlayerStatus,
-    VoiceConnectionStatus,
-    StreamType,
-    entersState
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+  VoiceConnectionStatus,
+  StreamType,
+  entersState
 } = require('@discordjs/voice');
 const { PermissionsBitField } = require('discord.js');
-const play = require('play-dl');
+const { spawn, execFile } = require('child_process');
+const { promisify } = require('util');
 
-let scReady = false;
+const execFileAsync = promisify(execFile);
 
-async function ensureSoundCloudAuth() {
-  if (scReady) return;
+const YTDLP_BIN = process.env.YTDLP_PATH || 'yt-dlp';
+const FFMPEG_BIN = process.env.FFMPEG_PATH || require('ffmpeg-static') || 'ffmpeg';
+const INACTIVITY_MS = 2 * 60 * 1000;
+const MAX_TRACK_DURATION_SEC = 7 * 60;
 
-  const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
-  if (!clientId) {
-    throw new Error('Missing SOUNDCLOUD_CLIENT_ID in environment.');
+function formatDuration(seconds) {
+  if (!Number.isFinite(seconds)) return 'Unknown';
+
+  const total = Math.floor(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   }
 
-  await play.setToken({
-    soundcloud: {
-      client_id: clientId
-    }
+  return `${minutes}:${String(secs).padStart(2, '0')}`;
+}
+
+function isUrl(input) {
+  return /^https?:\/\//i.test(input);
+}
+
+function getYtDlpTarget(input) {
+  if (isUrl(input)) return input;
+
+  return `scsearch1:${input}`;
+}
+
+async function getTrackInfo(input) {
+  const target = getYtDlpTarget(input);
+
+  const { stdout } = await execFileAsync(YTDLP_BIN, [
+    '--dump-json',
+    '--no-playlist',
+    '--no-warnings',
+    target
+  ], {
+    maxBuffer: 1024 * 1024 * 10
   });
 
-  scReady = true;
+  const firstJsonLine = stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+
+  if (!firstJsonLine) return null;
+
+  const info = JSON.parse(firstJsonLine);
+
+  return {
+    sourceType: 'soundcloud',
+    title: info.title || 'Unknown title',
+    uploader: info.uploader || info.channel || 'Unknown artist',
+    url: info.webpage_url || info.original_url || target,
+    duration: Number.isFinite(info.duration) ? info.duration : null,
+    durationRaw: formatDuration(info.duration),
+    thumbnail: info.thumbnail || null,
+    requestedBy: null,
+    startedAt: null
+  };
 }
 
-const fs = require('fs');
+function createYtDlpFfmpegStream(track) {
+  const ytDlp = spawn(YTDLP_BIN, [
+    '-f',
+    'bestaudio/best',
+    '--no-playlist',
+    '--no-warnings',
+    '--quiet',
+    '-o',
+    '-',
+    track.url
+  ], {
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
 
-const INACTIVITY_MS = 2 * 60 * 1000;
+  ytDlp.stderr.on('data', (chunk) => {
+    const text = chunk.toString().trim();
+    if (text) console.error(`yt-dlp stderr: ${text}`);
+  });
 
-async function resolveSoundCloudTrack(input) {
-    const isUrl = /^https?:\/\//i.test(input);
+  ytDlp.on('error', (err) => {
+    console.error('Failed to start yt-dlp:', err);
+  });
 
-    if (isUrl) {
-        const info = await play.soundcloud(input);
-        if (!info) return null;
-        return {
-            title: info.name || 'Unknown title',
-            url: info.url || input,
-            durationRaw: info.durationRaw || 'Unknown'
-        };
-    }
-
-    const results = await play.search(input, {
-        source: { soundcloud: 'tracks' },
-        limit: 1
-    });
-
-    const first = results?.[0];
-    if (!first) return null;
-
-    return {
-        title: first.name || 'Unknown title',
-        url: first.url,
-        durationRaw: first.durationRaw || 'Unknown'
-    };
+  return ffmpeg.stdout;
 }
 
-async function playTrack(client, guildId) {
-    const session = client.voiceSessions?.get(guildId);
-    if (!session) return;
+async function buildResourceForTrack(track) {
+  const stream = createYtDlpFfmpegStream(track);
 
-    const next = session.queue.shift();
+  return createAudioResource(stream, {
+    inputType: StreamType.Raw
+  });
+}
 
-    if (!next) {
-        if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
-        session.inactivityTimeout = setTimeout(async () => {
-            const latest = client.voiceSessions?.get(guildId);
-            if (!latest) return;
-            if (latest.current || latest.queue.length > 0) return;
+async function playNextInQueue(client, guildId) {
+  const session = client.voiceSessions?.get(guildId);
+  if (!session) return;
 
-            const channel = latest.textChannelId
-                ? await client.channels.fetch(latest.textChannelId).catch(() => null)
-                : null;
+  const nextTrack = session.queue.shift();
 
-            if (latest.connection) latest.connection.destroy();
-            client.voiceSessions.delete(guildId);
+  if (!nextTrack) {
+    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
 
-            if (channel?.isTextBased()) {
-                await channel.send('Left voice channel after 2 minutes of inactivity.');
-            }
-        }, INACTIVITY_MS);
+    session.inactivityTimeout = setTimeout(async () => {
+      const latest = client.voiceSessions?.get(guildId);
+      if (!latest) return;
+      if (latest.current || latest.queue.length > 0) return;
 
-        return;
-    }
+      const channel = latest.textChannelId
+        ? await client.channels.fetch(latest.textChannelId).catch(() => null)
+        : null;
 
-    if (session.inactivityTimeout) {
-        clearTimeout(session.inactivityTimeout);
-        session.inactivityTimeout = null;
-    }
+      if (latest.connection) latest.connection.destroy();
+      client.voiceSessions.delete(guildId);
 
-    session.current = next;
-    session.current.startedAt = Date.now();
+      if (channel?.isTextBased()) {
+        await channel.send('Left voice channel after 2 minutes of inactivity.');
+      }
+    }, INACTIVITY_MS);
 
-    const stream = await play.stream(next.url);
-    const resource = createAudioResource(stream.stream, {
-        inputType: stream.type || StreamType.Arbitrary
-    });
+    return;
+  }
 
+  if (session.inactivityTimeout) {
+    clearTimeout(session.inactivityTimeout);
+    session.inactivityTimeout = null;
+  }
+
+  try {
+    nextTrack.startedAt = Date.now();
+    session.current = nextTrack;
+
+    const resource = await buildResourceForTrack(nextTrack);
     session.player.play(resource);
+  } catch (err) {
+    console.error('Failed to build/play SoundCloud resource:', err);
+    session.current = null;
+    await playNextInQueue(client, guildId);
+  }
 }
 
 module.exports = {
-    name: 'sc',
-    aliases: ['soundcloud'],
-    async execute(message, args) {
-        try {
-            await ensureSoundCloudAuth();
+  name: 'sc',
+  aliases: ['soundcloud'],
 
-            if (!message.client.voiceSessions) {
-                message.client.voiceSessions = new Map();
+  async execute(message, args) {
+    try {
+      if (!message.client.voiceSessions) {
+        message.client.voiceSessions = new Map();
+      }
+
+      const query = args.join(' ').trim();
+      if (!query) {
+        return message.reply('Usage: `,sc <soundcloud url or search>`');
+      }
+
+      const voiceChannel = message.member?.voice?.channel;
+      if (!voiceChannel) {
+        return message.reply("You're currently not in a VC. <:smirk2:1498272372539785286>");
+      }
+
+      const me = message.guild.members.me;
+      if (!me) {
+        return message.reply('Could not verify bot member state.');
+      }
+
+      const perms = voiceChannel.permissionsFor(me);
+      if (!perms?.has(PermissionsBitField.Flags.Connect) || !perms?.has(PermissionsBitField.Flags.Speak)) {
+        return message.reply('I need **Connect** and **Speak** permissions in your voice channel. <:smirk2:1498272372539785286>');
+      }
+
+      const loadingMessage = await message.reply('Searching SoundCloud...');
+
+      const track = await getTrackInfo(query);
+      if (!track?.url) {
+        return loadingMessage.edit('No SoundCloud track found.');
+      }
+
+      if (Number.isFinite(track.duration) && track.duration > MAX_TRACK_DURATION_SEC) {
+        return loadingMessage.edit(`That track is too long. Max length is **${formatDuration(MAX_TRACK_DURATION_SEC)}**, but this one is **${track.durationRaw}**.`);
+      }
+
+      track.requestedBy = message.member?.displayName || message.author.username;
+
+      let session = message.client.voiceSessions.get(message.guild.id);
+
+      if (!session) {
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: message.guild.id,
+          adapterCreator: message.guild.voiceAdapterCreator,
+          selfDeaf: true
+        });
+
+        await entersState(connection, VoiceConnectionStatus.Ready, 30000);
+
+        const player = createAudioPlayer();
+        connection.subscribe(player);
+
+        session = {
+          connection,
+          player,
+          current: null,
+          queue: [],
+          textChannelId: message.channel.id,
+          inactivityTimeout: null,
+          loopMode: 'off',
+          supportsSc: true
+        };
+
+        message.client.voiceSessions.set(message.guild.id, session);
+
+        player.on(AudioPlayerStatus.Idle, async () => {
+          const activeSession = message.client.voiceSessions.get(message.guild.id);
+          if (!activeSession) return;
+
+          if (activeSession.loopMode === 'track' && activeSession.current) {
+            try {
+              activeSession.current.startedAt = Date.now();
+
+              const resource = await buildResourceForTrack(activeSession.current);
+              activeSession.player.play(resource);
+              return;
+            } catch (err) {
+              console.error('SoundCloud loop replay failed:', err);
+              activeSession.current = null;
+              await playNextInQueue(message.client, message.guild.id);
+              return;
             }
+          }
 
-            const query = args.join(' ').trim();
-            if (!query) return message.reply('Usage: `,sc <soundcloud url or search>`');
+          if (activeSession.loopMode === 'queue' && activeSession.current) {
+            activeSession.queue.push(activeSession.current);
+          }
 
-            const voiceChannel = message.member?.voice?.channel;
-            if (!voiceChannel) return message.reply("You're not in a voice channel.");
+          activeSession.current = null;
+          await playNextInQueue(message.client, message.guild.id);
+        });
 
-            const me = message.guild.members.me;
-            if (!me) return message.reply('Could not verify bot member state.');
+        player.on('error', async (err) => {
+          console.error('SoundCloud audio player error:', err);
 
-            const perms = voiceChannel.permissionsFor(me);
-            if (!perms?.has(PermissionsBitField.Flags.Connect) || !perms?.has(PermissionsBitField.Flags.Speak)) {
-                return message.reply('I need **Connect** and **Speak** in your voice channel.');
-            }
+          const activeSession = message.client.voiceSessions.get(message.guild.id);
+          if (!activeSession) return;
 
-            const resolved = await resolveSoundCloudTrack(query);
-            if (!resolved?.url) return message.reply('No SoundCloud track found.');
+          activeSession.current = null;
+          await playNextInQueue(message.client, message.guild.id);
+        });
+      }
 
-            const track = {
-                sourceType: 'soundcloud',
-                title: resolved.title,
-                url: resolved.url,
-                durationRaw: resolved.durationRaw,
-                requestedBy: message.member?.displayName || message.author.username,
-                startedAt: null
-            };
+      session.textChannelId = message.channel.id;
 
-            let session = message.client.voiceSessions.get(message.guild.id);
+      if (session.inactivityTimeout) {
+        clearTimeout(session.inactivityTimeout);
+        session.inactivityTimeout = null;
+      }
 
-            if (!session) {
-                const connection = joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: message.guild.id,
-                    adapterCreator: message.guild.voiceAdapterCreator,
-                    selfDeaf: true
-                });
+      session.queue.push(track);
 
-                await entersState(connection, VoiceConnectionStatus.Ready, 30000);
+      const displayName = `${track.title} - ${track.uploader}`;
+      const duration = track.durationRaw !== 'Unknown' ? ` \`${track.durationRaw}\`` : '';
 
-                const player = createAudioPlayer();
-                connection.subscribe(player);
+      if (!session.current) {
+        await playNextInQueue(message.client, message.guild.id);
+        return loadingMessage.edit(`Playing now: **${displayName}**${duration}`);
+      }
 
-                session = {
-                    connection,
-                    player,
-                    current: null,
-                    queue: [],
-                    textChannelId: message.channel.id,
-                    inactivityTimeout: null,
-                    loopMode: 'off',
-                    supportsSc: true
-                };
+      return loadingMessage.edit(`Queued **${displayName}**${duration} at position **${session.queue.length}**.`);
+    } catch (err) {
+      console.error('SoundCloud command failed:', err);
 
-                message.client.voiceSessions.set(message.guild.id, session);
+      if (err?.code === 'ENOENT') {
+        return message.reply('Could not find `yt-dlp` or `ffmpeg`. Install them or set `YTDLP_PATH` / `FFMPEG_PATH` in your `.env`.');
+      }
 
-                player.on(AudioPlayerStatus.Idle, async () => {
-                    const active = message.client.voiceSessions.get(message.guild.id);
-                    if (!active) return;
-
-                    if (active.loopMode === 'track' && active.current) {
-                        const stream = await play.stream(active.current.url);
-                        const resource = createAudioResource(stream.stream, {
-                            inputType: stream.type || StreamType.Arbitrary
-                        });
-                        active.current.startedAt = Date.now();
-                        active.player.play(resource);
-                        return;
-                    }
-
-                    if (active.loopMode === 'queue' && active.current) {
-                        active.queue.push(active.current);
-                    }
-
-                    active.current = null;
-                    await playTrack(message.client, message.guild.id);
-                });
-
-                player.on('error', async (err) => {
-                    console.error('sc player error:', err);
-                    const active = message.client.voiceSessions.get(message.guild.id);
-                    if (!active) return;
-                    active.current = null;
-                    await playTrack(message.client, message.guild.id);
-                });
-            } else if (!session.supportsSc) {
-                return message.reply('SoundCloud queueing into the current attachment session is not enabled yet. Next I can patch `play.js` so both sources work together.');
-            }
-
-            session.textChannelId = message.channel.id;
-            session.queue.push(track);
-
-            if (!session.current) {
-                await playTrack(message.client, message.guild.id);
-                return message.reply(`Playing now: **${track.title}**`);
-            }
-
-            return message.reply(`Queued **${track.title}** at position **${session.queue.length}**.`);
-        } catch (err) {
-            console.error('sc command failed:', err);
-            return message.reply('Could not play SoundCloud track.');
-        }
+      return message.reply("I couldn't play that SoundCloud track. <:smirk2:1498272372539785286> #- Check console logs.");
     }
+  }
 };

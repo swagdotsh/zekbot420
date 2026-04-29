@@ -1,5 +1,11 @@
 const fs = require('fs');
 
+function getTrackName(track) {
+    if (!track) return 'track';
+    if (track.title && track.uploader) return `${track.title} - ${track.uploader}`;
+    return track.attachment?.name || track.title || 'track';
+}
+
 module.exports = {
     name: 'remove',
     aliases: ['rmq', 'removequeue'],
@@ -23,6 +29,6 @@ module.exports = {
         const [removed] = session.queue.splice(pos - 1, 1);
         if (removed?.filePath && fs.existsSync(removed.filePath)) fs.unlinkSync(removed.filePath);
 
-        return message.reply(`Removed **${removed?.attachment?.name || 'track'}** from queue.`);
+        return message.reply(`Removed **${getTrackName(removed)}** from queue.`);
     }
 };
