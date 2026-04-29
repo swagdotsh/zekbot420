@@ -23,8 +23,23 @@ module.exports = {
       session.queue = [];
       session.current = null;
 
-      session.player.stop(true);
-      session.connection.destroy();
+      try {
+        if (session.player) {
+          session.player.removeAllListeners('error');
+          session.player.on('error', () => {});
+          session.player.stop();
+        }
+      } catch (e) {
+        console.error('player stop error:', e);
+      }
+
+      try {
+        if (session.connection && session.connection.state?.status !== 'destroyed') {
+          session.connection.destroy();
+        }
+      } catch (e) {
+        console.error('connection destroy error:', e);
+      }
 
       message.client.voiceSessions.delete(message.guild.id);
       return message.reply('Stopped playback and cleared queue.');
