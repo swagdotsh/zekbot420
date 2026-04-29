@@ -51,7 +51,7 @@ Your favorite Discord bot's open-source alternative.
 - Info to see sample rate, bitrate, etc. of currently playing track
 - Queue system
 - Skip, stop, pause, resume controls
-- **Soon**: SoundCloud support
+- SoundCloud & YouTube support
 #### VoiceMaster
 - Setup a "Join to Create" voice channel system
 - Lock/unlock voice channels, kick users from channels, rename channels
