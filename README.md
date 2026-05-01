@@ -58,7 +58,7 @@ Your favorite Discord bot's open-source alternative.
 - Usable by any server member
 
 ### Downloading
-- Download and share videos from pretty much any video service. [_If ffmpeg supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
+- Download and share videos from pretty much any video service. [_If yt-dlp supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
 
 ### Stats
 - Rainbow Six Siege player stats (optional; requires Ubisoft Connect credentials)
