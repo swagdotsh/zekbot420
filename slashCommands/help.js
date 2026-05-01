@@ -9,7 +9,7 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.reply({
-            content: `# Hi ${interaction.user}!\nAll commands are available on the [repository wiki](https://github.com/himynameisdon/zekbot420/wiki).\nIf you have any problems, visit the **[Issues tab](https://github.com/swagswagstar/himynameisdon/issues)** to report or see if it already is.`,
+            content: `# Hi ${interaction.user}!\nAll commands are available on the [bot's website](https://zekbot420.swagrelated.com/commands).\nIf you have any problems, visit the **[Issues tab](https://github.com/justadonisstar/zekbot420/issues)** to report or see if it already is.`,
             allowedMentions: { repliedUser: false }
         });
     }

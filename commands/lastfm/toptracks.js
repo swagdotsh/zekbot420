@@ -28,7 +28,7 @@ function parseArgs(args) {
 
 module.exports = {
     name: 'toptracks',
-    aliases: ['tt', 'toptracks', 'top'],
+    aliases: ['tt', 'top'],
     async execute(message, args) {
         const apiKey = process.env.LASTFM_API_KEY;
         if (!apiKey) return message.reply('Missing `LASTFM_API_KEY` in the bot environment.');

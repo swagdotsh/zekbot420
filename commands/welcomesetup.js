@@ -4,7 +4,7 @@ const configPath = path.join(__dirname, '../welcomeConfig.json');
 
 module.exports = {
   name: 'welcomesetup',
-  aliases: ['ws', 'setup'],
+  aliases: ['ws'],
   async execute(message, args) {
     if (!message.member.permissions.has('Administrator')) return;
 

@@ -106,11 +106,13 @@ DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 DISCORD_CLIENT_ID="BOTS_CLIENT_ID"
 GUILD_ID="DEVELOPMENT_TESTING_SERVER_ID"
 PREFIX="Use any prefix you like, default is ,"
+NEON_DATABASE_URL="YOUR_NEON_DATABASE_URL"
 
 # Add other optional environment variables your setup requires, for example:
 
 # Last.fm API credentials
 LASTFM_API_KEY=YOUR_LASTFM_API_KEY
+LASTFM_API_SECRET=YOUR_LASTFM_API_SECRET
 
 # Siege API credentials (Ubisoft Connect)
 UBISOFT_EMAIL=UBISOFT_EMAIL_ADDRESS

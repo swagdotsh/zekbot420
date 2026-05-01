@@ -1,6 +1,6 @@
 module.exports = {
     name: 'remindme',
-    aliases: ['remind', 'rm'],
+    aliases: ['remind'],
 
     async execute(message, args) {
         if (!args.length) {
