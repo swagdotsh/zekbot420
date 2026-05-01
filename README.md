@@ -58,7 +58,7 @@ Your favorite Discord bot's open-source alternative.
 - Usable by any server member
 
 ### Downloading
-- Pretty much [any video service](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
+- Download and share videos from pretty much any video service. [_If yt-dlp supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
 
 ### Stats
 - Rainbow Six Siege player stats (optional; requires Ubisoft Connect credentials)
@@ -82,61 +82,13 @@ Your favorite Discord bot's open-source alternative.
 - Ubisoft Connect account (for Rainbow Six Siege integration features, *will be deprecated in the future*)
 ---
 
-## Installation
+## Setting Up
+If you're interested in hosting your own version of zekbot420, visit the [Getting Started](https://github.com/justadonisstar/zekbot420/wiki/Getting-Started) wiki page. Everything you'll need to know is there from preresiquites to cloning the repo, installing packages and making the bot live is there. 
 
-```shell script
-npm install
-```
-
-
----
-
-## Configuration
-
-This project uses both a `.env` file and a `config.json`.
-> [!WARNING]
-> The `.env` file is the recommended place for configuration, and `config.json` will be deprecated in the future.
-
-### 1) Create `.env`
-
-Add a `.env` file in the project root (or edit the existing one) with placeholders like:
-
-```
-DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
-DISCORD_CLIENT_ID="BOTS_CLIENT_ID"
-GUILD_ID="DEVELOPMENT_TESTING_SERVER_ID"
-PREFIX="Use any prefix you like, default is ,"
-NEON_DATABASE_URL="YOUR_NEON_DATABASE_URL"
-
-# Add other optional environment variables your setup requires, for example:
-
-# Last.fm API credentials
-LASTFM_API_KEY=YOUR_LASTFM_API_KEY
-LASTFM_API_SECRET=YOUR_LASTFM_API_SECRET
-
-# Siege API credentials (Ubisoft Connect)
-UBISOFT_EMAIL=UBISOFT_EMAIL_ADDRESS
-UBISOFT_PASSWORD=UBISOFT_PASSWORD
-
-# SoundCloud API credentials
-SOUNDCLOUD_CLIENT_ID=YOUR_SOUNDCLOUD_CLIENT_ID
-```
-
-
-> Reminder to **NEVER** commit `.env` files to a public repo.
-
-### 2) Edit `config.json`
-> [!WARNING]
-> This will be deprecated in the future.
-
-Open `config.json` and set the values for your bot/server (typical examples include client/app ID, guild ID for development, log channel IDs, etc.).
-
-If you’re not sure what a field does:
-- Search for the key name across the project
-- Update it gradually (start with token + basic IDs) and run the bot to verify
+If that's all good to go, read the [Configuration](https://github.com/justadonisstar/zekbot420/wiki/Configuration) page to learn how to set up modify zekbot420.
 
 ## Running the bot
-
+Simply head to your project root and, in your terminal, run:
 ```shell script
 node index.js
 ```
@@ -147,26 +99,7 @@ Or, if you prefer a package script (if present in `package.json`):
 ```shell script
 npm run start
 ```
-
-
 ---
-
-## Slash Commands (Deploying)
-
-If your bot uses slash commands, you’ll usually need to register them with Discord after changing or adding commands.
-
-Run the deploy script:
-
-```shell script
-node deploy-commands.js
-```
-
-Notes:
-- Global command registration can take time to propagate.
-- For faster iteration, configure a development server and register commands to that guild while testing.
-
----
-
 ## Data & Persistence
 
 Some features store data locally (for example: warnings/modlog/Last.fm configuration/audio files). You’ll see data files under the `data/` directory.
