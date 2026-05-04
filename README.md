@@ -32,6 +32,7 @@ Your favorite Discord bot's open-source alternative.
 - Clear messages
 - Warn system (warn, unwarn, list warnings)
 - Jail system
+- Sticky roles system
 
 ### Leveling
 - Leveling system 
