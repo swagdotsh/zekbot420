@@ -6,6 +6,9 @@ require('dotenv').config();
 
 const {logMessageDeletion, logSnipeClear} = require('./log');
 const {handleVoiceStateUpdate} = require('./commands/voicemaster/vmManager');
+const {initDB} = require('./leveling');
+const {handleMessageXP} = require('./events/xpHandler');
+const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/vcXpHandler');
 
 const client = new Client({
     intents: [
@@ -64,10 +67,12 @@ if (fs.existsSync(slashCommandsPath)) {
     walk(slashCommandsPath);
 }
 
-    client.once('clientReady', () => {
-        console.log(`Logged in as ${client.user.tag}`);
-        client.user.setActivity('Eastern Conference Playoffs Round 1', {type: 3});
-    });
+client.once('clientReady', async () => {
+    console.log(`Logged in as ${client.user.tag}`);
+    client.user.setActivity('Eastern Conference Playoffs Round 1', {type: 3});
+    await initDB();
+    startVcXPLoop(client);
+});
 
 // Slash commands
 client.on('interactionCreate', async (interaction) => {
@@ -86,26 +91,30 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-    // Prefix commands
-    client.on('messageCreate', async (message) => {
-        if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
+// Prefix commands
+client.on('messageCreate', async (message) => {
+    if (!message.author.bot && message.guild) {
+        await handleMessageXP(message).catch(console.error);
+    }
 
-        const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
-        const commandName = args.shift().toLowerCase();
+    if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
 
-        const command = client.commands.find(
-            cmd => cmd.name === commandName || (cmd.aliases && cmd.aliases.includes(commandName))
-        );
+    const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
 
-        if (!command) return;
+    const command = client.commands.find(
+        cmd => cmd.name === commandName || (cmd.aliases && cmd.aliases.includes(commandName))
+    );
 
-        try {
-            await command.execute(message, args);
-        } catch (error) {
-            console.error(error);
-            await message.reply('There was an error executing that command.');
-        }
-    });
+    if (!command) return;
+
+    try {
+        await command.execute(message, args);
+    } catch (error) {
+        console.error(error);
+        await message.reply('There was an error executing that command.');
+    }
+});
 
 client.on('messageCreate', async message => {
     if (message.content === ',cs' || message.content === ',clearsnipe') {
@@ -145,6 +154,10 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     } catch (error) {
         console.error('VoiceMaster voiceStateUpdate failed:', error);
     }
+});
+
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    await handleVoiceXPStateUpdate(oldState, newState).catch(console.error);
 });
 
 require('./storesnipe')(client);
