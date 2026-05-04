@@ -19,7 +19,6 @@ function extractChannelId(input) {
   const raw = (input ?? '').toString().trim();
   if (!raw) return null;
 
-  // accepts: 123, <#123>
   const mentionMatch = raw.match(/^<#(\d+)>$/);
   if (mentionMatch) return mentionMatch[1];
 
@@ -40,8 +39,7 @@ async function readGuildConfig(guildId) {
       channelId: parsed?.channelId ?? null,
     };
   } catch {
-    // If corrupted/unreadable, fall back instead of crashing the command.
-    return { channelId: null };
+      return { channelId: null };
   }
 }
 
@@ -73,7 +71,6 @@ module.exports = {
 
     const guildId = message.guild.id;
 
-    // Allow disabling
     if (['off', 'disable', 'none', 'clear', 'reset'].includes(input.toLowerCase())) {
       const config = await readGuildConfig(guildId);
       config.channelId = null;
@@ -81,7 +78,6 @@ module.exports = {
       return message.reply({ content: 'Modlog has been disabled for this server.' });
     }
 
-    // 1) Try mention/id
     const channelId = extractChannelId(input);
     let channel = null;
 
@@ -89,18 +85,15 @@ module.exports = {
       channel = message.guild.channels.cache.get(channelId) ?? null;
     }
 
-    // 2) Try exact-ish name match (ignoring spaces/case)
     if (!channel) {
       const target = normalizeName(input);
       channel = message.guild.channels.cache.find((ch) => normalizeName(ch.name) === target) ?? null;
     }
 
-    // Validate
     if (!channel) {
       return message.reply({ content: 'Could not find that channel. Please check the name/ID.' });
     }
 
-    // Only allow text-based channels (so you can send log messages there)
     if (!channel.isTextBased?.() || channel.isDMBased?.()) {
       return message.reply({ content: 'Please choose a server text channel (not a category/voice/DM).' });
     }

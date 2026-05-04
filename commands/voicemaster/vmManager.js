@@ -1,9 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const {
+    ActionRowBuilder,
     AttachmentBuilder,
+    ButtonBuilder,
+    ButtonStyle,
     ChannelType,
+    ModalBuilder,
     PermissionsBitField,
+    TextInputBuilder,
+    TextInputStyle,
 } = require('discord.js');
 
 const dataDir = path.resolve(process.cwd(), 'data');
@@ -109,6 +115,224 @@ function isVoiceMasterOrStaff(member, managed) {
         member.id === managed.ownerId ||
         member.permissions.has(PermissionsBitField.Flags.ManageChannels)
     );
+}
+
+function buildVoiceMasterPanel(channelId) {
+    return [
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`vm:lock:${channelId}`)
+                .setEmoji('🔒')
+                .setLabel('Lock VC')
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId(`vm:rename:${channelId}`)
+                .setEmoji('✏️')
+                .setLabel('Rename VC')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId(`vm:limit:${channelId}`)
+                .setEmoji('👥')
+                .setLabel('Set Limit')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId(`vm:delete:${channelId}`)
+                .setEmoji('🗑️')
+                .setLabel('Delete VC')
+                .setStyle(ButtonStyle.Danger),
+        ),
+    ];
+}
+
+async function getManagedInteractionTarget(interaction, channelId) {
+    const managed = getManagedChannel(interaction.client, channelId);
+
+    if (!managed) {
+        await interaction.reply({
+            content: 'That VoiceMaster VC no longer exists or is not managed by me.',
+            ephemeral: true,
+        });
+        return null;
+    }
+
+    const member = interaction.member;
+
+    if (!isVoiceMasterOrStaff(member, managed)) {
+        await interaction.reply({
+            content: 'Only the VC owner or staff with **Manage Channels** can use this control panel.',
+            ephemeral: true,
+        });
+        return null;
+    }
+
+    const channel = await interaction.guild.channels.fetch(channelId).catch(() => null);
+
+    if (!channel || channel.type !== ChannelType.GuildVoice) {
+        await interaction.reply({
+            content: 'I could not find that voice channel anymore.',
+            ephemeral: true,
+        });
+        return null;
+    }
+
+    return {
+        managed,
+        channel,
+    };
+}
+
+async function handleVoiceMasterButton(interaction) {
+    if (!interaction.isButton() || !interaction.customId.startsWith('vm:')) return false;
+
+    const [, action, channelId] = interaction.customId.split(':');
+    const target = await getManagedInteractionTarget(interaction, channelId);
+    if (!target) return true;
+
+    const { channel } = target;
+
+    if (action === 'lock') {
+        const everyoneOverwrite = channel.permissionOverwrites.cache.get(interaction.guild.roles.everyone.id);
+        const isLocked = everyoneOverwrite?.deny.has(PermissionsBitField.Flags.Connect) ?? false;
+
+        await channel.permissionOverwrites.edit(interaction.guild.roles.everyone.id, {
+            Connect: isLocked ? null : false,
+            ViewChannel: true,
+        }, {
+            reason: `VoiceMaster ${isLocked ? 'unlock' : 'lock'} by ${interaction.user.tag}`,
+        });
+
+        await interaction.reply({
+            content: isLocked ? '🔓 Your VC has been unlocked.' : '🔒 Your VC has been locked.',
+            ephemeral: true,
+        });
+
+        return true;
+    }
+
+    if (action === 'rename') {
+        const modal = new ModalBuilder()
+            .setCustomId(`vm_modal:rename:${channelId}`)
+            .setTitle('Rename your VC');
+
+        const nameInput = new TextInputBuilder()
+            .setCustomId('name')
+            .setLabel('New VC name')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(100)
+            .setPlaceholder(`${interaction.member.displayName}'s VC`)
+            .setRequired(true);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(nameInput),
+        );
+
+        await interaction.showModal(modal);
+        return true;
+    }
+
+    if (action === 'limit') {
+        const modal = new ModalBuilder()
+            .setCustomId(`vm_modal:limit:${channelId}`)
+            .setTitle('Set VC user limit');
+
+        const limitInput = new TextInputBuilder()
+            .setCustomId('limit')
+            .setLabel('User limit')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(2)
+            .setPlaceholder('0 for no limit, or 2-99')
+            .setRequired(true);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(limitInput),
+        );
+
+        await interaction.showModal(modal);
+        return true;
+    }
+
+    if (action === 'delete') {
+        await interaction.reply({
+            content: '🗑️ Deleting your VoiceMaster VC...',
+            ephemeral: true,
+        });
+
+        await deleteManagedChannel(
+            interaction.client,
+            channelId,
+            `VoiceMaster VC deleted by ${interaction.user.tag}`,
+        );
+
+        return true;
+    }
+
+    return false;
+}
+
+async function handleVoiceMasterModal(interaction) {
+    if (!interaction.isModalSubmit() || !interaction.customId.startsWith('vm_modal:')) return false;
+
+    const [, action, channelId] = interaction.customId.split(':');
+    const target = await getManagedInteractionTarget(interaction, channelId);
+    if (!target) return true;
+
+    const { channel } = target;
+
+    if (action === 'rename') {
+        const name = interaction.fields.getTextInputValue('name').trim();
+
+        if (!name) {
+            await interaction.reply({
+                content: 'Please enter a valid VC name.',
+                ephemeral: true,
+            });
+            return true;
+        }
+
+        await channel.setName(name, `VoiceMaster rename by ${interaction.user.tag}`);
+
+        await interaction.reply({
+            content: `✏️ Your VC has been renamed to **${name}**.`,
+            ephemeral: true,
+        });
+
+        return true;
+    }
+
+    if (action === 'limit') {
+        const rawLimit = interaction.fields.getTextInputValue('limit').trim();
+        const limit = Number(rawLimit);
+
+        if (!Number.isInteger(limit) || limit < 0 || limit > 99 || limit === 1) {
+            await interaction.reply({
+                content: 'Please enter `0` for no limit, or a number from `2` to `99`.',
+                ephemeral: true,
+            });
+            return true;
+        }
+
+        await channel.setUserLimit(limit, `VoiceMaster limit changed by ${interaction.user.tag}`);
+
+        await interaction.reply({
+            content: limit === 0
+                ? '👥 Your VC user limit has been removed.'
+                : `👥 Your VC user limit has been set to **${limit}**.`,
+            ephemeral: true,
+        });
+
+        return true;
+    }
+
+    return false;
+}
+
+async function handleVoiceMasterInteraction(interaction) {
+    if (await handleVoiceMasterButton(interaction)) return true;
+    if (await handleVoiceMasterModal(interaction)) return true;
+
+    return false;
 }
 
 async function askForCategoryId(message) {
@@ -314,13 +538,16 @@ async function createManagedChannelForMember(oldState, newState) {
             await channel.send({
                 content:
                     `Hi ${member}, your VoiceMaster VC has been created!\n\n` +
-                    '**Commands:**\n' +
+                    '**Control Panel:**\n' +
+                    'Use the buttons below to manage your VC.\n\n' +
+                    '**Commands still work too:**\n' +
                     '` ,lvc ` - Lock/unlock your VC\n' +
                     '` ,dvc ` - Delete your VC\n' +
                     '` ,kvc @user ` - Kick someone from your VC\n' +
                     '` ,sl [0/2-99] ` - Set user limit, or remove it with `,sl` / `,sl 0`\n' +
                     '` ,rmvc new name ` - Rename your VC\n\n' +
-                    'Server staff with the **Manage Channels** can also use these commands.',
+                    'Server staff with the **Manage Channels** can also use these controls.',
+                components: buildVoiceMasterPanel(channel.id),
                 allowedMentions: {
                     users: [member.id],
                 },
@@ -447,4 +674,5 @@ module.exports = {
     isVoiceMasterOrStaff,
     deleteManagedChannel,
     handleVoiceStateUpdate,
+    handleVoiceMasterInteraction,
 };

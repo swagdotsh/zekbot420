@@ -5,7 +5,17 @@ const {Client, GatewayIntentBits, Collection, Partials} = require('discord.js');
 require('dotenv').config();
 
 const {logMessageDeletion, logSnipeClear} = require('./log');
-const {handleVoiceStateUpdate} = require('./commands/voicemaster/vmManager');
+const {
+    handleVoiceStateUpdate,
+    handleVoiceMasterInteraction,
+} = require('./commands/voicemaster/vmManager');
+const {initDB} = require('./leveling');
+const {initJailDB} = require('./jailHandler');
+const {initStickyRoleDB} = require('./stickyrolesDbHndlr');
+const {handleMessageXP} = require('./events/xpHandler');
+const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/vcXpHandler');
+const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
+const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
 const client = new Client({
     intents: [
@@ -13,7 +23,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMembers
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
@@ -64,48 +75,65 @@ if (fs.existsSync(slashCommandsPath)) {
     walk(slashCommandsPath);
 }
 
-    client.once('clientReady', () => {
-        console.log(`Logged in as ${client.user.tag}`);
-        client.user.setActivity('Eastern Conference Playoffs Round 1', {type: 3});
-    });
+client.once('clientReady', async () => {
+    console.log(`Logged in as ${client.user.tag}`);
+    client.user.setActivity('Eastern Conference Playoffs Round 2', {type: 3});
+    await initDB();
+    await initJailDB();
+    await initStickyRoleDB();
+    startVcXPLoop(client);
+    startJailExpiryLoop(client);
+    await handleStickyRoles(client);
+});
 
-// Slash commands
+// Slash commands, buttons, and modals
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const cmd = client.slashCommands.get(interaction.commandName);
-    if (!cmd) return;
-
     try {
+        if (await handleVoiceMasterInteraction(interaction)) return;
+
+        if (!interaction.isChatInputCommand()) return;
+
+        const cmd = client.slashCommands.get(interaction.commandName);
+        if (!cmd) return;
+
         await cmd.execute(interaction);
     } catch (error) {
         console.error(error);
-        const payload = {content: 'There was an error executing that command.', ephemeral: true};
+
+        const payload = {
+            content: 'There was an error executing that interaction.',
+            ephemeral: true,
+        };
+
         if (interaction.deferred || interaction.replied) await interaction.followUp(payload);
         else await interaction.reply(payload);
     }
 });
 
-    // Prefix commands
-    client.on('messageCreate', async (message) => {
-        if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
+// Prefix commands
+client.on('messageCreate', async (message) => {
+    if (!message.author.bot && message.guild) {
+        await handleMessageXP(message).catch(console.error);
+    }
 
-        const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
-        const commandName = args.shift().toLowerCase();
+    if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
 
-        const command = client.commands.find(
-            cmd => cmd.name === commandName || (cmd.aliases && cmd.aliases.includes(commandName))
-        );
+    const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
 
-        if (!command) return;
+    const command = client.commands.find(
+        cmd => cmd.name === commandName || (cmd.aliases && cmd.aliases.includes(commandName))
+    );
 
-        try {
-            await command.execute(message, args);
-        } catch (error) {
-            console.error(error);
-            await message.reply('There was an error executing that command.');
-        }
-    });
+    if (!command) return;
+
+    try {
+        await command.execute(message, args);
+    } catch (error) {
+        console.error(error);
+        await message.reply('There was an error executing that command.');
+    }
+});
 
 client.on('messageCreate', async message => {
     if (message.content === ',cs' || message.content === ',clearsnipe') {
@@ -145,6 +173,10 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     } catch (error) {
         console.error('VoiceMaster voiceStateUpdate failed:', error);
     }
+});
+
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    await handleVoiceXPStateUpdate(oldState, newState).catch(console.error);
 });
 
 require('./storesnipe')(client);

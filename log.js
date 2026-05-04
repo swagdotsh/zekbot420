@@ -9,7 +9,6 @@ const CLEARED_DIR = path.join(DATA_DIR, 'cleared_messages');
 
 const GUILD_CONFIG_FILE_NAME = 'modlog.json';
 
-// Per-guild cache: guildId -> { data, mtimeMs }
 const modlogConfigCacheByGuild = new Map();
 
 function nowStamp() {
@@ -22,9 +21,9 @@ function debugCreated(label, createdPath) {
 
 async function ensureDir(dirPath, labelForDebug = 'directory') {
   const existed = await fsp
-    .stat(dirPath)
-    .then(function(s) { return s.isDirectory() })
-    .catch(() => false);
+      .stat(dirPath)
+      .then(function(s) { return s.isDirectory() })
+      .catch(() => false);
 
   await fsp.mkdir(dirPath, { recursive: true });
 
@@ -52,8 +51,6 @@ function guildModlogConfigPath(guildId) {
 }
 
 async function migrateLegacyModlogConfigOnce() {
-  // Moves data/modlogConfig.json (mapping) into per-guild folders as data/<guildId>/modlog.json
-  // Safe to call often; it only migrates if legacy exists.
   const legacyStat = await fsp.stat(LEGACY_MODLOG_CONFIG_PATH).catch(function() { return null });
   if (!legacyStat) return;
 
@@ -78,24 +75,11 @@ async function migrateLegacyModlogConfigOnce() {
       debugCreated(`modlog config file for guild ${guildId}`, newPath);
     }
 
-    // Keep the legacy file around (non-destructive) so nothing breaks unexpectedly.
     console.info(
-      `[debug ${nowStamp()}] legacy modlogConfig.json was detected and migrated to per-guild folders (legacy file kept): ${LEGACY_MODLOG_CONFIG_PATH}`
+        `[debug ${nowStamp()}] legacy modlogConfig.json was detected and migrated to per-guild folders (legacy file kept): ${LEGACY_MODLOG_CONFIG_PATH}`
     );
   } catch (err) {
     console.error('Failed to migrate legacy modlog config:', err);
-  }
-}
-
-function safeTag(userLike) {
-  return userLike?.tag ?? 'Unknown';
-}
-
-function safeAvatarURL(userLike) {
-  try {
-    return userLike?.displayAvatarURL?.() ?? null;
-  } catch {
-    return null;
   }
 }
 
@@ -111,7 +95,6 @@ async function loadGuildModlogConfig(guildId) {
 
     const stat = await fsp.stat(configPath).catch(() => null);
     if (!stat) {
-      // New behavior: create data/<guildId>/modlog.json
       await ensureDir(dir, `guild data folder (${guildId})`);
 
       const initial = JSON.stringify({ channelId: null }, null, 2);
@@ -131,9 +114,9 @@ async function loadGuildModlogConfig(guildId) {
     const parsed = raw.trim() ? JSON.parse(raw) : {};
 
     const normalized =
-      parsed && typeof parsed === 'object'
-        ? { channelId: parsed.channelId ?? null }
-        : { channelId: null };
+        parsed && typeof parsed === 'object'
+            ? { channelId: parsed.channelId ?? null }
+            : { channelId: null };
 
     modlogConfigCacheByGuild.set(key, { data: normalized, mtimeMs: stat.mtimeMs });
     return normalized;
@@ -298,7 +281,6 @@ async function logKick(_client, guild, user, author, reason = 'No reason specifi
 }
 
 async function logClearMessages(_client, message, author, amount, messagesContent) {
-  // Save cleared messages under /data, but use a unique temp file to avoid races.
   try {
     await ensureDir(CLEARED_DIR, 'cleared messages folder');
 
@@ -312,10 +294,7 @@ async function logClearMessages(_client, message, author, amount, messagesConten
     await fsp.writeFile(filePath, toWrite, 'utf8');
 
     const modlogChannel = await getModlogChannelFromMessage(message);
-    if (!modlogChannel) {
-      // If we can't log it, still keep the file (better than deleting evidence).
-      return;
-    }
+    if (!modlogChannel) return;
 
     const channelName = message?.channel?.name ?? 'Unknown';
 
@@ -399,11 +378,11 @@ async function logWarn(_client, guild, user, author, reason = 'No reason specifi
     title: 'User Warned',
     actor: author,
   }).addFields(
-    { name: 'User', value: `${userTag} (${userId})`, inline: true },
-    { name: 'Warned By', value: safeTag(author), inline: true },
-    { name: 'Reason', value: reason, inline: false },
-    ...(warnCount != null ? [{ name: 'Total Warnings', value: String(warnCount), inline: true }] : []),
-    relativeTimeField()
+      { name: 'User', value: `${userTag} (${userId})`, inline: true },
+      { name: 'Warned By', value: safeTag(author), inline: true },
+      { name: 'Reason', value: reason, inline: false },
+      ...(warnCount != null ? [{ name: 'Total Warnings', value: String(warnCount), inline: true }] : []),
+      relativeTimeField()
   );
 
   await safeSend(modlogChannel, { embeds: [embed] });
@@ -421,16 +400,90 @@ async function logUnwarn(_client, guild, user, author, removedCount = 1, newCoun
     title: 'Warning Removed',
     actor: author,
   }).addFields(
-    { name: 'User', value: `${userTag} (${userId})`, inline: true },
-    { name: 'Removed By', value: safeTag(author), inline: true },
-    { name: 'Warnings Removed', value: String(removedCount ?? 0), inline: true },
-    ...(newCount != null ? [{ name: 'Total Warnings Now', value: String(newCount), inline: true }] : []),
-    ...(removedMode ? [{ name: 'Removal Mode', value: String(removedMode), inline: true }] : []),
-    ...(note ? [{ name: 'Note', value: String(note).slice(0, 1024), inline: false }] : []),
-    relativeTimeField()
+      { name: 'User', value: `${userTag} (${userId})`, inline: true },
+      { name: 'Removed By', value: safeTag(author), inline: true },
+      { name: 'Warnings Removed', value: String(removedCount ?? 0), inline: true },
+      ...(newCount != null ? [{ name: 'Total Warnings Now', value: String(newCount), inline: true }] : []),
+      ...(removedMode ? [{ name: 'Removal Mode', value: String(removedMode), inline: true }] : []),
+      ...(note ? [{ name: 'Note', value: String(note).slice(0, 1024), inline: false }] : []),
+      relativeTimeField()
   );
 
   await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logJail(_client, guild, target, moderator, duration = null) {
+  const modlogChannel = await getModlogChannelFromGuild(guild);
+
+  const userTag = target?.user?.tag ?? target?.tag ?? 'Unknown';
+  const userId = target?.id ?? 'Unknown';
+  const durationText = duration ?? 'Indefinite';
+
+  const embed = baseEmbed({
+    color: '#ff4444',
+    title: 'User Jailed',
+    actor: moderator,
+  }).addFields(
+      { name: 'User', value: `${userTag} (${userId})`, inline: true },
+      { name: 'Jailed By', value: safeTag(moderator), inline: true },
+      { name: 'Duration', value: durationText, inline: true },
+      relativeTimeField()
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+
+  try {
+    const dmEmbed = new EmbedBuilder()
+        .setColor('#ff4444')
+        .setTitle(`You have been jailed in ${guild.name}`)
+        .addFields(
+            { name: 'Duration', value: durationText, inline: true },
+            { name: 'Jailed By', value: safeTag(moderator), inline: true },
+            relativeTimeField()
+        )
+        .setTimestamp();
+
+    const user = target?.user ?? target;
+    await user?.send({ embeds: [dmEmbed] });
+  } catch {
+    // DMs disabled, silently ignore
+  }
+}
+
+async function logUnjail(_client, guild, target, moderator, expired = false) {
+  const modlogChannel = await getModlogChannelFromGuild(guild);
+
+  const userTag = target?.user?.tag ?? target?.tag ?? 'Unknown';
+  const userId = target?.id ?? 'Unknown';
+  const reason = expired ? 'Sentence expired' : `Unjailed by ${safeTag(moderator)}`;
+
+  const embed = baseEmbed({
+    color: '#43b581',
+    title: 'User Unjailed',
+    actor: moderator,
+  }).addFields(
+      { name: 'User', value: `${userTag} (${userId})`, inline: true },
+      { name: 'Reason', value: reason, inline: true },
+      relativeTimeField()
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+
+  try {
+    const dmEmbed = new EmbedBuilder()
+        .setColor('#43b581')
+        .setTitle(`You have been unjailed in ${guild.name}`)
+        .addFields(
+            { name: 'Reason', value: reason, inline: true },
+            relativeTimeField()
+        )
+        .setTimestamp();
+
+    const user = target?.user ?? target;
+    await user?.send({ embeds: [dmEmbed] });
+  } catch {
+    // DMs disabled, silently ignore
+  }
 }
 
 module.exports = {
@@ -444,4 +497,6 @@ module.exports = {
   logUntimeout,
   logWarn,
   logUnwarn,
+  logJail,
+  logUnjail,
 };

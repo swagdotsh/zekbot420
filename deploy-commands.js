@@ -9,7 +9,7 @@ function readSlashCommandFiles(dir) {
     for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) out.push(...readSlashCommandFiles(full));
-        else if (entry.isFile() && entry.name.endsWith('.js')) out.push(full);
+        else if (entry.isFile() && entry.name.endsWith('.js') && !entry.name.startsWith('_')) out.push(full); // ignore helpr files
     }
     return out;
 }

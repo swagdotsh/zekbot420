@@ -31,6 +31,13 @@ Your favorite Discord bot's open-source alternative.
 - Timeout / untimeout
 - Clear messages
 - Warn system (warn, unwarn, list warnings)
+- Jail system
+
+### Leveling
+- Leveling system 
+- Leaderboards
+- Configurable XP system
+- Role rewards
 
 ### Utility & Info
 - Ping / uptime
@@ -39,6 +46,7 @@ Your favorite Discord bot's open-source alternative.
 - Status helpers
 - Help command
 - Basic server/user info
+- Translation (translate messages and text to almost any language)
 
 ### Logging 
 - Logs support (stores moderation actions)
