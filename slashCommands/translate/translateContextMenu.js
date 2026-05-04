@@ -40,6 +40,9 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        console.log('Interaction received:', interaction.type, interaction.commandName);
+        console.log(`Running context menu command: ${interaction.commandName}`);
+
         const message = interaction.targetMessage;
         const text = message.content?.trim();
 
@@ -73,12 +76,12 @@ module.exports = {
                     }
                 )
                 .setFooter({
-                    text: `Message by ${message.author.tag}`
+                    text: `Message by ${message.author?.tag ?? 'Unknown User'}`
                 });
 
-            return interaction.editReply({
-                embeds: [embed]
-            });
+                return interaction.editReply({
+                    embeds: [embed]
+                });
         } catch (err) {
             console.error(err);
 
