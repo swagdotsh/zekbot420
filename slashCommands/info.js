@@ -11,7 +11,8 @@ module.exports = {
                 `# zekbot420 is your favorite Discord's bot free and open-source alternative, developed by zekkie.\n` +
                 "If you want a list of all commands, use **/help**.\n" +
                 "If you want to contribute, or take a look at the source code, [check out the repository](https://github.com/himynameisdon/zekbot420)!\n" +
-                `-# Licensed under the MIT License. Copyright (c) 2023-2026 zekkie/swagrelated.com. All rights reserved.`,
+                `-# Licensed under the MIT License. Copyright (c) 2023-2026 zekkie/swagrelated.com. All rights reserved.\n` +
+                `-# In the event you think zekbot420 isn't working like usual, check out the [status page](https://zekbot420.statuspage.io/).`,
         });
     }
 };
