@@ -8,7 +8,6 @@ Learn more at: [zekbot420.swagrelated.com](https://zekbot420.swagrelated.com)
 <br />
 
 <img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues/himynameisdon/zekbot420?style=for-the-badge" />
 <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/himynameisdon/zekbot420?style=for-the-badge" />
 <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/himynameisdon/zekbot420?style=for-the-badge" />
 <img alt="GitHub License" src="https://img.shields.io/github/license/himynameisdon/zekbot420?style=for-the-badge" />
