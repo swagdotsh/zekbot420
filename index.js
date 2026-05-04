@@ -11,9 +11,11 @@ const {
 } = require('./commands/voicemaster/vmManager');
 const {initDB} = require('./leveling');
 const {initJailDB} = require('./jailHandler');
+const {initStickyRoleDB} = require('./stickyrolesDbHndlr');
 const {handleMessageXP} = require('./events/xpHandler');
 const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/vcXpHandler');
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
+const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
 const client = new Client({
     intents: [
@@ -21,7 +23,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMembers
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
@@ -77,8 +80,10 @@ client.once('clientReady', async () => {
     client.user.setActivity('Eastern Conference Playoffs Round 2', {type: 3});
     await initDB();
     await initJailDB();
+    await initStickyRoleDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
+    await handleStickyRoles(client);
 });
 
 // Slash commands, buttons, and modals
