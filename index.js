@@ -5,7 +5,10 @@ const {Client, GatewayIntentBits, Collection, Partials} = require('discord.js');
 require('dotenv').config();
 
 const {logMessageDeletion, logSnipeClear} = require('./log');
-const {handleVoiceStateUpdate} = require('./commands/voicemaster/vmManager');
+const {
+    handleVoiceStateUpdate,
+    handleVoiceMasterInteraction,
+} = require('./commands/voicemaster/vmManager');
 const {initDB} = require('./leveling');
 const {initJailDB} = require('./jailHandler');
 const {handleMessageXP} = require('./events/xpHandler');
@@ -78,18 +81,25 @@ client.once('clientReady', async () => {
     startJailExpiryLoop(client);
 });
 
-// Slash commands
+// Slash commands, buttons, and modals
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const cmd = client.slashCommands.get(interaction.commandName);
-    if (!cmd) return;
-
     try {
+        if (await handleVoiceMasterInteraction(interaction)) return;
+
+        if (!interaction.isChatInputCommand()) return;
+
+        const cmd = client.slashCommands.get(interaction.commandName);
+        if (!cmd) return;
+
         await cmd.execute(interaction);
     } catch (error) {
         console.error(error);
-        const payload = {content: 'There was an error executing that command.', ephemeral: true};
+
+        const payload = {
+            content: 'There was an error executing that interaction.',
+            ephemeral: true,
+        };
+
         if (interaction.deferred || interaction.replied) await interaction.followUp(payload);
         else await interaction.reply(payload);
     }
