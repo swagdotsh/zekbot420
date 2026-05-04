@@ -2,6 +2,7 @@ const { setConfig } = require('../../leveling');
 
 module.exports = {
     name: 'levelsetup',
+    aliases: ['levelconfig', 'lvlconfig', 'lvlsetup'],
     async execute(message, args) {
         if (!message.member.permissions.has('ManageGuild')) {
             return message.reply('You need the **Manage Server** permission to run this.');

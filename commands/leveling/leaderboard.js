@@ -2,7 +2,7 @@ const { getLeaderboard, getConfig } = require('../../leveling');
 
 module.exports = {
     name: 'leaderboard',
-    aliases: ['lb'],
+    aliases: ['lb', 'rankings', 'ranks', 'ranking'],
     async execute(message, args) {
         const config = await getConfig(message.guild.id);
         if (!config?.lb_enabled) return message.reply('The leaderboard is disabled in this server.');

@@ -6,7 +6,7 @@ function xpForNextLevel(level) {
 
 module.exports = {
     name: 'rank',
-    aliases: ['level', 'lvl'],
+    aliases: ['level', 'lvl', 'levels'],
     async execute(message, args) {
         const target = message.mentions.users.first() || message.author;
         const data = await getUser(message.guild.id, target.id);

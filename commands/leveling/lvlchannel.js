@@ -2,6 +2,7 @@ const { setLevelChannel } = require('../../leveling');
 
 module.exports = {
     name: 'lvlchannel',
+    aliases: ['lvlchannelset', 'levelchannel'],
     async execute(message, args) {
         if (!message.member.permissions.has('ManageGuild')) {
             return message.reply('You need the **Manage Server** permission to run this.');

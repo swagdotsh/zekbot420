@@ -7,8 +7,10 @@ require('dotenv').config();
 const {logMessageDeletion, logSnipeClear} = require('./log');
 const {handleVoiceStateUpdate} = require('./commands/voicemaster/vmManager');
 const {initDB} = require('./leveling');
+const {initJailDB} = require('./jailHandler');
 const {handleMessageXP} = require('./events/xpHandler');
 const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/vcXpHandler');
+const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
 
 const client = new Client({
     intents: [
@@ -69,9 +71,11 @@ if (fs.existsSync(slashCommandsPath)) {
 
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
-    client.user.setActivity('Eastern Conference Playoffs Round 1', {type: 3});
+    client.user.setActivity('Eastern Conference Playoffs Round 2', {type: 3});
     await initDB();
+    await initJailDB();
     startVcXPLoop(client);
+    startJailExpiryLoop(client);
 });
 
 // Slash commands
