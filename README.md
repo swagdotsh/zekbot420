@@ -7,13 +7,13 @@ Learn more at: [zekbot420.swagrelated.com](https://zekbot420.swagrelated.com)
 
 <br />
 
-<img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub License" src="https://img.shields.io/github/license/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub top language" src="https://img.shields.io/github/languages/top/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/himynameisdon/zekbot420?style=for-the-badge" />
-<img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/himynameisdon/zekbot420?style=for-the-badge" />
+<img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues/swagdotsh/zekbot420?style=for-the-badge" />
+<img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/swagdotsh/zekbot420?style=for-the-badge" />
+<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/swagdotsh/zekbot420?style=for-the-badge" />
+<img alt="GitHub License" src="https://img.shields.io/github/license/swagdotsh/zekbot420?style=for-the-badge" />
+<img alt="GitHub top language" src="https://img.shields.io/github/languages/top/swagdotsh/zekbot420?style=for-the-badge" />
+<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/swagdotsh/zekbot420?style=for-the-badge" />
+<img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/swagdotsh/zekbot420?style=for-the-badge" />
 
 Your favorite Discord bot's open-source alternative.
 <br><br><a href="https://top.gg/bot/939283468322484274">
