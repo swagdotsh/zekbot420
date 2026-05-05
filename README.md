@@ -94,9 +94,9 @@ Your favorite Discord bot's open-source alternative.
 ---
 
 ## Setting Up
-If you're interested in hosting your own version of zekbot420, visit the [Getting Started](https://github.com/justadonisstar/zekbot420/wiki/Getting-Started) wiki page. Everything you'll need to know is there from preresiquites to cloning the repo, installing packages and making the bot live is there. 
+If you're interested in hosting your own version of zekbot420, visit the [Getting Started](https://github.com/swagdotsh/zekbot420/wiki/Getting-Started) wiki page. Everything you'll need to know is there from preresiquites to cloning the repo, installing packages and making the bot live is there. 
 
-If that's all good to go, read the [Configuration](https://github.com/justadonisstar/zekbot420/wiki/Configuration) page to learn how to set up modify zekbot420.
+If that's all good to go, read the [Configuration](https://github.com/swagdotsh/zekbot420/wiki/Configuration) page to learn how to set up modify zekbot420.
 
 ## Running the bot
 Simply head to your project root and, in your terminal, run:
@@ -113,11 +113,9 @@ npm run start
 ---
 ## Data & Persistence
 
-Some features store data locally (for example: warnings/modlog/Last.fm configuration/audio files). You’ll see data files under the `data/` directory.
+Some features store data locally (for example: warnings/modlog/Last.fm configuration/audio files) and others on a PostgresSQL-database. For the local data, you’ll see data files under the `data/` directory.
 > [!CAUTION]
 > Keep this folder on `.gitignore` to avoid accidentally committing sensitive data. 
-
-If you deploy to a platform with ephemeral storage, consider migrating persistence to a database or mounted volume.
 
 ---
 
@@ -129,7 +127,12 @@ If you deploy to a platform with ephemeral storage, consider migrating persisten
 - `welcoming.js` / `welcomesetup.js` — welcoming flow
 - `storesnipe.js` / `snipe.js` — message snipe support
 - `deploy-commands.js` — registers slash commands with Discord
-- `data/` — local JSON storage (warnings, modlog, lastfm config, etc.)
+- `data/` — local storage (warnings, modlog, downloads, audio)
+- `events/` — handlers for leveling XP (text, voice) & jail timing
+- `stickyrolesDbHandler.js` — Postgres database handler for sticky roles
+- `stickyrolesHandler.js` — primary sticky roles manager
+- `jailHandler.js` — Postgres database and primary manager for the jail system
+- `leveling.js` — Postgres database and primary manager for the leveling system
 
 ---
 
@@ -151,6 +154,9 @@ node deploy-commands.js
 
 ### Intents-related issues
 - Make sure the required Gateway Intents are enabled in the Discord Developer Portal for your bot (and configured in code if applicable)
+
+## Support
+If you have issues that aren't listed here or just have general questions, visit the bot's [support page](https://zekbot420.swagrelated.com/support).
 
 ---
 
