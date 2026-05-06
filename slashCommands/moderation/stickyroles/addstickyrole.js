@@ -4,8 +4,9 @@ const { addStickyRole } = require('../../../stickyrolesDbHndlr');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addstickyrole')
-        .setDescription('Mark a role as sticky')
+        .setDescription('Add a sticky role')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addRoleOption((opt) =>
             opt

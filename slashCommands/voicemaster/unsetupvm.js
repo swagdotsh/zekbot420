@@ -11,6 +11,7 @@ module.exports = {
         .setName('unsetupvm')
         .setDescription('Remove VoiceMaster setup from this server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addBooleanOption((opt) =>
             opt

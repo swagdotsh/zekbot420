@@ -12,6 +12,7 @@ module.exports = {
         .setName('kvc')
         .setDescription('Kick a user from your VoiceMaster VC')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .addUserOption((opt) =>
             opt
                 .setName('user')

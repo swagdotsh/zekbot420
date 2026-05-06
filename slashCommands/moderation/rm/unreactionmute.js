@@ -38,6 +38,7 @@ module.exports = {
         .setName('unreactionmute')
         .setDescription('Remove a reaction mute from a member')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addUserOption((opt) =>
             opt

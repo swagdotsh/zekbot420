@@ -39,6 +39,7 @@ module.exports = {
         .setName('jail')
         .setDescription('Jail a member')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((opt) =>
             opt

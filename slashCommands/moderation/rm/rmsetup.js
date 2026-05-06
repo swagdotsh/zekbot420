@@ -31,15 +31,52 @@ async function writeReactionMuteConfig(guildId, data) {
     );
 }
 
+async function reactMuteConfigExists(guildId) {
+    try {
+        await fs.access(reactionMuteConfigPath(guildId));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function readReactionMuteConfig(guildId) {
+    try {
+        const data = await fs.readFile(reactionMuteConfigPath(guildId), 'utf8');
+        return JSON.parse(data);
+    } catch {
+        return null;
+    }
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('rmsetup')
         .setDescription('Set up reaction mute')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
     async execute(interaction) {
         const guild = interaction.guild;
+
+        // Check if already setup
+        const alreadySetup = await reactMuteConfigExists(guild.id);
+        if (alreadySetup) {
+            const config = await readReactionMuteConfig(guild.id);
+            const setupUser = await guild.client.users.fetch(config.setupBy).catch(() => null);
+            const setupByTag = setupUser ? setupUser.tag : 'Unknown user';
+
+            return interaction.reply({
+                content:
+                    `# ⚠️ Reaction mute is already set up.\n` +
+                    `Role: **${config.roleName}** (ID: ${config.roleId})\n` +
+                    `Set up by: **${setupByTag}**\n` +
+                    `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>`,
+                ephemeral: true
+            });
+        }
+
         const me = guild.members.me;
 
         if (!me) {

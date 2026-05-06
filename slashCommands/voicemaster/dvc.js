@@ -12,7 +12,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('dvc')
         .setDescription('Delete your VoiceMaster VC')
-        .setContexts(InteractionContextType.Guild),
+        .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0),
 
     async execute(interaction) {
         const voiceChannel = interaction.member?.voice?.channel;

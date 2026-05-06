@@ -93,6 +93,6 @@ module.exports = {
         // Log to modlog (if configured)
         await logWarn(message.client, message.guild, target.user, message.author, reason, warnCount);
 
-        return message.reply(`**Warned ${target.user.tag} for**: *${reason}*\n\-# ${target.user.tag} is on ${warnCount} warn(s).`);
+        return message.reply(`👍 **Warned ${target.user.tag} for**: *${reason}*\n\-# ${target.user.tag} is on ${warnCount} warn(s).`);
     },
 };

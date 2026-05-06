@@ -38,6 +38,7 @@ module.exports = {
         .setName('reactionmute')
         .setDescription('Prevent a member from adding reactions')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addUserOption((opt) =>
             opt

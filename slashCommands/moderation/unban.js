@@ -10,6 +10,7 @@ module.exports = {
         .setName('unban')
         .setDescription('Unban a user from the server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
         .addStringOption((opt) =>
             opt
@@ -40,7 +41,7 @@ module.exports = {
 
             await logUnban(interaction.client, interaction.guild, target.user, interaction.user);
 
-            return interaction.reply(`${target.user.tag} has been unbanned.`);
+            return interaction.reply(`👍`);
         } catch (err) {
             console.error(err);
 

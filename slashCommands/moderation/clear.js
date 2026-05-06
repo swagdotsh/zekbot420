@@ -8,8 +8,9 @@ const { logClearMessages } = require('../../log');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('clear')
-        .setDescription('Clear messages from this channel')
+        .setDescription('Clear messages')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addIntegerOption((opt) =>
             opt

@@ -55,6 +55,8 @@ Your favorite Discord bot's open-source alternative.
 
 ### Integrations
 - Last.fm login and commands (optional; requires API key)
+- Fortnite item shop and player stats (optional; requires [fnbr.co](https://fnbr.co/api/docs) and [fortnite-api](https://fortnite-api.com) API keys, respectively)
+- 
 
 ### Voice
 #### Audio playback

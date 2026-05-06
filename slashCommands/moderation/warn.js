@@ -48,6 +48,7 @@ module.exports = {
         .setName('warn')
         .setDescription('Warn a member')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((opt) =>
             opt
@@ -122,7 +123,7 @@ module.exports = {
         await logWarn(interaction.client, interaction.guild, target.user, interaction.user, reason, warnCount);
 
         return interaction.reply(
-            `**Warned ${target.user.tag} for**: *${reason}*\n-# ${target.user.tag} is on ${warnCount} warn(s).`
+            `👍 **Warned ${target.user.tag} for**: *${reason}*\n-# ${target.user.tag} is on ${warnCount} warn(s).`
         );
     }
 };

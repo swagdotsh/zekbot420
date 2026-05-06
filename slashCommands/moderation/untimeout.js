@@ -11,6 +11,7 @@ module.exports = {
         .setName('untimeout')
         .setDescription('Remove a timeout from a member')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((opt) =>
             opt

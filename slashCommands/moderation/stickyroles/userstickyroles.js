@@ -4,8 +4,9 @@ const { addUserStickyRole, removeUserStickyRole } = require('../../../stickyrole
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('userstickyroles')
-        .setDescription('Manually manage sticky roles for a specific user')
+        .setDescription("View a user's sticky roles")
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addSubcommand((sub) =>
             sub

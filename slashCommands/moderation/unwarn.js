@@ -134,6 +134,7 @@ module.exports = {
         .setName('unwarn')
         .setDescription('Remove warnings from a member')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((opt) =>
             opt

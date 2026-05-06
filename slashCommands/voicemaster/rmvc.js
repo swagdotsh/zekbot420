@@ -12,6 +12,7 @@ module.exports = {
         .setName('rmvc')
         .setDescription('Rename your VoiceMaster VC')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .addStringOption((opt) =>
             opt
                 .setName('name')

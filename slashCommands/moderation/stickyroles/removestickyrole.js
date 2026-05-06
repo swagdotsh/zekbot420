@@ -4,8 +4,9 @@ const { removeStickyRole, getStickyRoles } = require('../../../stickyrolesDbHndl
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('removestickyrole')
-        .setDescription('Remove a role from sticky roles')
+        .setDescription('Remove a sticky role')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addRoleOption((opt) =>
             opt

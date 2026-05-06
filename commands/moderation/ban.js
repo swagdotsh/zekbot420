@@ -34,6 +34,6 @@ module.exports = {
     await target.ban({ reason });
 
     await logBan(message.client, message.guild, target, message.author, reason);
-    message.reply(`✌️ ${target.user.tag} has been banned.`);
+    message.reply(`✌️`);
   }
 };

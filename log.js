@@ -31,7 +31,7 @@ async function ensureDir(dirPath, labelForDebug = 'directory') {
 }
 
 function safeTag(userLike) {
-  return userLike?.tag ?? 'Unknown';
+  return userLike?.tag ?? userLike?.user?.tag ?? 'Unknown';
 }
 
 function safeAvatarURL(userLike) {

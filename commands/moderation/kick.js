@@ -32,7 +32,7 @@ module.exports = {
     }
 
     await target.kick(reason);  // Kick the user
-    message.reply(`✌️ ${target.user.tag} has been kicked.`);
+    message.reply(`✌️`);
 
     await logKick(message.client, message.guild, target.user, message.author, reason);
   }

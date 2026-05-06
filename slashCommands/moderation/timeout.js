@@ -9,8 +9,9 @@ const { logTimeout } = require('../../log');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('timeout')
-        .setDescription('Timeout a member')
+        .setDescription('Timeout a member from the server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((opt) =>
             opt
