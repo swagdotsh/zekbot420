@@ -7,8 +7,9 @@ const {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('rs')
-        .setDescription('Snipe the most recent removed reaction in this channel')
-        .setContexts(InteractionContextType.Guild),
+        .setDescription('View a recently removed reaction')
+        .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0),
 
     execute(interaction) {
         const snipe = interaction.client.reactionSnipes.get(interaction.channel.id);

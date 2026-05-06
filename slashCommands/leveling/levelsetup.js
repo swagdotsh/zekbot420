@@ -12,6 +12,7 @@ module.exports = {
         .setName('levelsetup')
         .setDescription('Configure the leveling system')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addChannelOption((opt) =>
             opt

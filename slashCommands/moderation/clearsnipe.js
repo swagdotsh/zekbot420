@@ -8,8 +8,9 @@ const { logSnipeClear } = require('../../log');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('clearsnipe')
-        .setDescription('Clear snipe data for this channel')
+        .setDescription('Clear the snipe data for this channel')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
     async execute(interaction) {

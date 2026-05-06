@@ -6,6 +6,7 @@ module.exports = {
         .setName('stickyroles')
         .setDescription('Enable or disable sticky roles for your server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addStringOption((opt) =>
             opt

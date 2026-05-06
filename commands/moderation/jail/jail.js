@@ -68,6 +68,6 @@ module.exports = {
             }]
         });
 
-        await message.reply(`✅ **${target.user.tag}** has been jailed${durationText}.`);
+        await message.reply(`👍`);
     }
 };

@@ -11,6 +11,7 @@ module.exports = {
         .setName('lvlrole')
         .setDescription('Manage level roles')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addSubcommand((subcommand) =>
             subcommand

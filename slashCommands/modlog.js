@@ -50,6 +50,7 @@ module.exports = {
         .setName('modlog')
         .setDescription('Set or disable the modlog channel')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addSubcommand((subcommand) =>
             subcommand

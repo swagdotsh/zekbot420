@@ -37,6 +37,6 @@ module.exports = {
         if (!success) return message.reply('Could not find that member in the server.');
 
         await logUnjail(null, guild, target, message.member, false);
-        await message.reply(`✅ **${target.user.tag}** has been unjailed.`);
+        await message.reply(`👍`);
     }
 };

@@ -12,6 +12,7 @@ module.exports = {
         .setName('sl')
         .setDescription('Set or remove the user limit for your VoiceMaster VC')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .addIntegerOption((opt) =>
             opt
                 .setName('limit')

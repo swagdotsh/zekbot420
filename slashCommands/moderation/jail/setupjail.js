@@ -12,9 +12,12 @@ module.exports = {
         .setName('setupjail')
         .setDescription('Set up the jail system')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+
         const guild = interaction.guild;
 
         let jailRole = guild.roles.cache.find((r) => r.name === 'Jailed');
@@ -74,9 +77,8 @@ module.exports = {
                 { name: 'Channels Restricted', value: `${channels.size}`, inline: true }
             );
 
-        return interaction.reply({
-            embeds: [embed],
-            ephemeral: true
+        return interaction.editReply({
+            embeds: [embed]
         });
     }
 };

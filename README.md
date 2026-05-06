@@ -55,6 +55,8 @@ Your favorite Discord bot's open-source alternative.
 
 ### Integrations
 - Last.fm login and commands (optional; requires API key)
+- Fortnite item shop and player stats (optional; requires [fnbr.co](https://fnbr.co/api/docs) and [fortnite-api](https://fortnite-api.com) API keys, respectively)
+- 
 
 ### Voice
 #### Audio playback
@@ -70,12 +72,6 @@ Your favorite Discord bot's open-source alternative.
 
 ### Downloading
 - Download and share videos from pretty much any video service. [_If yt-dlp supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
-
-### Stats
-- Rainbow Six Siege player stats (optional; requires Ubisoft Connect credentials)
-> [!WARNING]
-> This will be deprecated in the future and replaced with a different service for stats.
-
 ---
 
 ## Requirements

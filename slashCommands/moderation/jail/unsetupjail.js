@@ -11,6 +11,7 @@ module.exports = {
         .setName('unsetupjail')
         .setDescription('Remove the jail system from this server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addBooleanOption((opt) =>
             opt

@@ -12,6 +12,7 @@ module.exports = {
         .setName('setupvm')
         .setDescription('Set up VoiceMaster in a category')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addChannelOption((opt) =>
             opt

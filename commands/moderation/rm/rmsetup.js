@@ -26,11 +26,44 @@ async function writeReactionMuteConfig(guildId, data) {
     );
 }
 
+async function reactMuteConfigExists(guildId) {
+    try {
+        await fs.access(reactionMuteConfigPath(guildId));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function readReactionMuteConfig(guildId) {
+    try {
+        const data = await fs.readFile(reactionMuteConfigPath(guildId), 'utf8');
+        return JSON.parse(data);
+    } catch {
+        return null;
+    }
+}
+
 module.exports = {
     name: 'rmsetup',
     aliases: ['reactionmutesetup', 'setupreactionmute'],
     async execute(message) {
         if (!message.guild) return;
+
+        const alreadySetup = await reactMuteConfigExists(message.guild.id);
+        if (alreadySetup) {
+            const config = await readReactionMuteConfig(message.guild.id);
+            const setupUser = await message.guild.client.users.fetch(config.setupBy).catch(() => null);
+            const setupByTag = setupUser ? setupUser.tag : 'Unknown user';
+
+            return message.reply({
+                content:
+                    `# ⚠️ Reaction mute is already set up.\n` +
+                    `Role: **${config.roleName}** (ID: ${config.roleId})\n` +
+                    `Set up by: **${setupByTag}**\n` +
+                    `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>`
+            });
+        }
 
         if (!message.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return message.reply('You do not have permission to set up reaction muting.');

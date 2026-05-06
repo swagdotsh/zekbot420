@@ -12,8 +12,9 @@ function xpForNextLevel(level) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('rank')
-        .setDescription('Show your or another user’s rank')
+        .setDescription("Show your or another user's rank")
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .addUserOption((opt) =>
             opt
                 .setName('user')

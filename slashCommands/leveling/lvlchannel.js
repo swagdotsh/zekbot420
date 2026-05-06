@@ -11,6 +11,7 @@ module.exports = {
         .setName('lvlchannel')
         .setDescription('Set the channel for level-up announcements')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addChannelOption((opt) =>
             opt

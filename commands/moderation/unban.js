@@ -20,7 +20,7 @@ module.exports = {
       if (!target) return message.reply('User not found in ban list.');
 
       await message.guild.members.unban(target.user.id);
-      message.reply(`${target.user.tag} has been unbanned.`);
+      message.reply(`👍`);
 
       await logUnban(message.client, message.guild, target.user, message.author);
     } catch (err) {

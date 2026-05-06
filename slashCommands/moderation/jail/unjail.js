@@ -26,6 +26,7 @@ module.exports = {
         .setName('unjail')
         .setDescription('Unjail a member')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((opt) =>
             opt

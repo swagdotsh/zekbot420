@@ -9,7 +9,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('leaderboard')
         .setDescription('Show the server XP leaderboard')
-        .setContexts(InteractionContextType.Guild),
+        .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0),
 
     async execute(interaction) {
         const config = await getConfig(interaction.guild.id);

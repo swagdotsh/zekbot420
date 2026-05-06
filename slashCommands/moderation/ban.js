@@ -11,6 +11,7 @@ module.exports = {
         .setName('ban')
         .setDescription('Ban a member from the server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
         .addUserOption((opt) =>
             opt
@@ -64,7 +65,7 @@ module.exports = {
 
             await logBan(interaction.client, interaction.guild, target, interaction.user, reason);
 
-            return interaction.reply(`✌️ ${target.user.tag} has been banned.`);
+            return interaction.reply(`✌️`);
         } catch (err) {
             console.error(err);
 

@@ -9,6 +9,7 @@ module.exports = {
         .setName('snipe')
         .setDescription('Show a recently deleted message in this channel')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .addIntegerOption((opt) =>
             opt
                 .setName('index')

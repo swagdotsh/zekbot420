@@ -11,6 +11,7 @@ module.exports = {
         .setName('kick')
         .setDescription('Kick a member from the server')
         .setContexts(InteractionContextType.Guild)
+        .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
         .addUserOption((opt) =>
             opt
@@ -64,7 +65,7 @@ module.exports = {
 
             await logKick(interaction.client, interaction.guild, target.user, interaction.user, reason);
 
-            return interaction.reply(`✌️ ${target.user.tag} has been kicked.`);
+            return interaction.reply(`✌️`);
         } catch (err) {
             console.error(err);
 
