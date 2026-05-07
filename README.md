@@ -56,7 +56,7 @@ Your favorite Discord bot's open-source alternative.
 ### Integrations
 - Last.fm login and commands (optional; requires API key)
 - Fortnite item shop and player stats (optional; requires [fnbr.co](https://fnbr.co/api/docs) and [fortnite-api](https://fortnite-api.com) API keys, respectively)
-- 
+- Rainbow Six Siege stats (optional; requires [r6data.eu](https://r6data.eu/dashboard.html) API key)
 
 ### Voice
 #### Audio playback
@@ -142,7 +142,10 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 ```shell script
 node deploy-commands.js
 ```
-
+If your instance of zekbot420 is in mutliple servers, add a `global` at the end for it to deploy everywhere your bot is added.
+```shell script
+node deploy-commands.js global
+```
 
 ### “Missing Access” / permission errors
 - Ensure the bot role is high enough in the server role hierarchy
