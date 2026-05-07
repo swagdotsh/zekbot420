@@ -60,6 +60,10 @@ To request data deletion, contact zekkie at zekkiewashere[at]icloud[dot]com.
 zekbot420 uses the following third-party services:  
 - Discord (for bot functionality)  
 - Last.fm (for music stat tracking features)  
+- fnbr.co (Fortnite Item Shop)
+- yt-dlp (Downloading + music playing features)
+- Fortnite-API.com (Fortnite player stats)
+- R6Data.eu (Tom Clancy's Rainbow Six Siege player stats)
   
 Their respective privacy policies apply.  
   
