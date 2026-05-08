@@ -43,7 +43,6 @@ Your favorite Discord bot's open-source alternative.
 - Ping / uptime
 - Avatar lookup
 - Polls
-- Status helpers
 - Help command
 - Basic server/user info
 - Translation (translate messages and text to almost any language)
