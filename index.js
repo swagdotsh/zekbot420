@@ -13,8 +13,9 @@ const {initDB} = require('./leveling');
 const {initJailDB} = require('./jailHandler');
 const {initStickyRoleDB} = require('./stickyrolesDbHndlr');
 const {handleMessageXP} = require('./events/xpHandler');
-const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/vcXpHandler');
+const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/VCxpHandler');
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
+
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
 const client = new Client({
@@ -83,7 +84,10 @@ client.once('clientReady', async () => {
     await initStickyRoleDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
+    require('./events/welcoming')(client);
     await handleStickyRoles(client);
+
+    console.log([...client.commands.keys()]);
 });
 
 // Slash commands, buttons, and modals
