@@ -64,6 +64,7 @@ Your favorite Discord bot's open-source alternative.
 - Queue system
 - Skip, stop, pause, resume controls
 - SoundCloud & YouTube support
+
 #### VoiceMaster
 - Setup a "Join to Create" voice channel system
 - Lock/unlock voice channels, kick users from channels, rename channels
