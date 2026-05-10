@@ -316,7 +316,7 @@ module.exports = {
         return message.reply('Could not find `yt-dlp` or `ffmpeg`. Install them or set `YTDLP_PATH` / `FFMPEG_PATH` in your `.env`.');
       }
 
-      return message.reply("I couldn't play that SoundCloud track. <:smirk2:1498272372539785286> #- Check console logs.");
+      return message.reply("I couldn't play that SoundCloud track. <:smirk2:1498272372539785286>");
     }
   }
 };

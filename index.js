@@ -4,7 +4,19 @@ const {Client, GatewayIntentBits, Collection, Partials} = require('discord.js');
 
 require('dotenv').config();
 
-const {logMessageDeletion, logSnipeClear} = require('./log');
+const {
+    logMessageDeletion,
+    logSnipeClear,
+    logMessageEdit,
+    logMemberJoin,
+    logMemberLeave,
+    logChannelCreate,
+    logChannelDelete,
+    logRoleCreate,
+    logRoleUpdate,
+    logMemberRoleUpdate,
+} = require('./log');
+
 const {
     handleVoiceStateUpdate,
     handleVoiceMasterInteraction,
@@ -142,6 +154,82 @@ client.on('messageCreate', async (message) => {
 client.on('messageCreate', async message => {
     if (message.content === ',cs' || message.content === ',clearsnipe') {
         await logSnipeClear(client, message, message.author);
+    }
+});
+
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+    try {
+        if (oldMessage.partial) {
+            oldMessage = await oldMessage.fetch();
+        }
+
+        if (newMessage.partial) {
+            newMessage = await newMessage.fetch();
+        }
+
+        if (!newMessage.guild || newMessage.author?.bot) return;
+
+        await logMessageEdit(client, oldMessage, newMessage);
+    } catch (error) {
+        console.error('Failed to log message edit:', error);
+    }
+});
+
+client.on('guildMemberAdd', async member => {
+    try {
+        await logMemberJoin(client, member);
+    } catch (error) {
+        console.error('Failed to log member join:', error);
+    }
+});
+
+client.on('guildMemberRemove', async member => {
+    try {
+        await logMemberLeave(client, member);
+    } catch (error) {
+        console.error('Failed to log member leave:', error);
+    }
+});
+
+client.on('channelCreate', async channel => {
+    try {
+        if (!channel.guild) return;
+        await logChannelCreate(client, channel);
+    } catch (error) {
+        console.error('Failed to log channel create:', error);
+    }
+});
+
+client.on('channelDelete', async channel => {
+    try {
+        if (!channel.guild) return;
+        await logChannelDelete(client, channel);
+    } catch (error) {
+        console.error('Failed to log channel delete:', error);
+    }
+});
+
+client.on('roleCreate', async role => {
+    try {
+        await logRoleCreate(client, role);
+    } catch (error) {
+        console.error('Failed to log role create:', error);
+    }
+});
+
+client.on('roleUpdate', async (oldRole, newRole) => {
+    try {
+        await logRoleUpdate(client, oldRole, newRole);
+    } catch (error) {
+        console.error('Failed to log role update:', error);
+    }
+});
+
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    try {
+        await logMemberRoleUpdate(client, oldMember, newMember);
+    } catch (error) {
+        console.error('Failed to log member role update:', error);
     }
 });
 

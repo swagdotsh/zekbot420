@@ -1,7 +1,7 @@
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const LEGACY_MODLOG_CONFIG_PATH = path.join(DATA_DIR, 'modlogConfig.json');
@@ -165,6 +165,57 @@ function relativeTimeField() {
   return { name: 'Time', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true };
 }
 
+function truncateField(value, maxLength = 1024) {
+  let text;
+
+  if (typeof value === 'string') {
+    text = value;
+  } else if (value == null) {
+    text = '';
+  } else {
+    text = String(value);
+  }
+
+  if (!text.length) text = '*No content*';
+  if (text.length <= maxLength) return text;
+
+  return `${text.slice(0, maxLength - 3)}...`;
+}
+
+function channelTypeLabel(channel) {
+  if (!channel) return 'Unknown';
+
+  const typeMap = {
+    0: 'Text Channel',
+    2: 'Voice Channel',
+    4: 'Category',
+    5: 'Announcement Channel',
+    13: 'Stage Channel',
+    15: 'Forum Channel',
+    16: 'Media Channel',
+  };
+
+  return typeMap[channel.type] ?? `Unknown (${channel.type})`;
+}
+
+function rolePermissionsText(role) {
+  try {
+    const permissions = role?.permissions instanceof PermissionsBitField
+        ? role.permissions.toArray()
+        : new PermissionsBitField(role?.permissions?.bitfield ?? role?.permissions ?? 0n).toArray();
+
+    if (!permissions.length) return 'No permissions';
+    return permissions.join(', ');
+  } catch {
+    return 'Unable to read permissions';
+  }
+}
+
+function roleDisplay(role) {
+  if (!role) return 'Unknown';
+  return `${role.name ?? 'Unknown'} (${role.id ?? 'Unknown'})`;
+}
+
 async function safeSend(channel, payload) {
   if (!channel) return;
   try {
@@ -193,6 +244,234 @@ async function logMessageDeletion(_client, message, author) {
           { name: 'Channel', value: channelName, inline: true },
           relativeTimeField()
       );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logMessageEdit(_client, oldMessage, newMessage) {
+  const message = newMessage ?? oldMessage;
+  const modlogChannel = await getModlogChannelFromMessage(message);
+  if (!modlogChannel) return;
+
+  if (oldMessage?.author?.bot || newMessage?.author?.bot) return;
+
+  const oldContent = oldMessage?.content?.length ? oldMessage.content : '*No previous content available*';
+  const newContent = newMessage?.content?.length ? newMessage.content : '*No new content available*';
+
+  if (oldContent === newContent) return;
+
+  const channelName = message?.channel?.name ?? 'Unknown';
+
+  const embed = baseEmbed({
+    color: '#3498db',
+    title: 'Message Edited',
+    actor: message?.author,
+  })
+      .addFields(
+          { name: 'Author', value: safeTag(message?.author), inline: true },
+          { name: 'Channel', value: channelName, inline: true },
+          relativeTimeField(),
+          { name: 'Before', value: truncateField(oldContent), inline: false },
+          { name: 'After', value: truncateField(newContent), inline: false }
+      );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logMemberJoin(_client, member) {
+  const modlogChannel = await getModlogChannelFromGuild(member?.guild);
+  if (!modlogChannel) return;
+
+  const userTag = member?.user?.tag ?? 'Unknown';
+  const userId = member?.id ?? 'Unknown';
+
+  const embed = baseEmbed({
+    color: '#43b581',
+    title: 'Member Joined',
+    actor: member?.user,
+  }).addFields(
+      { name: 'User', value: `${userTag} (${userId})`, inline: true },
+      { name: 'Account Created', value: member?.user?.createdTimestamp ? `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>` : 'Unknown', inline: true },
+      relativeTimeField()
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logMemberLeave(_client, member) {
+  const modlogChannel = await getModlogChannelFromGuild(member?.guild);
+  if (!modlogChannel) return;
+
+  const userTag = member?.user?.tag ?? 'Unknown';
+  const userId = member?.id ?? 'Unknown';
+
+  const embed = baseEmbed({
+    color: '#ff5555',
+    title: 'Member Left',
+    actor: member?.user,
+  }).addFields(
+      { name: 'User', value: `${userTag} (${userId})`, inline: true },
+      relativeTimeField()
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logChannelCreate(_client, channel) {
+  const modlogChannel = await getModlogChannelFromGuild(channel?.guild);
+  if (!modlogChannel) return;
+
+  const embed = baseEmbed({
+    color: '#43b581',
+    title: 'Channel Created',
+    actor: channel?.client?.user,
+  }).addFields(
+      { name: 'Channel', value: `${channel?.name ?? 'Unknown'} (${channel?.id ?? 'Unknown'})`, inline: true },
+      { name: 'Type', value: channelTypeLabel(channel), inline: true },
+      relativeTimeField()
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logChannelDelete(_client, channel) {
+  const modlogChannel = await getModlogChannelFromGuild(channel?.guild);
+  if (!modlogChannel) return;
+
+  const embed = baseEmbed({
+    color: '#ff5555',
+    title: 'Channel Deleted',
+    actor: channel?.client?.user,
+  }).addFields(
+      { name: 'Channel', value: `${channel?.name ?? 'Unknown'} (${channel?.id ?? 'Unknown'})`, inline: true },
+      { name: 'Type', value: channelTypeLabel(channel), inline: true },
+      relativeTimeField()
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logRoleCreate(_client, role) {
+  const modlogChannel = await getModlogChannelFromGuild(role?.guild);
+  if (!modlogChannel) return;
+
+  const embed = baseEmbed({
+    color: '#43b581',
+    title: 'Role Created',
+    actor: role?.client?.user,
+  }).addFields(
+      { name: 'Role', value: roleDisplay(role), inline: true },
+      { name: 'Color', value: role?.hexColor ?? 'Unknown', inline: true },
+      relativeTimeField(),
+      { name: 'Permissions', value: truncateField(rolePermissionsText(role)), inline: false }
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logRoleUpdate(_client, oldRole, newRole) {
+  const modlogChannel = await getModlogChannelFromGuild(newRole?.guild ?? oldRole?.guild);
+  if (!modlogChannel) return;
+
+  const oldPerms = rolePermissionsText(oldRole);
+  const newPerms = rolePermissionsText(newRole);
+
+  const oldPermArray = oldRole?.permissions?.toArray?.() ?? [];
+  const newPermArray = newRole?.permissions?.toArray?.() ?? [];
+
+  const addedPerms = newPermArray.filter(permission => !oldPermArray.includes(permission));
+  const removedPerms = oldPermArray.filter(permission => !newPermArray.includes(permission));
+
+  const changedFields = [];
+
+  if (oldRole?.name !== newRole?.name) {
+    changedFields.push({
+      name: 'Name Changed',
+      value: `${oldRole?.name ?? 'Unknown'} → ${newRole?.name ?? 'Unknown'}`,
+      inline: false,
+    });
+  }
+
+  if (oldRole?.hexColor !== newRole?.hexColor) {
+    changedFields.push({
+      name: 'Color Changed',
+      value: `${oldRole?.hexColor ?? 'Unknown'} → ${newRole?.hexColor ?? 'Unknown'}`,
+      inline: false,
+    });
+  }
+
+  if (oldPerms !== newPerms) {
+    changedFields.push(
+        {
+          name: 'Permissions Added',
+          value: truncateField(addedPerms.length ? addedPerms.join(', ') : 'None'),
+          inline: false,
+        },
+        {
+          name: 'Permissions Removed',
+          value: truncateField(removedPerms.length ? removedPerms.join(', ') : 'None'),
+          inline: false,
+        }
+    );
+  }
+
+  if (!changedFields.length) return;
+
+  const embed = baseEmbed({
+    color: '#f1c40f',
+    title: 'Role Updated',
+    actor: newRole?.client?.user,
+  }).addFields(
+      { name: 'Role', value: roleDisplay(newRole), inline: true },
+      relativeTimeField(),
+      ...changedFields
+  );
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logMemberRoleUpdate(_client, oldMember, newMember) {
+  const modlogChannel = await getModlogChannelFromGuild(newMember?.guild ?? oldMember?.guild);
+  if (!modlogChannel) return;
+
+  const oldRoles = oldMember?.roles?.cache;
+  const newRoles = newMember?.roles?.cache;
+  if (!oldRoles || !newRoles) return;
+
+  const addedRoles = newRoles.filter(role => !oldRoles.has(role.id));
+  const removedRoles = oldRoles.filter(role => !newRoles.has(role.id));
+
+  if (!addedRoles.size && !removedRoles.size) return;
+
+  const memberTag = newMember?.user?.tag ?? oldMember?.user?.tag ?? 'Unknown';
+  const memberId = newMember?.id ?? oldMember?.id ?? 'Unknown';
+
+  const fields = [
+    { name: 'User', value: `${memberTag} (${memberId})`, inline: true },
+    relativeTimeField(),
+  ];
+
+  if (addedRoles.size) {
+    fields.push({
+      name: 'Roles Added',
+      value: truncateField(addedRoles.map(role => roleDisplay(role)).join('\n')),
+      inline: false,
+    });
+  }
+
+  if (removedRoles.size) {
+    fields.push({
+      name: 'Roles Removed',
+      value: truncateField(removedRoles.map(role => roleDisplay(role)).join('\n')),
+      inline: false,
+    });
+  }
+
+  const embed = baseEmbed({
+    color: addedRoles.size ? '#43b581' : '#ff5555',
+    title: 'Member Roles Updated',
+    actor: newMember?.user ?? oldMember?.user,
+  }).addFields(...fields);
 
   await safeSend(modlogChannel, { embeds: [embed] });
 }
@@ -482,12 +761,13 @@ async function logUnjail(_client, guild, target, moderator, expired = false) {
     const user = target?.user ?? target;
     await user?.send({ embeds: [dmEmbed] });
   } catch {
-    // DMs disabled, silently ignore
+    // DMs disabled, silently ignore (so bot doesn't fucking crash)
   }
 }
 
 module.exports = {
   logMessageDeletion,
+  logMessageEdit,
   logSnipeClear,
   logUnban,
   logBan,
@@ -499,4 +779,11 @@ module.exports = {
   logUnwarn,
   logJail,
   logUnjail,
+  logMemberJoin,
+  logMemberLeave,
+  logChannelCreate,
+  logChannelDelete,
+  logRoleCreate,
+  logRoleUpdate,
+  logMemberRoleUpdate,
 };
