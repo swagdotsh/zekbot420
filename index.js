@@ -97,6 +97,7 @@ client.once('clientReady', async () => {
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     require('./events/welcoming')(client);
+    require('./events/onJoin')(client);
     await handleStickyRoles(client);
 
     console.log([...client.commands.keys()]);
