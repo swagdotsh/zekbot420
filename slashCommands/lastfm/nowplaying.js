@@ -104,7 +104,7 @@ module.exports = {
                 author: { name: isPlaying ? '🎵 Now Playing' : '⏮ Last Played' },
                 title: song || 'Unknown track',
                 url: trackUrl || undefined,
-                description: artist ? `by **${artist}**${album ? ` • *${album}*` : ''}` : undefined,
+                description: artist ? `**${artist}**${album ? ` • *${album}*` : ''}` : undefined,
                 thumbnail: albumArt ? { url: albumArt } : undefined,
                 footer: { text: `${footerLabel} • ${username}${playsText}` }
             };
