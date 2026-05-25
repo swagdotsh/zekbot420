@@ -1,8 +1,21 @@
 const axios = require('axios');
 const { SlashCommandBuilder } = require('discord.js');
 const { neon } = require("@neondatabase/serverless")
+const { getAverageColor } = require('fast-average-color-node');
 
 const sql = neon(process.env.NEON_DATABASE_URL)
+
+async function getCoverArtColor(albumArt) {
+    if (!albumArt) return 0xd51007;
+
+    try {
+        const color = await getAverageColor(albumArt);
+        return parseInt(color.hex.replace('#', ''), 16);
+    } catch (err) {
+        console.log('Error fetching album art color:', err.message);
+        return 0xd51007;
+    }
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -52,6 +65,7 @@ module.exports = {
             const album = track?.album?.['#text'];
             const albumArt = track?.image?.[3]?.['#text'] || track?.image?.at?.(-1)?.['#text'] || null;
             const trackUrl = track?.url;
+            const embedColor = await getCoverArtColor(albumArt);
 
             let userPlayCount = null;
             let userLoved = false;
@@ -86,7 +100,7 @@ module.exports = {
             const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
 
             const embed = {
-                color: 0xd51007,
+                color: embedColor,
                 author: { name: isPlaying ? '🎵 Now Playing' : '⏮ Last Played' },
                 title: song || 'Unknown track',
                 url: trackUrl || undefined,
