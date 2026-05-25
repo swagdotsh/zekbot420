@@ -46,6 +46,7 @@ Your favorite Discord bot's open-source alternative.
 - Help command
 - Basic server/user info
 - Translation (translate messages and text to almost any language)
+- Emoji fetcher
 
 ### Logging 
 - Logs support (stores moderation actions)
