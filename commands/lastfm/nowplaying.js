@@ -82,7 +82,7 @@ module.exports = {
         author: { name: isPlaying ? 'Now Playing' : 'Last Played' },
         title: song,
         url: trackUrl || undefined,
-        description: `by ${artist}${album ? ` • *${album}*` : ''}`,
+        description: `**${artist}${album ? `** - *${album}*` : ''}`,
         thumbnail: albumArt ? { url: albumArt } : null,
         footer: { text: `${footerLabel} • ${username}${playsText}` }
       };

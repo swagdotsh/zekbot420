@@ -7,6 +7,8 @@ module.exports = {
         const guild = message.guild;
 
         const owner = await guild.fetchOwner();
+        await guild.members.fetch();
+
         const roles = guild.roles.cache.size;
         const members = guild.memberCount;
         const channels = guild.channels.cache.size;
@@ -17,12 +19,12 @@ module.exports = {
         const bots = guild.members.cache.filter(m => m.user.bot).size;
         const humans = guild.members.cache.filter(m => !m.user.bot).size;
         const created = Math.floor(guild.createdTimestamp / 1000);
-        const banner = guild.bannerURL({ dynamic: true, size: 1024 });
+        const banner = guild.bannerURL({ forceStatic: false, size: 1024 });
 
         const embed = new EmbedBuilder()
             .setColor('Random')
             .setTitle(guild.name)
-            .setThumbnail(guild.iconURL({ dynamic: true }))
+            .setThumbnail(guild.iconURL({ forceStatic: false, size: 1024 }))
             .addFields(
                 { name: 'Owner', value: `<@${owner.id}>`, inline: true },
                 { name: 'Members', value: `${members}`, inline: true },
@@ -37,7 +39,7 @@ module.exports = {
                 { name: 'Created', value: `<t:${created}:F> (<t:${created}:R>)`, inline: false },
                 { name: 'Banner', value: banner ? `[Click here](${banner})` : 'None', inline: false }
             )
-            .setFooter({ text: `Server ID: ${guild.id}` })
+            .setFooter({ text: `Guild ID: ${guild.id}` })
             .setTimestamp();
 
         message.channel.send({ embeds: [embed] });
