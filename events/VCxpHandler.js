@@ -3,6 +3,9 @@ const { getConfig, getUser, upsertUser, getLevelRoles, startVcSession, endVcSess
 const VC_XP = 5;
 const VC_INTERVAL_MS = 2 * 60 * 1000;
 
+const lastVcXpAward = new Map();
+let vcXpLoopRunning = false;
+
 function xpForNextLevel(level) {
     return 500 * (level + 1);
 }
@@ -75,14 +78,32 @@ async function handleVoiceXPStateUpdate(oldState, newState) {
 
 function startVcXPLoop(client) {
     setInterval(async () => {
-        const sessions = await getAllVcSessions();
-        for (const session of sessions) {
-            const guild = client.guilds.cache.get(session.guild_id);
-            if (!guild) continue;
-            const member = guild.members.cache.get(session.user_id);
-            if (!member?.voice?.channel) continue;
-            if (!isEligible(member.voice)) continue;
-            await handleVcXP(client, session.guild_id, session.user_id).catch(console.error);
+        if (vcXpLoopRunning) return;
+        vcXpLoopRunning = true;
+
+        try {
+            const sessions = await getAllVcSessions();
+
+            for (const session of sessions) {
+                const key = `${session.guild_id}:${session.user_id}`;
+                const now = Date.now();
+                const last = lastVcXpAward.get(key) || 0;
+
+                if (now - last < VC_INTERVAL_MS) continue;
+
+                const guild = client.guilds.cache.get(session.guild_id);
+                if (!guild) continue;
+
+                const member = guild.members.cache.get(session.user_id);
+                if (!member?.voice?.channel) continue;
+                if (!isEligible(member.voice)) continue;
+
+                await handleVcXP(client, session.guild_id, session.user_id).catch(console.error);
+
+                lastVcXpAward.set(key, now);
+            }
+        } finally {
+            vcXpLoopRunning = false;
         }
     }, VC_INTERVAL_MS);
 }
