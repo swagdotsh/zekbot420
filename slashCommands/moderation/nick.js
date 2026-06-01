@@ -28,7 +28,7 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
             return interaction.reply({
-                content: 'You need the Manage Channels permission to use this command.',
+                content: 'You need the Manage Members permission to use this command.',
                 ephemeral: true
             });
         }
