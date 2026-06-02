@@ -10,6 +10,10 @@ module.exports = {
         let target = message.member;
         let newNickname;
 
+        if (!message.member.permissions.has(PermissionFlagsBits.ChangeNickname)) {
+            return message.reply('You do not have permission to change your nickname.');
+        }
+
         if (mentionedMember) {
             if (!message.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return;
 
