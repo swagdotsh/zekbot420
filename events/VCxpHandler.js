@@ -61,6 +61,15 @@ async function handleVcXP(client, guildId, userId) {
     return true;
 }
 
+function isEligible(voiceState) {
+    return Boolean(
+        voiceState?.channelId &&
+        !voiceState.member?.user?.bot &&
+        !voiceState.deaf &&
+        !voiceState.selfDeaf
+    );
+}
+
 async function handleVoiceXPStateUpdate(oldState, newState) {
     const userId = newState.id;
     const guildId = newState.guild.id;
