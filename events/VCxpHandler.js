@@ -6,13 +6,22 @@ const VC_INTERVAL_MS = 2 * 60 * 1000;
 const lastVcXpAward = new Map();
 let vcXpLoopRunning = false;
 
+function vcXpAwardKey(guildId, userId) {
+    return `${guildId}:${userId}`;
+}
+
+async function endTrackedVcSession(guildId, userId) {
+    await endVcSession(guildId, userId);
+    lastVcXpAward.delete(vcXpAwardKey(guildId, userId));
+}
+
 function xpForNextLevel(level) {
     return 500 * (level + 1);
 }
 
 async function handleVcXP(client, guildId, userId) {
     const config = await getConfig(guildId);
-    if (!config) return;
+    if (!config) return false;
 
     const existing = await getUser(guildId, userId);
     const currentXp = (existing?.xp || 0) + VC_XP;
@@ -48,14 +57,17 @@ async function handleVcXP(client, guildId, userId) {
             if (member) await member.roles.add(roleToAssign.role_id).catch(console.error);
         }
     }
+
+    return true;
 }
 
-function isEligible(state) {
-    if (state.deaf) return false;
-    const guild = state.channel?.guild;
-    if (!guild) return false;
-    if (guild.afkChannelId && state.channelId === guild.afkChannelId) return false;
-    return true;
+function isEligible(voiceState) {
+    return Boolean(
+        voiceState?.channelId &&
+        !voiceState.member?.user?.bot &&
+        !voiceState.deaf &&
+        !voiceState.selfDeaf
+    );
 }
 
 async function handleVoiceXPStateUpdate(oldState, newState) {
@@ -83,9 +95,18 @@ function startVcXPLoop(client) {
 
         try {
             const sessions = await getAllVcSessions();
+            const activeSessionKeys = new Set(
+                sessions.map(session => vcXpAwardKey(session.guild_id, session.user_id))
+            );
+
+            for (const key of lastVcXpAward.keys()) {
+                if (!activeSessionKeys.has(key)) {
+                    lastVcXpAward.delete(key);
+                }
+            }
 
             for (const session of sessions) {
-                const key = `${session.guild_id}:${session.user_id}`;
+                const key = vcXpAwardKey(session.guild_id, session.user_id);
                 const now = Date.now();
                 const last = lastVcXpAward.get(key) || 0;
 
@@ -98,9 +119,15 @@ function startVcXPLoop(client) {
                 if (!member?.voice?.channel) continue;
                 if (!isEligible(member.voice)) continue;
 
-                await handleVcXP(client, session.guild_id, session.user_id).catch(console.error);
+                try {
+                    const xpWritten = await handleVcXP(client, session.guild_id, session.user_id);
 
-                lastVcXpAward.set(key, now);
+                    if (xpWritten) {
+                        lastVcXpAward.set(key, now);
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
             }
         } finally {
             vcXpLoopRunning = false;

@@ -15,7 +15,7 @@ const LINKS = {
     repo: 'https://github.com/swagdotsh/zekbot420',
     website: 'https://zekbot420.swagrelated.com/',
     commands: 'https://zekbot420.swagrelated.com/commands/',
-    status: 'https://status.swagrelated.com/',
+    status: 'https://zekbot420.statuspage.io',
     issues: 'https://github.com/swagdotsh/zekbot420/issues',
 };
 
@@ -95,48 +95,28 @@ module.exports = (client) => {
 
             const embed = new EmbedBuilder()
                 .setColor(0x57f287)
-                .setTitle('hi, im zekbot420')
+                .setTitle('hi, im zekbot420!')
                 .setDescription(
                     [
-                        'Thanks for adding me to the server.',
+                        'thanks for adding me to ' + guild.name,
                         '',
-                        'Here are some useful links and setup commands to get started.',
+                        'here are some useful links and setup commands to get started.',
                     ].join('\n')
                 )
                 .addFields(
                     {
-                        name: 'Useful links',
+                        name: 'quick setup commands',
                         value: [
-                            `[Website](${LINKS.website})`,
-                            `[Commands](${LINKS.commands})`,
-                            `[Repository](${LINKS.repo})`,
-                            `[Status Page](${LINKS.status})`,
-                            `[Report an Issue](${LINKS.issues})`,
-                        ].join(' • '),
-                    },
-                    {
-                        name: 'Quick setup commands',
-                        value: [
-                            '`/welcomesetup` — set up welcome messages',
-                            '`,stickyroles` — configure sticky roles',
-                            '`,jail` — configure or use jail moderation',
-                            '`,voicemaster` — set up temporary voice channels',
-                            '`,modlog` — configure moderation logging',
                             '`,help` — view help and command links',
-                        ].join('\n'),
-                    },
-                    {
-                        name: 'Recommended setup order',
-                        value: [
-                            '1. Make sure I have the permissions needed for moderation features.',
-                            '2. Set up logging and welcome messages.',
-                            '3. Configure sticky roles, jail, and VoiceMaster if you want them.',
-                            '4. Check the command list for everything else I can do.',
+                            '`,welcomesetup` — setup welcome messages',
+                            '`,setupjail` — setup the jail system',
+                            '`,voicemaster` — set up temporary voice channels (VoiceMaster chanels)',
+                            '`,modlog` — setup & configure moderation logging',
                         ].join('\n'),
                     }
                 )
                 .setFooter({
-                    text: `Added to ${guild.name}`,
+                    text: `added to ${guild.name}`,
                     iconURL: guild.iconURL() || undefined,
                 })
                 .setTimestamp();

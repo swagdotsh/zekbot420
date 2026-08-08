@@ -11,7 +11,7 @@ module.exports = {
         .setDescription('Change or reset a member nickname')
         .setContexts(InteractionContextType.Guild)
         .setIntegrationTypes(0)
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames)
         .addUserOption((opt) =>
             opt
                 .setName('user')
@@ -26,9 +26,9 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
             return interaction.reply({
-                content: 'You need the Manage Channels permission to use this command.',
+                content: 'You need the Manage Members permission to use this command.',
                 ephemeral: true
             });
         }
