@@ -90,7 +90,7 @@ if (fs.existsSync(slashCommandsPath)) {
 
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
-    client.user.setActivity('Eastern Conference Playoffs Round 2', {type: 3});
+    client.user.setActivity('nothing. nothing interesting is on.', {type: 3}); // watching [...]
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
@@ -98,6 +98,7 @@ client.once('clientReady', async () => {
     startJailExpiryLoop(client);
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
+    await require('./events/giveawayManager').execute(client); // LOL NO WAY THIS TOOK ME 3 MONTHS TO FIX
     await handleStickyRoles(client);
 
     console.log([...client.commands.keys()]);
