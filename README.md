@@ -24,7 +24,7 @@ Your favorite Discord bot's open-source alternative.
 
 ## Features
 
-### Moderation
+### Moderation & management
 - Ban / unban
 - Kick
 - Timeout / untimeout
@@ -32,6 +32,7 @@ Your favorite Discord bot's open-source alternative.
 - Warn system (warn, unwarn, list warnings)
 - Jail system
 - Sticky roles system
+- Giveways system
 
 ### Leveling
 - Leveling system 
@@ -43,6 +44,7 @@ Your favorite Discord bot's open-source alternative.
 - Ping / uptime
 - Avatar lookup
 - Polls
+- Downloads (only on your own hosted instance, not main :/ ) 
 - Help command
 - Basic server/user info
 - Translation (translate messages and text to almost any language)
@@ -51,7 +53,7 @@ Your favorite Discord bot's open-source alternative.
 ### Logging 
 - Logs support (stores moderation actions)
 - Welcome setup + welcoming messages
-- “Snipe” / “clearsnipe” style message recall 
+- “Snipe” / “clearsnipe” style message recall
 
 ### Integrations
 - Last.fm login and commands (optional; requires API key)
@@ -135,17 +137,17 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 
 ## Common Issues
 
-### Bot starts but commands don’t work
+### Bot starts but regular/slash commands don’t work
 - Confirm the bot is invited with the right scopes/permissions:
     - `bot`
     - `applications.commands` (for slash commands)
-- Re-run command deployment:
+- Re-run command deployment (if slash commands don't worK):
 ```shell script
 node deploy-commands.js
 ```
 If your instance of zekbot420 is in mutliple servers, add a `global` at the end for it to deploy everywhere your bot is added.
 ```shell script
-node deploy-commands.js global
+node deploy-commands.js --global
 ```
 
 ### “Missing Access” / permission errors
