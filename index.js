@@ -27,6 +27,7 @@ const {initStickyRoleDB} = require('./stickyrolesDbHndlr');
 const {handleMessageXP} = require('./events/xpHandler');
 const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/VCxpHandler');
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
+const {handleAfkMessage} = require('./events/afkStore');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
@@ -132,6 +133,7 @@ client.on('interactionCreate', async (interaction) => {
 client.on('messageCreate', async (message) => {
     if (!message.author.bot && message.guild) {
         await handleMessageXP(message).catch(console.error);
+        await handleAfkMessage(message).catch(console.error);
     }
 
     if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
