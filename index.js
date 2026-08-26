@@ -28,6 +28,7 @@ const {handleMessageXP} = require('./events/xpHandler');
 const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/VCxpHandler');
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
 const {handleAfkMessage} = require('./events/afkStore');
+const {handleTrapMessage} = require('./events/trapHandler');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
