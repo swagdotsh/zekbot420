@@ -97,11 +97,21 @@ async function loadGuildModlogConfig(guildId) {
     if (!stat) {
       await ensureDir(dir, `guild data folder (${guildId})`);
 
-      const initial = JSON.stringify({ channelId: null }, null, 2);
+      const initial = JSON.stringify({
+        channelId: null,
+        trapChannelId: null,
+        trapExemptRoleIds: [],
+        trapBanCount: 0,
+      }, null, 2);
       await fsp.writeFile(configPath, initial, 'utf8');
       debugCreated(`modlog config file for guild ${guildId}`, configPath);
 
-      const data = { channelId: null };
+      const data = {
+        channelId: null,
+        trapChannelId: null,
+        trapExemptRoleIds: [],
+        trapBanCount: 0,
+      };
       modlogConfigCacheByGuild.set(String(guildId), { data, mtimeMs: -1 });
       return data;
     }
@@ -115,7 +125,12 @@ async function loadGuildModlogConfig(guildId) {
 
     const normalized =
         parsed && typeof parsed === 'object'
-            ? { channelId: parsed.channelId ?? null }
+            ? {
+              channelId: parsed.channelId ?? null,
+              trapChannelId: parsed.trapChannelId ?? null,
+              trapExemptRoleIds: Array.isArray(parsed.trapExemptRoleIds) ? parsed.trapExemptRoleIds : [],
+              trapBanCount: Number.isInteger(parsed.trapBanCount) ? parsed.trapBanCount : 0,
+            }
             : { channelId: null };
 
     modlogConfigCacheByGuild.set(key, { data: normalized, mtimeMs: stat.mtimeMs });

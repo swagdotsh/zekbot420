@@ -31,12 +31,30 @@ function extractChannelId(input) {
 async function readGuildConfig(guildId) {
   const cfgPath = guildConfigPath(guildId);
   try {
-    if (!fs.existsSync(cfgPath)) return { channelId: null };
+    if (!fs.existsSync(cfgPath)) {
+      return {
+        channelId: null,
+        trapChannelId: null,
+        trapExemptRoleIds: [],
+        trapBanCount: 0,
+      };
+    }
+
     const txt = await fs.promises.readFile(cfgPath, 'utf8');
-    if (!txt.trim()) return { channelId: null };
+    if (!txt.trim()) {
+      return {
+        channelId: null,
+        trapChannelId: null,
+        trapExemptRoleIds: [],
+        trapBanCount: 0,
+      };
+    }
     const parsed = JSON.parse(txt);
     return {
       channelId: parsed?.channelId ?? null,
+      trapChannelId: parsed?.trapChannelId ?? null,
+      trapExemptRoleIds: Array.isArray(parsed?.trapExemptRoleIds) ? parsed.trapExemptRoleIds : [],
+      trapBanCount: Number.isInteger(parsed?.trapBanCount) ? parsed.trapBanCount : 0,
     };
   } catch {
       return { channelId: null };

@@ -206,6 +206,13 @@ async function createTrapChannel(message, requestedName) {
         permissionOverwrites,
     });
 
+    await channel.send(
+        '# DO NOT SEND MESSAGES IN THIS CHANNEL\n' +
+        'This is a trap channel designed to catch compromised accounts. Compromised accounts tend to be automated and send messages in every channel they have access to.\n **If you send a message here, you will be automatically banned.**'
+    ).catch(err => {
+        console.error('Failed to send trap channel warning message:', err);
+    });
+
     config.trapChannelId = channel.id;
     config.trapExemptRoleIds = staffRoleIds;
     config.trapBanCount = Number.isInteger(config.trapBanCount) ? config.trapBanCount : 0;
