@@ -29,6 +29,7 @@ const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/VCxpHandler'
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
 const {handleAfkMessage} = require('./events/afkStore');
 const {handleTrapMessage} = require('./events/trapHelper');
+const {startBirthdayLoop} = require('./events/birthdayManager');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
@@ -98,6 +99,7 @@ client.once('clientReady', async () => {
     await initStickyRoleDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
+    startBirthdayLoop(client);
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
     await require('./events/giveawayManager').execute(client); // LOL NO WAY THIS TOOK ME 3 MONTHS TO FIX
