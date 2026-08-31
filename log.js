@@ -213,6 +213,39 @@ function channelTypeLabel(channel) {
   return typeMap[channel.type] ?? `Unknown (${channel.type})`;
 }
 
+function channelMention(channel) {
+  return channel?.id ? `<#${channel.id}>` : 'Unknown';
+}
+
+function messageJumpLink(message) {
+  if (!message?.guild?.id || !message?.channel?.id || !message?.id) return 'Unavailable';
+  return `https://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`;
+}
+
+function userDisplay(userLike) {
+  const user = userLike?.user ?? userLike;
+  const tag = safeTag(userLike);
+  const id = userLike?.id ?? user?.id ?? 'Unknown';
+  return `${tag} (${id})`;
+}
+
+function avatarUrlForUser(userLike) {
+  try {
+    const user = userLike?.user ?? userLike;
+    return user?.displayAvatarURL?.({ size: 1024 }) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function guildAvatarUrlForMember(member) {
+  try {
+    return member?.displayAvatarURL?.({ size: 1024 }) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function rolePermissionsText(role) {
   try {
     const permissions = role?.permissions instanceof PermissionsBitField
@@ -227,8 +260,29 @@ function rolePermissionsText(role) {
 }
 
 function roleDisplay(role) {
-  if (!role) return 'Unknown';
-  return `${role.name ?? 'Unknown'} (${role.id ?? 'Unknown'})`;
+  if (!role?.id) return 'Unknown';
+  return `<@&${role.id}>`;
+}
+
+async function getRecentAuditLogExecutor(guild, type, targetId) {
+  try {
+    if (!guild || !type || !targetId) return guild?.client?.user ?? null;
+
+    const logs = await guild.fetchAuditLogs({
+      type,
+      limit: 6,
+    });
+
+    const entry = logs.entries.find(auditEntry => {
+      const isTarget = auditEntry.target?.id === targetId;
+      const isRecent = Date.now() - auditEntry.createdTimestamp < 15 * 1000;
+      return isTarget && isRecent;
+    });
+
+    return entry?.executor ?? guild.client.user;
+  } catch {
+    return guild?.client?.user ?? null;
+  }
 }
 
 async function safeSend(channel, payload) {
@@ -240,12 +294,44 @@ async function safeSend(channel, payload) {
   }
 }
 
+function formatAttachmentLinks(message) {
+  const attachments = message?.attachments;
+  if (!attachments || !attachments.size) return null;
+
+  return [...attachments.values()]
+      .map(att => `[${att.name ?? 'attachment'}](${att.url})`)
+      .join('\n');
+}
+
+function firstImageAttachmentUrl(message) {
+  const attachments = message?.attachments;
+  if (!attachments || !attachments.size) return null;
+
+  const image = [...attachments.values()].find(att =>
+      att.contentType?.startsWith('image/') ?? /\.(png|jpe?g|gif|webp)$/i.test(att.name ?? '')
+  );
+
+  return image?.url ?? null;
+}
+
 async function logMessageDeletion(_client, message, author) {
   const modlogChannel = await getModlogChannelFromMessage(message);
   if (!modlogChannel) return;
 
-  const content = message?.content?.length ? message.content : '*No content*';
-  const channelName = message?.channel?.name ?? 'Unknown';
+  const hasAttachments = message?.attachments?.size > 0;
+  let content;
+  if (message?.content?.length) {
+    content = message.content;
+  } else if (hasAttachments) {
+    content = '*No text content (attachment only)*';
+  } else if (message?.partial) {
+    content = '*Content unavailable — message was not cached before deletion*';
+  } else {
+    content = '*No content*';
+  }
+
+  const attachmentLinks = formatAttachmentLinks(message);
+  const imageUrl = firstImageAttachmentUrl(message);
 
   const embed = baseEmbed({
     color: '#fc6603',
@@ -254,11 +340,15 @@ async function logMessageDeletion(_client, message, author) {
   })
       .setDescription(`**Message:**\n${content}`)
       .addFields(
-          { name: 'Author', value: safeTag(message?.author), inline: true },
+          { name: 'Author', value: userDisplay(message?.author), inline: true },
           { name: 'Deleted By', value: safeTag(author), inline: true },
-          { name: 'Channel', value: channelName, inline: true },
+          { name: 'Channel', value: channelMention(message?.channel), inline: true },
+          { name: 'Message ID', value: message?.id ?? 'Unknown', inline: true },
+          ...(attachmentLinks ? [{ name: 'Attachments', value: truncateField(attachmentLinks), inline: false }] : []),
           relativeTimeField()
       );
+
+  if (imageUrl) embed.setImage(imageUrl);
 
   await safeSend(modlogChannel, { embeds: [embed] });
 }
@@ -270,12 +360,17 @@ async function logMessageEdit(_client, oldMessage, newMessage) {
 
   if (oldMessage?.author?.bot || newMessage?.author?.bot) return;
 
-  const oldContent = oldMessage?.content?.length ? oldMessage.content : '*No previous content available*';
-  const newContent = newMessage?.content?.length ? newMessage.content : '*No new content available*';
+  const oldContentRaw = oldMessage?.content;
+  const newContentRaw = newMessage?.content;
 
-  if (oldContent === newContent) return;
+  if (typeof oldContentRaw !== 'string' || typeof newContentRaw !== 'string') return;
+  if (!oldContentRaw.length && !newContentRaw.length) return;
+  if (oldContentRaw === newContentRaw) return;
 
-  const channelName = message?.channel?.name ?? 'Unknown';
+  const oldContent = oldContentRaw.length ? oldContentRaw : '*No previous content available*';
+  const newContent = newContentRaw.length ? newContentRaw : '*No new content available*';
+
+  const attachmentLinks = formatAttachmentLinks(newMessage ?? oldMessage);
 
   const embed = baseEmbed({
     color: '#3498db',
@@ -283,11 +378,14 @@ async function logMessageEdit(_client, oldMessage, newMessage) {
     actor: message?.author,
   })
       .addFields(
-          { name: 'Author', value: safeTag(message?.author), inline: true },
-          { name: 'Channel', value: channelName, inline: true },
+          { name: 'Author', value: userDisplay(message?.author), inline: true },
+          { name: 'Channel', value: channelMention(message?.channel), inline: true },
+          { name: 'Message ID', value: message?.id ?? 'Unknown', inline: true },
+          { name: 'Jump Link', value: messageJumpLink(message), inline: false },
           relativeTimeField(),
           { name: 'Before', value: truncateField(oldContent), inline: false },
-          { name: 'After', value: truncateField(newContent), inline: false }
+          { name: 'After', value: truncateField(newContent), inline: false },
+          ...(attachmentLinks ? [{ name: 'Attachments', value: truncateField(attachmentLinks), inline: false }] : [])
       );
 
   await safeSend(modlogChannel, { embeds: [embed] });
@@ -341,7 +439,7 @@ async function logChannelCreate(_client, channel) {
     title: 'Channel Created',
     actor: channel?.client?.user,
   }).addFields(
-      { name: 'Channel', value: `${channel?.name ?? 'Unknown'} (${channel?.id ?? 'Unknown'})`, inline: true },
+      { name: 'Channel', value: channelMention(channel), inline: true },
       { name: 'Type', value: channelTypeLabel(channel), inline: true },
       relativeTimeField()
   );
@@ -370,13 +468,19 @@ async function logRoleCreate(_client, role) {
   const modlogChannel = await getModlogChannelFromGuild(role?.guild);
   if (!modlogChannel) return;
 
+  const executor = await getRecentAuditLogExecutor(
+      role?.guild,
+      AuditLogEvent.RoleCreate,
+      role?.id
+  );
+
   const embed = baseEmbed({
     color: '#43b581',
     title: 'Role Created',
     actor: role?.client?.user,
   }).addFields(
       { name: 'Role', value: roleDisplay(role), inline: true },
-      { name: 'Color', value: role?.hexColor ?? 'Unknown', inline: true },
+      { name: 'Created By', value: safeTag(executor), inline: true },
       relativeTimeField(),
       { name: 'Permissions', value: truncateField(rolePermissionsText(role)), inline: false }
   );
@@ -438,6 +542,7 @@ async function logRoleUpdate(_client, oldRole, newRole) {
     actor: newRole?.client?.user,
   }).addFields(
       { name: 'Role', value: roleDisplay(newRole), inline: true },
+      { name: 'Updated By', value: roleDisplay(exectutor), inline: true },
       relativeTimeField(),
       ...changedFields
   );
@@ -491,11 +596,119 @@ async function logMemberRoleUpdate(_client, oldMember, newMember) {
   await safeSend(modlogChannel, { embeds: [embed] });
 }
 
+async function logMemberProfileUpdate(_client, oldMember, newMember) {
+  const modlogChannel = await getModlogChannelFromGuild(newMember?.guild ?? oldMember?.guild);
+  if (!modlogChannel) return;
+
+  const changedFields = [];
+  const oldNickname = oldMember?.nickname ?? oldMember?.user?.username ?? 'None';
+  const newNickname = newMember?.nickname ?? newMember?.user?.username ?? 'None';
+
+  if (oldMember?.nickname !== newMember?.nickname) {
+    changedFields.push({
+      name: 'Nickname Changed',
+      value: `${oldNickname} → ${newNickname}`,
+      inline: false,
+    });
+  }
+
+  const oldGuildAvatar = guildAvatarUrlForMember(oldMember);
+  const newGuildAvatar = guildAvatarUrlForMember(newMember);
+
+  if (oldGuildAvatar !== newGuildAvatar) {
+    changedFields.push({
+      name: 'Server Avatar Changed',
+      value: [
+        oldGuildAvatar ? `[Old Avatar](${oldGuildAvatar})` : 'Old Avatar: None',
+        newGuildAvatar ? `[New Avatar](${newGuildAvatar})` : 'New Avatar: None',
+      ].join('\n'),
+      inline: false,
+    });
+  }
+
+  if (!changedFields.length) return;
+
+  const embed = baseEmbed({
+    color: '#9b59b6',
+    title: 'Member Profile Updated',
+    actor: newMember?.user ?? oldMember?.user,
+  }).addFields(
+      { name: 'User', value: userDisplay(newMember ?? oldMember), inline: true },
+      relativeTimeField(),
+      ...changedFields
+  );
+
+  if (newGuildAvatar) embed.setThumbnail(newGuildAvatar);
+
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
+async function logUserProfileUpdate(client, oldUser, newUser) {
+  if (!client?.guilds?.cache?.size) return;
+
+  const changedFields = [];
+
+  if (oldUser?.username !== newUser?.username) {
+    changedFields.push({
+      name: 'Username Changed',
+      value: `${oldUser?.username ?? 'Unknown'} → ${newUser?.username ?? 'Unknown'}`,
+      inline: false,
+    });
+  }
+
+  const oldGlobalName = oldUser?.globalName ?? null;
+  const newGlobalName = newUser?.globalName ?? null;
+
+  if (oldGlobalName !== newGlobalName) {
+    changedFields.push({
+      name: 'Global Display Name Changed',
+      value: `${oldGlobalName ?? 'None'} → ${newGlobalName ?? 'None'}`,
+      inline: false,
+    });
+  }
+
+  const oldAvatar = avatarUrlForUser(oldUser);
+  const newAvatar = avatarUrlForUser(newUser);
+
+  if (oldAvatar !== newAvatar) {
+    changedFields.push({
+      name: 'Global Avatar Changed',
+      value: [
+        oldAvatar ? `[Old Avatar](${oldAvatar})` : 'Old Avatar: None',
+        newAvatar ? `[New Avatar](${newAvatar})` : 'New Avatar: None',
+      ].join('\n'),
+      inline: false,
+    });
+  }
+
+  if (!changedFields.length) return;
+
+  for (const guild of client.guilds.cache.values()) {
+    const member = guild.members.cache.get(newUser.id);
+    if (!member) continue;
+
+    const modlogChannel = await getModlogChannelFromGuild(guild);
+    if (!modlogChannel) continue;
+
+    const embed = baseEmbed({
+      color: '#9b59b6',
+      title: 'User Profile Updated',
+      actor: newUser,
+    }).addFields(
+        { name: 'User', value: userDisplay(newUser), inline: true },
+        relativeTimeField(),
+        ...changedFields
+    );
+
+    if (newAvatar) embed.setThumbnail(newAvatar);
+
+    await safeSend(modlogChannel, { embeds: [embed] });
+  }
+}
+
 async function logSnipeClear(_client, message, author) {
   const modlogChannel = await getModlogChannelFromMessage(message);
   if (!modlogChannel) return;
-
-  const channelName = message?.channel?.name ?? 'Unknown';
 
   const embed = baseEmbed({
     color: '#a903fc',
@@ -505,7 +718,8 @@ async function logSnipeClear(_client, message, author) {
       .setDescription('Snipe data has been cleared.')
       .addFields(
           { name: 'Cleared By', value: safeTag(author), inline: true },
-          { name: 'Channel', value: channelName, inline: true },
+          { name: 'Channel', value: channelMention(message?.channel), inline: true },
+          { name: 'Message ID', value: message?.id ?? 'Unknown', inline: true },
           relativeTimeField()
       );
 
@@ -801,4 +1015,9 @@ module.exports = {
   logRoleCreate,
   logRoleUpdate,
   logMemberRoleUpdate,
+  logMemberProfileUpdate,
+  logUserProfileUpdate,
 };
+
+// shit says 1022 lines
+// someone please remind me to separate these functions later

@@ -8,8 +8,17 @@ module.exports = (client) => {
 
     const snipes = client.snipes.get(message.channel.id) || [];
 
+    const attachments = message.attachments?.size
+        ? [...message.attachments.values()].map(att => ({
+          name: att.name ?? 'attachment',
+          url: att.url,
+          contentType: att.contentType ?? null,
+        }))
+        : [];
+
     snipes.unshift({
-      content: message.content || '[No content]',
+      content: message.content || (attachments.length ? '' : '[No content]'),
+      attachments,
       user: message.author,
       timestamp: Date.now()
     });

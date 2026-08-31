@@ -15,6 +15,10 @@ const {
     logRoleCreate,
     logRoleUpdate,
     logMemberRoleUpdate,
+    logMemberProfileUpdate,
+    logUserProfileUpdate,
+    logTimeout,
+    logUntimeout,
 } = require('./log');
 
 const {
@@ -50,6 +54,128 @@ client.commands = new Collection();
 client.slashCommands = new Collection();
 client.snipes = new Map();
 client.reactionSnipes = new Map();
+
+const EMPTY_VC_GRACE_MS = 15*1000; // 15 seconds then the bot leaves IF its playing music
+
+function voiceChannelHasNonBotMembers(channel) {
+    return channel?.members?.some(member => !member.user.bot) ?? false;
+}
+
+async function cleanupEmptyVoiceSession(client, guildId, channelId) {
+    const session = client.voiceSessions?.get(guildId);
+    if (!session) return;
+
+    const sessionChannelId = session.connection?.joinConfig?.channelId;
+    if (!sessionChannelId || sessionChannelId !== channelId) return;
+
+    const channel = await client.channels.fetch(channelId).catch(() => null);
+    if (!channel || voiceChannelHasNonBotMembers(channel)) return;
+
+    if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
+    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
+
+    session.player?.stop(true);
+    session.connection?.destroy();
+    client.voiceSessions.delete(guildId);
+
+    const textChannel = session.textChannelId
+        ? await client.channels.fetch(session.textChannelId).catch(() => null)
+        : null;
+
+    if (textChannel?.isTextBased()) {
+        await textChannel.send('Left voice channel because everyone left.');
+    }
+}
+
+function scheduleEmptyVoiceSessionCleanup(client, guildId, channelId) {
+    const session = client.voiceSessions?.get(guildId);
+    if (!session) return;
+
+    const sessionChannelId = session.connection?.joinConfig?.channelId;
+    if (sessionChannelId !== channelId) return;
+
+    if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
+
+    session.emptyVoiceTimeout = setTimeout(() => {
+        cleanupEmptyVoiceSession(client, guildId, channelId).catch(console.error);
+    }, EMPTY_VC_GRACE_MS);
+}
+
+function clearEmptyVoiceSessionCleanup(client, guildId) {
+    const session = client.voiceSessions?.get(guildId);
+    if (!session?.emptyVoiceTimeout) return;
+
+    clearTimeout(session.emptyVoiceTimeout);
+    session.emptyVoiceTimeout = null;
+}
+
+async function getRecentMemberUpdateExecutor(guild, targetId) {
+    try {
+        const logs = await guild.fetchAuditLogs({
+            type: AuditLogEvent.MemberUpdate,
+            limit: 6,
+        });
+
+        const entry = logs.entries.find(auditEntry => {
+            const isTarget = auditEntry.target?.id === targetId;
+            const isRecent = Date.now() - auditEntry.createdTimestamp < 10 * 1000;
+            return isTarget && isRecent;
+        });
+
+        return entry?.executor ?? guild.client.user;
+    } catch {
+        return guild.client.user;
+    }
+}
+
+function formatTimeoutDuration(untilTimestamp) {
+    const remainingMs = untilTimestamp - Date.now();
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return 'Expired';
+
+    const minutes = Math.ceil(remainingMs / 60000);
+    if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+
+    const hours = Math.ceil(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'}`;
+
+    const days = Math.ceil(hours / 24);
+    return `${days} day${days === 1 ? '' : 's'}`;
+}
+
+async function logTimeoutChange(client, oldMember, newMember) {
+    const oldUntil = oldMember?.communicationDisabledUntilTimestamp ?? null;
+    const newUntil = newMember?.communicationDisabledUntilTimestamp ?? null;
+
+    if (oldUntil === newUntil) return;
+
+    const guild = newMember?.guild ?? oldMember?.guild;
+    const user = newMember?.user ?? oldMember?.user;
+    if (!guild || !user) return;
+
+    const executor = await getRecentMemberUpdateExecutor(guild, newMember.id);
+
+    if (newUntil && newUntil > Date.now()) {
+        await logTimeout(
+            client,
+            guild,
+            user,
+            executor,
+            'Check Discord audit log for reason.',
+            formatTimeoutDuration(newUntil)
+        );
+        return;
+    }
+
+    if (oldUntil && (!newUntil || newUntil <= Date.now())) {
+        await logUntimeout(
+            client,
+            guild,
+            user,
+            executor,
+            'Timeout removed or expired.'
+        );
+    }
+}
 
 const commandsPath = path.join(__dirname, 'commands');
 
@@ -167,15 +293,24 @@ client.on('messageCreate', async message => {
 
 client.on('messageUpdate', async (oldMessage, newMessage) => {
     try {
-        if (oldMessage.partial) {
-            oldMessage = await oldMessage.fetch();
-        }
-
         if (newMessage.partial) {
-            newMessage = await newMessage.fetch();
+            newMessage = await newMessage.fetch().catch(() => null);
         }
 
-        if (!newMessage.guild || newMessage.author?.bot) return;
+        if (!newMessage?.guild || newMessage.author?.bot) return;
+
+        if (oldMessage.partial) {
+            oldMessage = await oldMessage.fetch().catch(() => null);
+        }
+
+        if (!oldMessage || oldMessage.author?.bot) return;
+
+        const oldContent = oldMessage.content;
+        const newContent = newMessage.content;
+
+        if (typeof oldContent !== 'string' || typeof newContent !== 'string') return;
+        if (!oldContent.length && !newContent.length) return;
+        if (oldContent === newContent) return;
 
         await logMessageEdit(client, oldMessage, newMessage);
     } catch (error) {
@@ -188,6 +323,24 @@ client.on('guildMemberAdd', async member => {
         await logMemberJoin(client, member);
     } catch (error) {
         console.error('Failed to log member join:', error);
+    }
+});
+
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    try {
+        await logTimeoutChange(client, oldMember, newMember);
+        await logMemberRoleUpdate(client, oldMember, newMember);
+        await logMemberProfileUpdate(client, oldMember, newMember);
+    } catch (error) {
+        console.error('Failed to log member update:', error);
+    }
+});
+
+client.on('userUpdate', async (oldUser, newUser) => {
+    try {
+        await logUserProfileUpdate(client, oldUser, newUser);
+    } catch (error) {
+        console.error('Failed to log user profile update:', error);
     }
 });
 
@@ -233,14 +386,6 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     }
 });
 
-client.on('guildMemberUpdate', async (oldMember, newMember) => {
-    try {
-        await logMemberRoleUpdate(client, oldMember, newMember);
-    } catch (error) {
-        console.error('Failed to log member role update:', error);
-    }
-});
-
 client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
 
@@ -277,6 +422,20 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
     await handleVoiceXPStateUpdate(oldState, newState).catch(console.error);
+
+    const leftChannel = oldState.channel;
+    if (leftChannel) {
+        if (voiceChannelHasNonBotMembers(leftChannel)) {
+            clearEmptyVoiceSessionCleanup(client, oldState.guild.id);
+        } else {
+            scheduleEmptyVoiceSessionCleanup(client, oldState.guild.id, leftChannel.id);
+        }
+    }
+
+    const joinedChannel = newState.channel;
+    if (joinedChannel && voiceChannelHasNonBotMembers(joinedChannel)) {
+        clearEmptyVoiceSessionCleanup(client, newState.guild.id);
+    }
 });
 
 require('./storesnipe')(client);
