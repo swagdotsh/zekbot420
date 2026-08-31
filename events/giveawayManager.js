@@ -62,7 +62,23 @@ module.exports = {
     name: 'ready',
     once: false,
     async execute(client) {
-        setInterval(() => checkExpiredGiveaways(client), 15000)
+        let expiryCheckRunning = false
+
+        const runExpiryCheck = async () => {
+            if (expiryCheckRunning) return
+            expiryCheckRunning = true
+
+            try {
+                await checkExpiredGiveaways(client)
+            } catch (error) {
+                console.error('Giveaway expiry check failed:', error)
+            } finally {
+                expiryCheckRunning = false
+            }
+        }
+
+        setInterval(() => runExpiryCheck().catch(console.error), 15000)
+        runExpiryCheck().catch(console.error)
 
         client.on('interactionCreate', async (interaction) => {
             console.log('[Giveaway] interactionCreate fired')

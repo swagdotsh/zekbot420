@@ -1,8 +1,22 @@
 const fs = require('fs');
 const path = require('path');
-const {Client, GatewayIntentBits, Collection, Partials} = require('discord.js');
+const {
+    AuditLogEvent,
+    AutoModerationActionType,
+    Client,
+    GatewayIntentBits,
+    Collection,
+    Partials,
+} = require('discord.js');
 
 require('dotenv').config();
+
+const missingRuntimeConfig = ['TOKEN', 'PREFIX', 'NEON_DATABASE_URL']
+    .filter((name) => !process.env[name]);
+
+if (missingRuntimeConfig.length) {
+    throw new Error(`Missing required environment variable(s): ${missingRuntimeConfig.join(', ')}`);
+}
 
 const {
     logMessageDeletion,
@@ -44,7 +58,8 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMembers
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.AutoModerationExecution
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
@@ -109,7 +124,7 @@ function clearEmptyVoiceSessionCleanup(client, guildId) {
     session.emptyVoiceTimeout = null;
 }
 
-async function getRecentMemberUpdateExecutor(guild, targetId) {
+async function getRecentMemberUpdateAuditEntry(guild, targetId) {
     try {
         const logs = await guild.fetchAuditLogs({
             type: AuditLogEvent.MemberUpdate,
@@ -122,9 +137,9 @@ async function getRecentMemberUpdateExecutor(guild, targetId) {
             return isTarget && isRecent;
         });
 
-        return entry?.executor ?? guild.client.user;
+        return entry ?? null;
     } catch {
-        return guild.client.user;
+        return null;
     }
 }
 
@@ -142,6 +157,18 @@ function formatTimeoutDuration(untilTimestamp) {
     return `${days} day${days === 1 ? '' : 's'}`;
 }
 
+function formatTimeoutSeconds(durationSeconds) {
+    const seconds = Number(durationSeconds);
+    if (!Number.isFinite(seconds) || seconds <= 0) return 'Unknown';
+    return formatTimeoutDuration(Date.now() + seconds * 1000);
+}
+
+const recentAutoModTimeouts = new Map();
+
+function autoModTimeoutKey(guildId, userId) {
+    return `${guildId}:${userId}`;
+}
+
 async function logTimeoutChange(client, oldMember, newMember) {
     const oldUntil = oldMember?.communicationDisabledUntilTimestamp ?? null;
     const newUntil = newMember?.communicationDisabledUntilTimestamp ?? null;
@@ -152,15 +179,22 @@ async function logTimeoutChange(client, oldMember, newMember) {
     const user = newMember?.user ?? oldMember?.user;
     if (!guild || !user) return;
 
-    const executor = await getRecentMemberUpdateExecutor(guild, newMember.id);
+    const timeoutKey = autoModTimeoutKey(guild.id, user.id);
+    if (newUntil && newUntil > Date.now() && recentAutoModTimeouts.has(timeoutKey)) return;
+
+    const auditEntry = await getRecentMemberUpdateAuditEntry(guild, newMember.id);
+    const executor = auditEntry?.executor ?? guild.client.user;
 
     if (newUntil && newUntil > Date.now()) {
+        recentAutoModTimeouts.set(timeoutKey, true);
+        setTimeout(() => recentAutoModTimeouts.delete(timeoutKey), 15 * 1000);
+
         await logTimeout(
             client,
             guild,
             user,
             executor,
-            'Check Discord audit log for reason.',
+            auditEntry?.reason || 'No reason specified',
             formatTimeoutDuration(newUntil)
         );
         return;
@@ -219,7 +253,7 @@ if (fs.existsSync(slashCommandsPath)) {
 
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
-    client.user.setActivity('nothing. nothing interesting is on.', {type: 3}); // watching [...]
+    client.user.setActivity('NFL Week 1 in 2 weeks!!!!', {type: 3}); // watching [...]
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
@@ -333,6 +367,33 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
         await logMemberProfileUpdate(client, oldMember, newMember);
     } catch (error) {
         console.error('Failed to log member update:', error);
+    }
+});
+
+client.on('autoModerationActionExecution', async (execution) => {
+    if (execution.action.type !== AutoModerationActionType.Timeout) return;
+
+    const key = autoModTimeoutKey(execution.guild.id, execution.userId);
+    if (recentAutoModTimeouts.has(key)) return;
+
+    recentAutoModTimeouts.set(key, true);
+    setTimeout(() => recentAutoModTimeouts.delete(key), 15 * 1000);
+
+    try {
+        const user = execution.user ?? await client.users.fetch(execution.userId).catch(() => null);
+        if (!user) return;
+
+        const ruleName = execution.autoModerationRule?.name ?? 'AutoMod rule';
+        await logTimeout(
+            client,
+            execution.guild,
+            user,
+            client.user,
+            `Triggered ${ruleName}.`,
+            formatTimeoutSeconds(execution.action.metadata.durationSeconds)
+        );
+    } catch (error) {
+        console.error('Failed to log AutoMod timeout:', error);
     }
 });
 

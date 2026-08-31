@@ -129,6 +129,8 @@ function startVcXPLoop(client) {
                     console.error(error);
                 }
             }
+        } catch (error) {
+            console.error('Voice XP award loop failed:', error);
         } finally {
             vcXpLoopRunning = false;
         }
