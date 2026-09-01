@@ -1,4 +1,4 @@
-const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,22 +16,12 @@ module.exports = {
 
         user = await user.fetch(true);
 
-        const banner = user.bannerURL({ extension: 'png', size: 1024 });
+        const banner = user.bannerURL({ extension: 'png', size: 4096 });
 
         if (!banner) {
             return interaction.reply({ content: 'This user does not have a banner.', ephemeral: true });
         }
 
-        const embed = new EmbedBuilder()
-            .setTitle(`${user.username}'s Banner`)
-            .setImage(banner)
-            .setColor('#3498db')
-            .setFooter({
-                text: `Requested by ${interaction.user.tag}`,
-                iconURL: interaction.user.displayAvatarURL()
-            })
-            .setTimestamp();
-
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(banner);
     }
 };
