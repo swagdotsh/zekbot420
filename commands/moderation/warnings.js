@@ -55,7 +55,7 @@ module.exports = {
 
         // If you're trying to view someone else's history, require mod perms
         if (!viewingSelf && !message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return message.reply("You don't have permission to view other users' warnings.");
+            return message.reply("You don't have permission to view other users' warnings. <:smirk2:1498272372539785286>");
         }
 
         const store = await readWarns(message.guild.id);

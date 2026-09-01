@@ -11,11 +11,11 @@ module.exports = {
         if (!message.guild) return;
 
         if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-            return message.reply('You need the `Manage Messages` permission to use this command.');
+            return message.reply('You need the `Manage Messages` permission to use this command. <:smirk2:1498272372539785286>');
         }
 
         if (!message.guild.members.me.permissions.has(PermissionFlagsBits.AddReactions)) {
-            return message.reply('I need the `Add Reactions` permission to do that.');
+            return message.reply('I need the `Add Reactions` permission to do that. <:smirk2:1498272372539785286>');
         }
 
         const emojiInput = args[0];

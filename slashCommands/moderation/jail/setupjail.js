@@ -5,7 +5,7 @@ const {
     ChannelType,
     EmbedBuilder
 } = require('discord.js');
-const { setJailConfig } = require('../../../jailHandler');
+const { getJailConfig, setJailConfig } = require('../../../jailHandler');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -19,6 +19,13 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         const guild = interaction.guild;
+        const existingConfig = await getJailConfig(guild.id);
+
+        if (existingConfig) {
+            return interaction.editReply(
+                'Jail is already configured. Use `/jail`, `/unjail`, or `/unsetupjail` to manage it. <:smirk2:1498272372539785286>'
+            );
+        }
 
         let jailRole = guild.roles.cache.find((r) => r.name === 'Jailed');
 

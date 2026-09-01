@@ -4,6 +4,13 @@ const {REST, Routes} = require('discord.js');
 
 require('dotenv').config();
 
+const missingDeployConfig = ['TOKEN', 'DISCORD_CLIENT_ID', 'NEON_DATABASE_URL']
+    .filter((name) => !process.env[name]);
+
+if (missingDeployConfig.length) {
+    throw new Error(`Missing required environment variable(s): ${missingDeployConfig.join(', ')}`);
+}
+
 function readSlashCommandFiles(dir) {
     const out = [];
     for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
@@ -30,8 +37,6 @@ async function main() {
     });
 
     const rest = new REST({version: '10'}).setToken(process.env.TOKEN);
-
-    if (!process.env.DISCORD_CLIENT_ID) throw new Error('Missing DISCORD_CLIENT_ID in .env');
 
     const args = process.argv.slice(2).map((a) => String(a).toLowerCase());
     const forceGlobal = args.includes('global') || args.includes('--global') || args.includes('-g');

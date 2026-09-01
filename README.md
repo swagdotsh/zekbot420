@@ -84,10 +84,10 @@ Your favorite Discord bot's open-source alternative.
 - **npm** (comes with Node.js)
 - [**A Discord application + bot token**](https://discord.com/developers/applications)
 - **Permissions to add a bot to a server** (usually a role with `Manage Server`, or you can create a test server)
+- [**Neon**](https://neon.tech) (or another Postgres-compatible database; required by the current bot)
 
 ### Optional (depending on your use case)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (for video downloading features)
-- [Neon](https://neon.tech) (or any postgres-compatible database)
 - ffmpeg (required for audio playback in voice channel features, installs with `npm install` during install)
 - [Last.fm API key](https://www.last.fm/api) (for Last.fm integration features)
 ---

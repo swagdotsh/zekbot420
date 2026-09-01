@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { neon } = require("@neondatabase/serverless")
-const { getAverageColor } = require('fast-average-color-node');
+const sharp = require('sharp');
 
 const sql = neon(process.env.NEON_DATABASE_URL)
 
@@ -8,8 +8,13 @@ async function getCoverArtColor(albumArt) {
   if (!albumArt) return 0xd51007;
 
   try {
-    const color = await getAverageColor(albumArt);
-    return parseInt(color.hex.replace('#', ''), 16);
+    const { data } = await axios.get(albumArt, { responseType: 'arraybuffer' });
+    const { data: pixels } = await sharp(data)
+      .resize(1, 1, { fit: 'fill' })
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    return (pixels[0] << 16) | (pixels[1] << 8) | pixels[2];
   } catch (err) {
     console.log('Error fetching album art color:', err.message);
     return 0xd51007;

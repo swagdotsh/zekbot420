@@ -153,14 +153,14 @@ module.exports = {
 
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions)) {
             return interaction.reply({
-                content: 'You need the **Create Expressions** or **Manage Expressions** permission to use this.',
+                content: 'You need the **Create Expressions** or **Manage Expressions** permission to use this. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageGuildExpressions)) {
             return interaction.reply({
-                content: 'I need the **Create Expressions** or **Manage Expressions** permission to add emojis.',
+                content: 'I need the **Create Expressions** or **Manage Expressions** permission to add emojis. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
@@ -229,7 +229,7 @@ module.exports = {
             console.error(error);
 
             return interaction.editReply(
-                'Failed to add that emoji. Make sure the file is a valid image/gif and that I have permission to create emojis.'
+                'Failed to add that emoji. Make sure the file is a valid image/gif and that I have permission to create emojis. <:smirk2:1498272372539785286>'
             );
         } finally {
             await fs.rm(tempDir, { recursive: true, force: true }).catch(() => null);

@@ -3,7 +3,13 @@ const { doUnjail } = require('../commands/moderation/jail/unjail');
 const { logUnjail } = require('../log');
 
 function startJailExpiryLoop(client) {
-    setInterval(async () => {
+    let isRunning = false;
+
+    const checkExpiredJails = async () => {
+        if (isRunning) return;
+        isRunning = true;
+
+        try {
         const expired = await getExpiredJails();
         for (const row of expired) {
             const guild = client.guilds.cache.get(row.guild_id);
@@ -25,7 +31,18 @@ function startJailExpiryLoop(client) {
             }
             await logUnjail(null, guild, { id: row.user_id, user: await guild.members.fetch(row.user_id).then(m => m.user).catch(() => null) }, null, true);
         }
+        } catch (error) {
+            console.error('Jail expiry check failed:', error);
+        } finally {
+            isRunning = false;
+        }
+    };
+
+    setInterval(() => {
+        checkExpiredJails().catch(console.error);
     }, 30 * 1000);
+
+    checkExpiredJails().catch(console.error);
 }
 
 module.exports = { startJailExpiryLoop };

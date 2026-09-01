@@ -16,12 +16,29 @@ module.exports = {
 
     const snipe = snipes[index - 1];
     const timeAgo = formatTimeAgo(Date.now() - snipe.timestamp);
+    const attachments = snipe.attachments ?? [];
+
+    const description = snipe.content?.length
+        ? snipe.content
+        : (attachments.length ? '*No text content (attachment only)*' : '[No content]');
 
     const embed = new EmbedBuilder()
-      .setAuthor({ name: snipe.user.username, iconURL: snipe.user.displayAvatarURL({ dynamic: true }) })
-      .setDescription(snipe.content)
-      .setColor('#a903fc')
-      .setFooter({ text: `${index}/${snipes.length} • Deleted ${timeAgo}` });
+        .setAuthor({ name: snipe.user.username, iconURL: snipe.user.displayAvatarURL({ dynamic: true }) })
+        .setDescription(description)
+        .setColor('#a903fc')
+        .setFooter({ text: `${index}/${snipes.length} • Deleted ${timeAgo}` });
+
+    if (attachments.length) {
+      const links = attachments
+          .map(att => `[${att.name}](${att.url})`)
+          .join('\n');
+      embed.addFields({ name: 'Attachments', value: links.slice(0, 1024) });
+
+      const image = attachments.find(att =>
+          att.contentType?.startsWith('image/') ?? /\.(png|jpe?g|gif|webp)$/i.test(att.name ?? '')
+      );
+      if (image) embed.setImage(image.url);
+    }
 
     message.reply({ embeds: [embed] });
   }

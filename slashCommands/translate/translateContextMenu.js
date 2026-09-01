@@ -7,12 +7,14 @@ const {
 } = require('discord.js');
 
 const LIBRE_URL = 'https://translate.cutie.dating';
+const API_KEY = process.env.LIBRETRANSLATE_KEY;
 const REQUEST_TIMEOUT = 8000; // 8 second timeout
 
 async function detectLanguage(text) {
     try {
         const res = await axios.post(`${LIBRE_URL}/detect`, {
-            q: text
+            q: text,
+            api_key: API_KEY,
         }, {
             timeout: REQUEST_TIMEOUT
         });
@@ -33,7 +35,8 @@ async function translateText(text, source, target) {
         const res = await axios.post(`${LIBRE_URL}/translate`, {
             q: text,
             source,
-            target
+            target,
+            api_key: API_KEY,
         }, {
             timeout: REQUEST_TIMEOUT
         });
@@ -61,9 +64,6 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            console.log('Interaction received:', interaction.type, interaction.commandName);
-            console.log(`Running context menu command: ${interaction.commandName}`);
-
             const message = interaction.targetMessage;
             const text = message.content?.trim();
 
@@ -74,9 +74,7 @@ module.exports = {
                 });
             }
 
-            await interaction.deferReply({
-                ephemeral: true
-            });
+            await interaction.deferReply();
 
             try {
                 const source = await detectLanguage(text);

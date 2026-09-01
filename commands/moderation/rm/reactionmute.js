@@ -33,7 +33,7 @@ module.exports = {
         if (!message.guild) return;
 
         if (!message.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-            return message.reply('You do not have permission to reaction mute members.');
+            return message.reply('You do not have permission to reaction mute members. <:smirk2:1498272372539785286>');
         }
 
         const target = message.mentions.members.first();
@@ -51,11 +51,11 @@ module.exports = {
 
         const me = message.guild.members.me;
         if (!me) {
-            return message.reply('I could not verify my own permissions.');
+            return message.reply('I could not verify my own permissions. <:smirk2:1498272372539785286>');
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
-            return message.reply('I need the **Manage Roles** permission to reaction mute members.');
+            return message.reply('I need the **Manage Roles** permission to reaction mute members. <:smirk2:1498272372539785286>');
         }
 
         const config = await readReactionMuteConfig(message.guild.id);

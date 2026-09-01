@@ -43,14 +43,14 @@ module.exports = {
 
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: 'You need the `Manage Channels` permission to use this command.',
+                content: 'You need the `Manage Channels` permission to use this command. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: 'I need the `Manage Channels` permission to create channels.',
+                content: 'I need the `Manage Channels` permission to create channels. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }

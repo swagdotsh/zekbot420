@@ -31,12 +31,30 @@ function extractChannelId(input) {
 async function readGuildConfig(guildId) {
   const cfgPath = guildConfigPath(guildId);
   try {
-    if (!fs.existsSync(cfgPath)) return { channelId: null };
+    if (!fs.existsSync(cfgPath)) {
+      return {
+        channelId: null,
+        trapChannelId: null,
+        trapExemptRoleIds: [],
+        trapBanCount: 0,
+      };
+    }
+
     const txt = await fs.promises.readFile(cfgPath, 'utf8');
-    if (!txt.trim()) return { channelId: null };
+    if (!txt.trim()) {
+      return {
+        channelId: null,
+        trapChannelId: null,
+        trapExemptRoleIds: [],
+        trapBanCount: 0,
+      };
+    }
     const parsed = JSON.parse(txt);
     return {
       channelId: parsed?.channelId ?? null,
+      trapChannelId: parsed?.trapChannelId ?? null,
+      trapExemptRoleIds: Array.isArray(parsed?.trapExemptRoleIds) ? parsed.trapExemptRoleIds : [],
+      trapBanCount: Number.isInteger(parsed?.trapBanCount) ? parsed.trapBanCount : 0,
     };
   } catch {
       return { channelId: null };
@@ -56,7 +74,7 @@ module.exports = {
   aliases: ['log'],
   async execute(message, args) {
     if (!message.member.permissions.has('Administrator') && message.author.id !== message.guild.ownerId) {
-      return message.reply({ content: 'You do not have the required permissions to run this command.' });
+      return message.reply({ content: 'You do not have the required permissions to run this command. <:smirk2:1498272372539785286>' });
     }
 
     const input = (args[0] ?? '').trim();
@@ -99,6 +117,13 @@ module.exports = {
     }
 
     const config = await readGuildConfig(guildId);
+    if (config.channelId) {
+      return message.reply({
+        content:
+          `Modlog is already configured in <#${config.channelId}>. Use \`,modlog off\` to disable it, then run \`,modlog #channel\` to choose another channel. AutoMod alerts can be managed with \`/automod words\`. <:smirk2:1498272372539785286>`,
+      });
+    }
+
     config.channelId = channel.id;
     await writeGuildConfig(guildId, config);
 

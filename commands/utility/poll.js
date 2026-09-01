@@ -15,7 +15,7 @@ module.exports = {
         } catch (err) {
             console.error('Failed to add poll reactions:', err);
             return message.reply({
-                content: 'I couldn’t add reactions to your message. Check my permissions (Add Reactions + Read Message History).'
+                content: 'I couldn’t add reactions to your message. Check my permissions (Add Reactions + Read Message History). <:smirk2:1498272372539785286>'
             });
         }
 

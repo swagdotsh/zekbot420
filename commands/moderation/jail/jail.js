@@ -26,7 +26,7 @@ module.exports = {
     name: 'jail',
     async execute(message, args) {
         if (!message.member.permissions.has('ModerateMembers')) {
-            return message.reply('You need the **Moderate Members** permission to run this.');
+            return message.reply('You need the **Moderate Members** permission to run this. <:smirk2:1498272372539785286>');
         }
 
         const guild = message.guild;

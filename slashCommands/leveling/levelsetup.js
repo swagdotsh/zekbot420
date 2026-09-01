@@ -5,7 +5,7 @@ const {
     ChannelType,
     EmbedBuilder
 } = require('discord.js');
-const { setConfig } = require('../../leveling');
+const { getConfig, setConfig } = require('../../leveling');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -48,6 +48,14 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        const existingConfig = await getConfig(interaction.guild.id);
+        if (existingConfig) {
+            return interaction.reply({
+                content: `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`/rank\`, \`/leaderboard\`, or \`/lvlrole\` to manage it. <:smirk2:1498272372539785286>`,
+                ephemeral: true
+            });
+        }
+
         const channel = interaction.options.getChannel('channel');
         const xpMin = interaction.options.getInteger('xp_min');
         const xpMax = interaction.options.getInteger('xp_max');
