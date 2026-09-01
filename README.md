@@ -27,12 +27,14 @@ Your favorite Discord bot's open-source alternative.
 ### Moderation & management
 - Ban / unban
 - Kick
+- Auto-Mod
 - Timeout / untimeout
 - Clear messages
 - Warn system (warn, unwarn, list warnings)
 - Jail system
 - Sticky roles system
 - Giveways system
+- Starboard system
 
 ### Leveling
 - Leveling system 
@@ -49,11 +51,13 @@ Your favorite Discord bot's open-source alternative.
 - Basic server/user info
 - Translation (translate messages and text to almost any language)
 - Emoji fetcher
+- AFK System
+- Birthday tracker
 
 ### Logging 
 - Logs support (stores moderation actions)
 - Welcome setup + welcoming messages
-- “Snipe” / “clearsnipe” style message recall
+- `snipe` / `editsnipe` message recall for deleted and edited messages
 
 ### Integrations
 - Last.fm login and commands (optional; requires API key)
