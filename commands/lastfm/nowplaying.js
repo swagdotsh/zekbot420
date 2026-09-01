@@ -21,6 +21,37 @@ async function getCoverArtColor(albumArt) {
   }
 }
 
+function trackKey(track) {
+  const name = String(track?.name ?? '').trim().toLowerCase();
+  const artist = String(track?.artist?.['#text'] ?? track?.artist?.name ?? '').trim().toLowerCase();
+  return `${name}\u0000${artist}`;
+}
+
+function ordinal(value) {
+  const remainder = value % 100;
+  if (remainder >= 11 && remainder <= 13) return `${value}th`;
+  if (value % 10 === 1) return `${value}st`;
+  if (value % 10 === 2) return `${value}nd`;
+  if (value % 10 === 3) return `${value}rd`;
+  return `${value}th`;
+}
+
+function consecutivePlayStreak(tracks) {
+  const list = Array.isArray(tracks) ? tracks : tracks ? [tracks] : [];
+  if (!list.length) return 0;
+
+  const firstKey = trackKey(list[0]);
+  if (!firstKey || firstKey === '\u0000') return 0;
+
+  let streak = 0;
+  for (const track of list) {
+    if (trackKey(track) !== firstKey) break;
+    streak++;
+  }
+
+  return streak;
+}
+
 module.exports = {
   name: 'nowplaying',
   aliases: ['np', 'fm', 'lastplayed'],
@@ -34,11 +65,14 @@ module.exports = {
 
     if (!username) return message.reply('Provide a Last.fm username or link your account with `,linklastfm`!')
 
-    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${username}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=1`;
+    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${username}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=200`;
 
     try {
       const { data } = await axios.get(url);
-      const track = data.recenttracks.track[0];
+      const recentTracks = Array.isArray(data?.recenttracks?.track)
+        ? data.recenttracks.track
+        : data?.recenttracks?.track ? [data.recenttracks.track] : [];
+      const track = recentTracks[0];
 
       if (!track) return message.reply(`No recent tracks found for **${username}**.`);
 
@@ -81,6 +115,8 @@ module.exports = {
               : '';
 
       const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
+      const streak = consecutivePlayStreak(recentTracks);
+      const streakText = streak > 5 ? ` • 🔥 ${ordinal(streak)} play in a row!` : '';
 
       const embed = {
         color: embedColor,
@@ -89,7 +125,7 @@ module.exports = {
         url: trackUrl || undefined,
         description: `**${artist}**${album ? ` - *${album}*` : ''}`,
         thumbnail: albumArt ? { url: albumArt } : null,
-        footer: { text: `${footerLabel} • ${username}${playsText}` }
+        footer: { text: `${footerLabel} • ${username}${playsText}${streakText}` }
       };
 
       message.reply({ embeds: [embed] });

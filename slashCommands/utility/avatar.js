@@ -1,4 +1,4 @@
-const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,16 +14,6 @@ module.exports = {
     execute(interaction) {
         const user = interaction.options.getUser('user') || interaction.user;
 
-        const embed = new EmbedBuilder()
-            .setTitle(`${user.username}'s Avatar`)
-            .setImage(user.displayAvatarURL({ extension: 'png', size: 512 }))
-            .setColor('#3498db')
-            .setFooter({
-                text: `Requested by ${interaction.user.tag}`,
-                iconURL: interaction.user.displayAvatarURL()
-            })
-            .setTimestamp();
-
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply(user.displayAvatarURL({ extension: 'png', size: 4096 }));
     }
 };
