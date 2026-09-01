@@ -11,7 +11,7 @@ module.exports = {
             !message.member.permissions.has(PermissionsBitField.Flags.Administrator) &&
             message.author.id !== message.guild.ownerId
         ) {
-            return message.reply('You need Manage Server permission to run this command.');
+            return message.reply('You need Manage Server permission to run this command. <:smirk2:1498272372539785286>');
         }
 
         const shouldDelete = ['delete', 'del', 'removechannel', 'channel'].includes((args[0] ?? '').toLowerCase());

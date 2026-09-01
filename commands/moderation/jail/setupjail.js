@@ -4,7 +4,7 @@ module.exports = {
     name: 'setupjail',
     async execute(message, args) {
         if (!message.member.permissions.has('ManageGuild')) {
-            return message.reply('You need the **Manage Server** permission to run this.');
+            return message.reply('You need the **Manage Server** permission to run this. <:smirk2:1498272372539785286>');
         }
 
         const guild = message.guild;

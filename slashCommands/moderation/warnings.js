@@ -57,7 +57,7 @@ module.exports = {
 
         if (!viewingSelf && !interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
-                content: "You don't have permission to view other users' warnings.",
+                content: "You don't have permission to view other users' warnings. <:smirk2:1498272372539785286>",
                 ephemeral: true
             });
         }

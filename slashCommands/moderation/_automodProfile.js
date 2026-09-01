@@ -53,7 +53,7 @@ module.exports = {
         } catch (error) {
             console.error('Failed to enable AutoMod profile filter:', error);
             return interaction.editReply(
-                'I could not enable the profile filter. Confirm that I have the `Manage Server` permission and that AutoMod is available in this server.'
+                'I could not enable the profile filter. Confirm that I have the `Manage Server` permission and that AutoMod is available in this server. <:smirk2:1498272372539785286>'
             );
         }
     },

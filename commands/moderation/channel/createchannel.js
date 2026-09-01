@@ -16,11 +16,11 @@ module.exports = {
         if (!message.guild) return;
 
         if (!message.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-            return message.reply('You need the `Manage Channels` permission to use this command.');
+            return message.reply('You need the `Manage Channels` permission to use this command. <:smirk2:1498272372539785286>');
         }
 
         if (!message.guild.members.me.permissions.has(PermissionFlagsBits.ManageChannels)) {
-            return message.reply('I need the `Manage Channels` permission to create channels.');
+            return message.reply('I need the `Manage Channels` permission to create channels. <:smirk2:1498272372539785286>');
         }
 
         if (!args.length) {

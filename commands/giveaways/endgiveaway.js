@@ -8,7 +8,7 @@ module.exports = {
     aliases: ['endg'],
     async execute(message, args) {
         if (!message.member.permissions.has('ModerateMembers')) {
-            return message.reply('You need mod permissions to end a giveaway.')
+            return message.reply('You need mod permissions to end a giveaway. <:smirk2:1498272372539785286>')
         }
 
         const id = parseInt(args[0])

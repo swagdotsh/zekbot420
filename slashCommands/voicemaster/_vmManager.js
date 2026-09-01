@@ -123,7 +123,7 @@ async function setupVoiceMaster(interaction) {
 
     if (!me) {
         return interaction.reply({
-            content: 'Could not verify my permissions.',
+            content: 'Could not verify my permissions. <:smirk2:1498272372539785286>',
             ephemeral: true,
         });
     }
@@ -132,7 +132,7 @@ async function setupVoiceMaster(interaction) {
 
     if (!botPerms?.has(PermissionsBitField.Flags.ManageChannels)) {
         return interaction.reply({
-            content: 'I need **Manage Channels** permission to set up VoiceMaster.',
+            content: 'I need **Manage Channels** permission to set up VoiceMaster. <:smirk2:1498272372539785286>',
             ephemeral: true,
         });
     }
@@ -164,7 +164,7 @@ async function setupVoiceMaster(interaction) {
 
     if (!categoryPerms?.has(PermissionsBitField.Flags.ManageChannels)) {
         return interaction.reply({
-            content: 'I need **Manage Channels** permission in that category.',
+            content: 'I need **Manage Channels** permission in that category. <:smirk2:1498272372539785286>',
             ephemeral: true,
         });
     }

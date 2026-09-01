@@ -69,14 +69,14 @@ module.exports = {
 
         if (!me) {
             return interaction.reply({
-                content: 'I could not verify my own permissions.',
+                content: 'I could not verify my own permissions. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
-                content: 'I need the **Manage Roles** permission to remove reaction mutes.',
+                content: 'I need the **Manage Roles** permission to remove reaction mutes. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }

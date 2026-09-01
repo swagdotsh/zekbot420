@@ -6,7 +6,7 @@ module.exports = {
   aliases: ['addsticky', 'stickyroleon', 'asr', 'sr', 'stick', 'sticky'],
   async execute(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-      return message.reply('You need the **Manage Server** permission to run this.');
+      return message.reply('You need the **Manage Server** permission to run this. <:smirk2:1498272372539785286>');
     }
 
     const roleArg = args[0];
@@ -48,4 +48,3 @@ module.exports = {
     }
   }
 };
-

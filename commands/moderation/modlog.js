@@ -74,7 +74,7 @@ module.exports = {
   aliases: ['log'],
   async execute(message, args) {
     if (!message.member.permissions.has('Administrator') && message.author.id !== message.guild.ownerId) {
-      return message.reply({ content: 'You do not have the required permissions to run this command.' });
+      return message.reply({ content: 'You do not have the required permissions to run this command. <:smirk2:1498272372539785286>' });
     }
 
     const input = (args[0] ?? '').trim();

@@ -381,13 +381,13 @@ async function setupVoiceMaster(message) {
     const me = guild.members.me;
 
     if (!me) {
-        return message.reply('Could not verify my permissions.');
+        return message.reply('Could not verify my permissions. <:smirk2:1498272372539785286>');
     }
 
     const botPerms = message.channel.permissionsFor(me);
 
     if (!botPerms?.has(PermissionsBitField.Flags.ManageChannels)) {
-        return message.reply('I need **Manage Channels** permission to set up VoiceMaster.');
+        return message.reply('I need **Manage Channels** permission to set up VoiceMaster. <:smirk2:1498272372539785286>');
     }
 
     const existingConfig = await getConfig(message.client, guild.id);
@@ -411,7 +411,7 @@ async function setupVoiceMaster(message) {
     const categoryPerms = category.permissionsFor(me);
 
     if (!categoryPerms?.has(PermissionsBitField.Flags.ManageChannels)) {
-        return message.reply('I need **Manage Channels** permission in that category.');
+        return message.reply('I need **Manage Channels** permission in that category. <:smirk2:1498272372539785286>');
     }
 
     const joinChannel = await guild.channels.create({

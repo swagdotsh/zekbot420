@@ -89,7 +89,7 @@ module.exports = {
 
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
             return interaction.reply({
-                content: 'Only server administrators can configure AutoMod words.',
+                content: 'Only server administrators can configure AutoMod words. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
@@ -97,7 +97,7 @@ module.exports = {
         const botMember = interaction.guild.members.me;
         if (!botMember?.permissions.has(PermissionFlagsBits.ManageGuild)) {
             return interaction.reply({
-                content: 'I need the `Manage Server` permission to update Discord AutoMod rules.',
+                content: 'I need the `Manage Server` permission to update Discord AutoMod rules. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
@@ -108,7 +108,7 @@ module.exports = {
 
         if (!botMember.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
-                content: 'I need the `Timeout Members` permission to create this AutoMod rule.',
+                content: 'I need the `Timeout Members` permission to create this AutoMod rule. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
@@ -254,7 +254,7 @@ module.exports = {
         } catch (error) {
             console.error('Failed to update AutoMod keyword rule:', error);
             return submission.editReply(
-                'I could not update the AutoMod rule. Confirm that I have `Manage Server` and `Timeout Members` permissions.'
+                'I could not update the AutoMod rule. Confirm that I have `Manage Server` and `Timeout Members` permissions. <:smirk2:1498272372539785286>'
             );
         }
     },

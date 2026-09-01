@@ -83,14 +83,14 @@ module.exports = {
 
         if (!me) {
             return interaction.reply({
-                content: 'I could not verify my own permissions.',
+                content: 'I could not verify my own permissions. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
-                content: 'I need the **Manage Roles** permission to reaction mute members.',
+                content: 'I need the **Manage Roles** permission to reaction mute members. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }

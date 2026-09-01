@@ -30,14 +30,14 @@ module.exports = {
 
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
             return interaction.reply({
-                content: 'You need the `Manage Messages` permission to use this command.',
+                content: 'You need the `Manage Messages` permission to use this command. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.AddReactions)) {
             return interaction.reply({
-                content: 'I need the `Add Reactions` permission to do that.',
+                content: 'I need the `Add Reactions` permission to do that. <:smirk2:1498272372539785286>',
                 ephemeral: true,
             });
         }

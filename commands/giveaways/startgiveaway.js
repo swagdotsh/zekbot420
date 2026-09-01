@@ -17,7 +17,7 @@ module.exports = {
     aliases: ['sg', 'giveaway'],
     async execute(message, args) {
         if (!message.member.permissions.has('ModerateMembers')) {
-            return message.reply('You need mod permissions to start a giveaway.')
+            return message.reply('You need mod permissions to start a giveaway. <:smirk2:1498272372539785286>')
         }
 
         const usage = 'Usage: `,startgiveaway <duration> <dm:yes/no> <#channel> <title...>`\nExample: `,startgiveaway 1h dm:yes #giveaways Free Nitro`'

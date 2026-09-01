@@ -36,7 +36,7 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
-                content: 'You need mod permissions to delete a giveaway.',
+                content: 'You need mod permissions to delete a giveaway. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }

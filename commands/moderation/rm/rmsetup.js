@@ -66,20 +66,20 @@ module.exports = {
         }
 
         if (!message.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-            return message.reply('You do not have permission to set up reaction muting.');
+            return message.reply('You do not have permission to set up reaction muting. <:smirk2:1498272372539785286>');
         }
 
         const me = message.guild.members.me;
         if (!me) {
-            return message.reply('I could not verify my own permissions.');
+            return message.reply('I could not verify my own permissions. <:smirk2:1498272372539785286>');
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
-            return message.reply('I need the **Manage Roles** permission to create the reaction mute role.');
+            return message.reply('I need the **Manage Roles** permission to create the reaction mute role. <:smirk2:1498272372539785286>');
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageChannels)) {
-            return message.reply('I need the **Manage Channels** permission to apply reaction restrictions to channels.');
+            return message.reply('I need the **Manage Channels** permission to apply reaction restrictions to channels. <:smirk2:1498272372539785286>');
         }
 
         let role = message.guild.roles.cache.find(function(role) { return role.name === ROLE_NAME });

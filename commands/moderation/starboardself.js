@@ -7,7 +7,7 @@ module.exports = {
 
     async execute(message, args) {
         if (!message.guild || !message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-            return message.reply('You need the `Manage Server` permission to configure the starboard.');
+            return message.reply('You need the `Manage Server` permission to configure the starboard. <:smirk2:1498272372539785286>');
         }
 
         const value = args[0]?.toLowerCase();

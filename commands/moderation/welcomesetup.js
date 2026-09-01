@@ -5,7 +5,7 @@ module.exports = {
   name: 'welcomesetup',
   aliases: ['ws'],
   async execute(message, args) {
-    if (!message.member.permissions.has('Administrator')) return message.reply('You need Administrator permissions.');
+    if (!message.member.permissions.has('Administrator')) return message.reply('You need Administrator permissions. <:smirk2:1498272372539785286>');
 
     const channel = message.mentions.channels.first();
     if (!channel) return message.reply('Usage: ,welcomesetup #channel');

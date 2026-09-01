@@ -81,21 +81,21 @@ module.exports = {
 
         if (!me) {
             return interaction.reply({
-                content: 'I could not verify my own permissions.',
+                content: 'I could not verify my own permissions. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
-                content: 'I need the **Manage Roles** permission to create the reaction mute role.',
+                content: 'I need the **Manage Roles** permission to create the reaction mute role. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: 'I need the **Manage Channels** permission to apply reaction restrictions to channels.',
+                content: 'I need the **Manage Channels** permission to apply reaction restrictions to channels. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }

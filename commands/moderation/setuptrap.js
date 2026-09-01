@@ -26,15 +26,15 @@ module.exports = {
             !message.member.permissions.has(PermissionsBitField.Flags.Administrator) &&
             message.author.id !== message.guild.ownerId
         ) {
-            return message.reply('You need Manage Server permission to run this command.');
+            return message.reply('You need Manage Server permission to run this command. <:smirk2:1498272372539785286>');
         }
 
         if (!message.guild.members.me.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return message.reply('I need Manage Channels permission to create the trap channel.');
+            return message.reply('I need Manage Channels permission to create the trap channel. <:smirk2:1498272372539785286>');
         }
 
         if (!message.guild.members.me.permissions.has(PermissionsBitField.Flags.BanMembers)) {
-            return message.reply('I need Ban Members permission before the trap system can be enabled.');
+            return message.reply('I need Ban Members permission before the trap system can be enabled. <:smirk2:1498272372539785286>');
         }
 
         const config = await readGuildConfig(message.guild.id);

@@ -26,7 +26,7 @@ module.exports = {
             interaction.user.id !== interaction.guild.ownerId
         ) {
             return interaction.reply({
-                content: 'You do not have the required permissions to run this command.',
+                content: 'You do not have the required permissions to run this command. <:smirk2:1498272372539785286>',
                 ephemeral: true
             });
         }

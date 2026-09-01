@@ -6,7 +6,7 @@ module.exports = {
   aliases: ['unmute', 'uto'],
   async execute(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return message.reply('You do not have permission to remove timeouts.');
+      return message.reply('You do not have permission to remove timeouts. <:smirk2:1498272372539785286>');
     }
 
     const target = message.mentions.members.first();
