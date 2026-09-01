@@ -274,7 +274,7 @@ client.on('interactionCreate', async (interaction) => {
     try {
         if (await handleVoiceMasterInteraction(interaction)) return;
 
-        if (!interaction.isChatInputCommand()) return;
+        if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) return;
 
         const cmd = client.slashCommands.get(interaction.commandName);
         if (!cmd) return;
