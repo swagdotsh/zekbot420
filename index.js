@@ -68,6 +68,7 @@ const client = new Client({
 client.commands = new Collection();
 client.slashCommands = new Collection();
 client.snipes = new Map();
+client.editSnipes = new Map();
 client.reactionSnipes = new Map();
 
 const EMPTY_VC_GRACE_MS = 15*1000; // 15 seconds then the bot leaves IF its playing music
@@ -346,6 +347,13 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
         if (!oldContent.length && !newContent.length) return;
         if (oldContent === newContent) return;
 
+        client.editSnipes.set(newMessage.channel.id, {
+            oldContent,
+            newContent,
+            user: newMessage.author,
+            timestamp: Date.now(),
+        });
+
         await logMessageEdit(client, oldMessage, newMessage);
     } catch (error) {
         console.error('Failed to log message edit:', error);
@@ -500,3 +508,4 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 });
 
 require('./storesnipe')(client);
+require('./starboardHandler')(client);
