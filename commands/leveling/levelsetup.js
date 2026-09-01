@@ -1,4 +1,4 @@
-const { setConfig } = require('../../leveling');
+const { getConfig, setConfig } = require('../../leveling');
 
 module.exports = {
     name: 'levelsetup',
@@ -6,6 +6,13 @@ module.exports = {
     async execute(message, args) {
         if (!message.member.permissions.has('ManageGuild')) {
             return message.reply('You need the **Manage Server** permission to run this. <:smirk2:1498272372539785286>');
+        }
+
+        const existingConfig = await getConfig(message.guild.id);
+        if (existingConfig) {
+            return message.reply(
+                `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`,rank\`, \`,leaderboard\`, or \`,lvlrole <level> @role\` to manage it. <:smirk2:1498272372539785286>`
+            );
         }
 
         const flags = {};

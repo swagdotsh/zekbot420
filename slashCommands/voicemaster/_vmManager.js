@@ -145,7 +145,7 @@ async function setupVoiceMaster(interaction) {
 
         if (existingChannel) {
             return interaction.reply({
-                content: `VoiceMaster is already set up: ${existingChannel}`,
+                content: `VoiceMaster is already set up: ${existingChannel}. Use \`/lvc\`, \`/dvc\`, \`/kvc\`, \`/rmvc\`, or \`/unsetupvm\` to manage it. <:smirk2:1498272372539785286>`,
                 ephemeral: true,
             });
         }

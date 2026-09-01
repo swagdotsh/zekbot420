@@ -72,7 +72,8 @@ module.exports = {
                     `# ⚠️ Reaction mute is already set up.\n` +
                     `Role: **${config.roleName}** (ID: ${config.roleId})\n` +
                     `Set up by: **${setupByTag}**\n` +
-                    `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>`,
+                    `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>\n` +
+                    `Use \`/reactionmute\` or \`/unreactionmute\` to manage it. <:smirk2:1498272372539785286>`,
                 ephemeral: true
             });
         }

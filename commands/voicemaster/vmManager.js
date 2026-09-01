@@ -395,7 +395,9 @@ async function setupVoiceMaster(message) {
     if (existingConfig.joinChannelId) {
         const existingChannel = guild.channels.cache.get(existingConfig.joinChannelId);
         if (existingChannel) {
-            return message.reply(`VoiceMaster is already set up: ${existingChannel}`);
+            return message.reply(
+                `VoiceMaster is already set up: ${existingChannel}. Use \`,lvc\`, \`,dvc\`, \`,kvc\`, \`,rmvc\`, or \`,unsetupvm\` to manage it. <:smirk2:1498272372539785286>`
+            );
         }
     }
 

@@ -5,7 +5,7 @@ const {
     ComponentType,
     PermissionFlagsBits,
 } = require('discord.js');
-const { deleteConfig, updateConfig } = require('../../starboardHandler');
+const { deleteConfig, readConfig, updateConfig } = require('../../starboardHandler');
 
 module.exports = {
     name: 'starboard',
@@ -49,6 +49,13 @@ module.exports = {
                     components: [],
                 }).catch(() => null);
             }
+        }
+
+        const existingConfig = await readConfig(message.guild.id);
+        if (existingConfig.channelId) {
+            return message.reply(
+                `Starboard is already configured in <#${existingConfig.channelId}>. Use \`,starboardthreshold <number>\`, \`,starboardself <yes:no>\`, or \`,staremoji <emoji>\` to manage it. Use \`,starboard off\` to remove it. <:smirk2:1498272372539785286>`
+            );
         }
 
         const channel = message.mentions.channels.first();

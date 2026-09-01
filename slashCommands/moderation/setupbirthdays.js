@@ -82,6 +82,12 @@ module.exports = {
         const config = await loadConfig();
         const existingGuildConfig = config[interaction.guild.id] ?? {};
 
+        if (existingGuildConfig.roleId || existingGuildConfig.channelId) {
+            return interaction.editReply(
+                'Birthday system is already configured. Use `/setbirthday`, `/birthdays`, or `/removebirthday` to manage it. <:smirk2:1498272372539785286>'
+            );
+        }
+
         let birthdayRole = existingGuildConfig.roleId
             ? interaction.guild.roles.cache.get(existingGuildConfig.roleId)
             : null;

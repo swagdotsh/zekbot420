@@ -117,6 +117,13 @@ module.exports = {
     }
 
     const config = await readGuildConfig(guildId);
+    if (config.channelId) {
+      return message.reply({
+        content:
+          `Modlog is already configured in <#${config.channelId}>. Use \`,modlog off\` to disable it, then run \`,modlog #channel\` to choose another channel. AutoMod alerts can be managed with \`/automod words\`. <:smirk2:1498272372539785286>`,
+      });
+    }
+
     config.channelId = channel.id;
     await writeGuildConfig(guildId, config);
 

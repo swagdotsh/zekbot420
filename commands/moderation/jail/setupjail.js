@@ -8,6 +8,13 @@ module.exports = {
         }
 
         const guild = message.guild;
+        const existingConfig = await getJailConfig(guild.id);
+
+        if (existingConfig) {
+            return message.reply(
+                'Jail is already configured. Use `,jail @user <duration>`, `,unjail @user`, or `,unsetupjail` to manage it. <:smirk2:1498272372539785286>'
+            );
+        }
 
         let jailRole = guild.roles.cache.find(r => r.name === 'Jailed');
         if (!jailRole) {

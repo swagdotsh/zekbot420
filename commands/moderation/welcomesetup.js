@@ -14,6 +14,13 @@ module.exports = {
     const configPath = path.join(guildDir, 'welcomeConfig.json');
 
     try {
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        if (config.channelId) {
+          return message.reply(`Welcome messages are already configured in <#${config.channelId}>. Use \`,welcomesetup #channel\` after removing the saved configuration if you need to change it. <:smirk2:1498272372539785286>`);
+        }
+      }
+
       fs.mkdirSync(guildDir, { recursive: true });
       console.log('[welcomesetup] saving to:', configPath);
       fs.writeFileSync(configPath, JSON.stringify({ channelId: channel.id }, null, 2));

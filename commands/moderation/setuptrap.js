@@ -40,7 +40,9 @@ module.exports = {
         const config = await readGuildConfig(message.guild.id);
 
         if (config.trapChannelId && message.guild.channels.cache.has(config.trapChannelId)) {
-            return message.reply(`A trap channel is already configured: <#${config.trapChannelId}>`);
+            return message.reply(
+                `A trap channel is already configured: <#${config.trapChannelId}>. Use \`,trapstats\` to review it or \`,removetrap\` to disable it. <:smirk2:1498272372539785286>`
+            );
         }
 
         const mentionedRoleIds = extractRoleIds(message);
