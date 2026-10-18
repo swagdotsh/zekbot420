@@ -109,23 +109,27 @@ module.exports = {
         console.log('Error fetching track info:', err.response?.data || err.message);
       }
 
-      const playsText =
-          typeof userPlayCount === 'number' && Number.isFinite(userPlayCount)
-              ? ` • ${userPlayCount.toLocaleString()} play${userPlayCount === 1 ? '' : 's'}`
-              : '';
-
-      const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
       const streak = consecutivePlayStreak(recentTracks);
-      const streakText = streak > 5 ? ` • 🔥 ${ordinal(streak)} play in a row!` : '';
+      const footerParts = [];
+      if (userLoved) footerParts.push('❤️ Loved track');
+      if (typeof userPlayCount === 'number' && Number.isFinite(userPlayCount)) {
+        footerParts.push(`${userPlayCount.toLocaleString()} track scrobble${userPlayCount === 1 ? '' : 's'}`);
+      }
+      if (streak > 5) footerParts.push(`🔥 ${ordinal(streak)} in a row!`);
+
+      const displayName = message.member?.displayName || message.author.displayName || message.author.username;
 
       const embed = {
         color: embedColor,
-        author: { name: isPlaying ? 'Now Playing' : 'Last Played' },
+        author: {
+          name: `${isPlaying ? 'Now playing' : 'Last played'} for ${displayName}`,
+          iconURL: message.author.displayAvatarURL({ extension: 'png', size: 128 }),
+        },
         title: song,
         url: trackUrl || undefined,
-        description: `**${artist}**${album ? ` - *${album}*` : ''}`,
+        description: `**${artist}**${album ? ` • *${album}*` : ''}`,
         thumbnail: albumArt ? { url: albumArt } : null,
-        footer: { text: `${footerLabel} • ${username}${playsText}${streakText}` }
+        footer: { text: footerParts.join(' • ') || 'Last.fm' }
       };
 
       message.reply({ embeds: [embed] });
