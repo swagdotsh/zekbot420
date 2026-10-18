@@ -14,3 +14,16 @@ const inviteLink = "https://discord.com/oauth2/authorize?client_id="+clientId+"&
 console.log('Your bot invite link:');
 console.log(inviteLink);
 console.log('Permissions set: Administrator')
+
+// Pass --copy to also put the link on your clipboard.
+if (process.argv.includes('--copy')) {
+    const { execSync } = require('child_process');
+    const clipboardCmd = { win32: 'clip', darwin: 'pbcopy' }[process.platform]
+        || (process.env.WAYLAND_DISPLAY ? 'wl-copy' : 'xclip -selection clipboard');
+    try {
+        execSync(clipboardCmd, { input: inviteLink });
+        console.log('Copied to clipboard!');
+    } catch {
+        console.log(`Couldn't copy to clipboard (${clipboardCmd} not available), copy the link above manually.`);
+    }
+}
