@@ -1,5 +1,6 @@
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { getStickyRolesEnabled, addUserStickyRole, removeUserStickyRole, getUserStickyRoles } = require('../../../stickyrolesDbHndlr');
+const { roleAssignBlocker } = require('../../../hierarchy');
 
 module.exports = {
   name: 'userstickyroles',
@@ -41,6 +42,9 @@ module.exports = {
 
     try {
       if (action === 'add') {
+        const blocker = roleAssignBlocker(message.member, role);
+        if (blocker) return message.reply(`${blocker} <:smirk2:1498272372539785286>`);
+
         await addUserStickyRole(message.guild.id, user.id, role.id);
         const embed = new EmbedBuilder()
           .setColor('#00ff88')

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { ManagedChannelMap, loadManagedChannels } = require('../../voicemasterStore');
 const path = require('path');
 const {
     ActionRowBuilder,
@@ -29,7 +30,7 @@ function ensureState(client) {
     if (!client.voiceMaster) {
         client.voiceMaster = {
             configs: new Map(),
-            channels: new Map(),
+            channels: new ManagedChannelMap(),
             ownerLeaveTimers: new Map(),
         };
     }
@@ -600,28 +601,56 @@ async function handleOwnerLeave(oldState, newState) {
     const oldChannel = oldState.channel;
     if (!oldChannel) return;
 
-    const existingTimer = state.ownerLeaveTimers.get(oldChannelId);
+    scheduleOwnerLeaveCheck(client, oldChannelId, managed);
+}
+
+// Deletes the VC if its owner still isn't back after the grace period
+function scheduleOwnerLeaveCheck(client, channelId, managed) {
+    const state = ensureState(client);
+
+    const existingTimer = state.ownerLeaveTimers.get(channelId);
     if (existingTimer) clearTimeout(existingTimer);
 
     const timer = setTimeout(async () => {
-        const latest = await client.channels.fetch(oldChannelId).catch(() => null);
+        const latest = await client.channels.fetch(channelId).catch(() => null);
 
         if (!latest) {
-            state.channels.delete(oldChannelId);
-            state.ownerLeaveTimers.delete(oldChannelId);
+            state.channels.delete(channelId);
+            state.ownerLeaveTimers.delete(channelId);
             return;
         }
 
         const ownerStillInside = latest.members?.has(managed.ownerId);
 
         if (!ownerStillInside) {
-            await deleteManagedChannel(client, oldChannelId, 'VoiceMaster owner left for more than 5 minutes');
+            await deleteManagedChannel(client, channelId, 'VoiceMaster owner left for more than 5 minutes');
         } else {
-            state.ownerLeaveTimers.delete(oldChannelId);
+            state.ownerLeaveTimers.delete(channelId);
         }
     }, OWNER_GRACE_MS);
 
-    state.ownerLeaveTimers.set(oldChannelId, timer);
+    state.ownerLeaveTimers.set(channelId, timer);
+}
+
+// Picks the saved temp VCs back up after a restart, cleaning up ones that emptied while the bot was down
+async function restoreManagedChannels(client) {
+    const state = ensureState(client);
+
+    for (const entry of loadManagedChannels()) {
+        const channel = await client.channels.fetch(entry.channelId).catch(() => null);
+        if (!channel) continue;
+
+        state.channels.set(entry.channelId, entry);
+
+        if (channel.members.size === 0) {
+            await deleteManagedChannel(client, entry.channelId, 'VoiceMaster temporary VC was empty after a restart');
+        } else if (!channel.members.has(entry.ownerId)) {
+            scheduleOwnerLeaveCheck(client, entry.channelId, entry);
+        }
+    }
+
+    // drops VCs that were deleted while the bot was offline
+    state.channels.save();
 }
 
 async function handleOwnerReturn(oldState, newState) {
@@ -677,4 +706,5 @@ module.exports = {
     deleteManagedChannel,
     handleVoiceStateUpdate,
     handleVoiceMasterInteraction,
+    restoreManagedChannels,
 };

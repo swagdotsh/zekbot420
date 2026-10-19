@@ -57,7 +57,7 @@ module.exports = {
                 },
                 {
                     name: 'Loop',
-                    value: "`"+session.loopMode || 'off'+"`",
+                    value: "`" + (session.loopMode || 'off') + "`",
                     inline: true
                 }
             )

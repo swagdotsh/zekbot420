@@ -22,7 +22,9 @@ module.exports = (client) => {
                 .setAuthor({ name: member.guild.name, iconURL: member.guild.iconURL() })
                 .setFooter({ text: `${member.guild.name} is now at ${member.guild.memberCount} members.` });
 
-            channel.send({ content: `Welcome ${member}!`, embeds: [embed] });
+            channel.send({ content: `Welcome ${member}!`, embeds: [embed] }).catch((err) => {
+                console.error('[welcoming] failed to send welcome:', err);
+            });
         } catch (err) {
             console.error('[welcoming]', err);
         }

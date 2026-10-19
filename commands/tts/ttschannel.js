@@ -16,7 +16,7 @@ module.exports = {
 
             // no channel given = use the one the command was ran in
             const channel = args[0]
-                ? message.mentions.channels.first() || message.guild.channels.cache.get(args[0])
+                ? message.mentions.channels.find(c => c.guildId === message.guild.id) || message.guild.channels.cache.get(args[0])
                 : message.channel;
 
             if (!channel || !channel.isTextBased()) {

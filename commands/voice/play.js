@@ -1,24 +1,14 @@
-const {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  VoiceConnectionStatus,
-  StreamType,
-  entersState
-} = require('@discordjs/voice');
+const { getOrCreateSession, playNext, cleanupTrack } = require('../../musicPlayer');
 const { PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const play = require('play-dl');
 const FFPROBE_BIN = process.env.FFPROBE_PATH || 'ffprobe';
 
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 
 const execFileAsync = promisify(execFile);
-const INACTIVITY_MS = 2 * 60 * 1000;
 
 async function probeAudio(filePath) {
   try {
@@ -45,68 +35,6 @@ async function probeAudio(filePath) {
     };
   } catch {
     return null;
-  }
-}
-
-function cleanupTrack(track) {
-  if (track?.sourceType === 'local' && track?.filePath && fs.existsSync(track.filePath)) {
-    fs.unlinkSync(track.filePath);
-  }
-}
-
-async function buildResourceForTrack(track) {
-  if (track?.sourceType === 'soundcloud') {
-    const stream = await play.stream(track.url);
-    return createAudioResource(stream.stream, {
-      inputType: stream.type || StreamType.Arbitrary
-    });
-  }
-
-  return createAudioResource(track.filePath);
-}
-
-async function playNextInQueue(client, guildId) {
-  const session = client.voiceSessions?.get(guildId);
-  if (!session) return;
-
-  const nextTrack = session.queue.shift();
-
-  if (!nextTrack) {
-    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
-
-    session.inactivityTimeout = setTimeout(async () => {
-      const latest = client.voiceSessions?.get(guildId);
-      if (!latest) return;
-      if (latest.current || (latest.queue && latest.queue.length > 0)) return;
-
-      const channel = latest.textChannelId ? await client.channels.fetch(latest.textChannelId).catch(() => null) : null;
-
-      if (latest.connection) latest.connection.destroy();
-      client.voiceSessions.delete(guildId);
-
-      if (channel?.isTextBased()) {
-        await channel.send('Left voice channel after 2 minutes of inactivity.');
-      }
-    }, INACTIVITY_MS);
-
-    return;
-  }
-
-  if (session.inactivityTimeout) {
-    clearTimeout(session.inactivityTimeout);
-    session.inactivityTimeout = null;
-  }
-
-  try {
-    nextTrack.startedAt = Date.now();
-    session.current = nextTrack;
-    const resource = await buildResourceForTrack(nextTrack);
-    session.player.play(resource);
-  } catch (err) {
-    console.error('Failed to build/play track resource:', err);
-    cleanupTrack(nextTrack);
-    session.current = null;
-    await playNextInQueue(client, guildId);
   }
 }
 
@@ -163,73 +91,7 @@ module.exports = {
         return message.reply("I'm in TTS mode right now. Use `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>");
       }
 
-      if (!session) {
-        const connection = joinVoiceChannel({
-          channelId: voiceChannel.id,
-          guildId: message.guild.id,
-          adapterCreator: message.guild.voiceAdapterCreator,
-          selfDeaf: true
-        });
-
-        await entersState(connection, VoiceConnectionStatus.Ready, 30000);
-
-        const player = createAudioPlayer();
-        connection.subscribe(player);
-
-        session = {
-          connection,
-          player,
-          current: null,
-          queue: [],
-          textChannelId: message.channel.id,
-          inactivityTimeout: null,
-          loopMode: 'off',
-          supportsSc: true
-        };
-
-        message.client.voiceSessions.set(message.guild.id, session);
-
-        player.on(AudioPlayerStatus.Idle, async () => {
-          const activeSession = message.client.voiceSessions.get(message.guild.id);
-          if (!activeSession) return;
-
-          if (activeSession.loopMode === 'track' && activeSession.current) {
-            try {
-              activeSession.current.startedAt = Date.now();
-              const resource = await buildResourceForTrack(activeSession.current);
-              activeSession.player.play(resource);
-              return;
-            } catch (err) {
-              console.error('Loop track replay failed:', err);
-              cleanupTrack(activeSession.current);
-              activeSession.current = null;
-              await playNextInQueue(message.client, message.guild.id);
-              return;
-            }
-          }
-
-          if (activeSession.loopMode === 'queue' && activeSession.current) {
-            activeSession.queue.push(activeSession.current);
-          } else {
-            cleanupTrack(activeSession.current);
-          }
-
-          activeSession.current = null;
-          await playNextInQueue(message.client, message.guild.id);
-        });
-
-        player.on('error', async (err) => {
-          console.error('Audio player error:', err);
-
-          const activeSession = message.client.voiceSessions.get(message.guild.id);
-          if (!activeSession) return;
-
-          cleanupTrack(activeSession.current);
-          activeSession.current = null;
-
-          await playNextInQueue(message.client, message.guild.id);
-        });
-      }
+      if (!session) session = await getOrCreateSession(message, voiceChannel);
 
       session.textChannelId = message.channel.id;
 
@@ -241,7 +103,7 @@ module.exports = {
       session.queue.push(track);
 
       if (!session.current) {
-        await playNextInQueue(message.client, message.guild.id);
+        await playNext(message.client, message.guild.id);
         return message.reply(`Playing now: **${track.attachment.name}**`);
       }
 

@@ -1,21 +1,11 @@
-const {
-    joinVoiceChannel,
-    createAudioPlayer,
-    createAudioResource,
-    AudioPlayerStatus,
-    VoiceConnectionStatus,
-    StreamType,
-    entersState
-} = require('@discordjs/voice');
+const { getOrCreateSession, playNext } = require('../../musicPlayer');
 const { PermissionsBitField } = require('discord.js');
-const { spawn, execFile } = require('child_process');
+const { execFile } = require('child_process');
 const { promisify } = require('util');
 
 const execFileAsync = promisify(execFile);
 
 const YTDLP_BIN = process.env.YTDLP_PATH || 'yt-dlp';
-const FFMPEG_BIN = process.env.FFMPEG_PATH || require('ffmpeg-static') || 'ffmpeg';
-const INACTIVITY_MS = 2 * 60 * 1000;
 const MAX_TRACK_DURATION_SEC = 7 * 60;
 
 function formatDuration(seconds) {
@@ -76,121 +66,6 @@ async function getTrackInfo(input) {
     };
 }
 
-function createYtDlpFfmpegStream(track) {
-    const ytDlp = spawn(YTDLP_BIN, [
-        '-f',
-        'bestaudio/best',
-        '--no-playlist',
-        '--no-warnings',
-        '--quiet',
-        '-o',
-        '-',
-        track.url
-    ], {
-        stdio: ['ignore', 'pipe', 'pipe']
-    });
-
-    const ffmpeg = spawn(FFMPEG_BIN, [
-        '-hide_banner',
-        '-loglevel',
-        'error',
-        '-i',
-        'pipe:0',
-        '-f',
-        's16le',
-        '-ar',
-        '48000',
-        '-ac',
-        '2',
-        'pipe:1'
-    ], {
-        stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    ytDlp.stdout.pipe(ffmpeg.stdin);
-
-    ytDlp.stderr.on('data', (chunk) => {
-        const text = chunk.toString().trim();
-        if (text) console.error(`yt-dlp stderr: ${text}`);
-    });
-
-    ffmpeg.stderr.on('data', (chunk) => {
-        const text = chunk.toString().trim();
-        if (text) console.error(`ffmpeg stderr: ${text}`);
-    });
-
-    ytDlp.on('error', (err) => {
-        console.error('Failed to start yt-dlp:', err);
-        ffmpeg.stdin.destroy();
-    });
-
-    ffmpeg.on('error', (err) => {
-        console.error('Failed to start ffmpeg:', err);
-        ytDlp.kill('SIGKILL');
-    });
-
-    ffmpeg.stdout.on('close', () => {
-        ytDlp.kill('SIGKILL');
-    });
-
-    return ffmpeg.stdout;
-}
-
-async function buildResourceForTrack(track) {
-    const stream = createYtDlpFfmpegStream(track);
-
-    return createAudioResource(stream, {
-        inputType: StreamType.Raw
-    });
-}
-
-async function playNextInQueue(client, guildId) {
-    const session = client.voiceSessions?.get(guildId);
-    if (!session) return;
-
-    const nextTrack = session.queue.shift();
-
-    if (!nextTrack) {
-        if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
-
-        session.inactivityTimeout = setTimeout(async () => {
-            const latest = client.voiceSessions?.get(guildId);
-            if (!latest) return;
-            if (latest.current || latest.queue.length > 0) return;
-
-            const channel = latest.textChannelId
-                ? await client.channels.fetch(latest.textChannelId).catch(() => null)
-                : null;
-
-            if (latest.connection) latest.connection.destroy();
-            client.voiceSessions.delete(guildId);
-
-            if (channel?.isTextBased()) {
-                await channel.send('Left voice channel after 2 minutes of inactivity.');
-            }
-        }, INACTIVITY_MS);
-
-        return;
-    }
-
-    if (session.inactivityTimeout) {
-        clearTimeout(session.inactivityTimeout);
-        session.inactivityTimeout = null;
-    }
-
-    try {
-        nextTrack.startedAt = Date.now();
-        session.current = nextTrack;
-
-        const resource = await buildResourceForTrack(nextTrack);
-        session.player.play(resource);
-    } catch (err) {
-        console.error('Failed to build/play YouTube resource:', err);
-        session.current = null;
-        await playNextInQueue(client, guildId);
-    }
-}
-
 module.exports = {
     name: 'yt',
     aliases: ['youtube'],
@@ -240,70 +115,7 @@ module.exports = {
                 return loadingMessage.edit("I'm in TTS mode right now. Use `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>");
             }
 
-            if (!session) {
-                const connection = joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: message.guild.id,
-                    adapterCreator: message.guild.voiceAdapterCreator,
-                    selfDeaf: true
-                });
-
-                await entersState(connection, VoiceConnectionStatus.Ready, 30000);
-
-                const player = createAudioPlayer();
-                connection.subscribe(player);
-
-                session = {
-                    connection,
-                    player,
-                    current: null,
-                    queue: [],
-                    textChannelId: message.channel.id,
-                    inactivityTimeout: null,
-                    loopMode: 'off',
-                    supportsSc: true,
-                    supportsYt: true
-                };
-
-                message.client.voiceSessions.set(message.guild.id, session);
-
-                player.on(AudioPlayerStatus.Idle, async () => {
-                    const activeSession = message.client.voiceSessions.get(message.guild.id);
-                    if (!activeSession) return;
-
-                    if (activeSession.loopMode === 'track' && activeSession.current) {
-                        try {
-                            activeSession.current.startedAt = Date.now();
-
-                            const resource = await buildResourceForTrack(activeSession.current);
-                            activeSession.player.play(resource);
-                            return;
-                        } catch (err) {
-                            console.error('YouTube loop replay failed:', err);
-                            activeSession.current = null;
-                            await playNextInQueue(message.client, message.guild.id);
-                            return;
-                        }
-                    }
-
-                    if (activeSession.loopMode === 'queue' && activeSession.current) {
-                        activeSession.queue.push(activeSession.current);
-                    }
-
-                    activeSession.current = null;
-                    await playNextInQueue(message.client, message.guild.id);
-                });
-
-                player.on('error', async (err) => {
-                    console.error('YouTube audio player error:', err);
-
-                    const activeSession = message.client.voiceSessions.get(message.guild.id);
-                    if (!activeSession) return;
-
-                    activeSession.current = null;
-                    await playNextInQueue(message.client, message.guild.id);
-                });
-            }
+            if (!session) session = await getOrCreateSession(message, voiceChannel);
 
             session.textChannelId = message.channel.id;
 
@@ -312,14 +124,13 @@ module.exports = {
                 session.inactivityTimeout = null;
             }
 
-            session.supportsYt = true;
             session.queue.push(track);
 
             const displayName = `${track.title} - ${track.uploader}`;
             const duration = track.durationRaw !== 'Unknown' ? ` \`${track.durationRaw}\`` : '';
 
             if (!session.current) {
-                await playNextInQueue(message.client, message.guild.id);
+                await playNext(message.client, message.guild.id);
                 return loadingMessage.edit(`Playing now: **${displayName}**${duration}`);
             }
 

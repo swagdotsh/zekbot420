@@ -6,6 +6,12 @@ module.exports = (client) => {
   client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
 
+    // uncached messages have no author or content, still log the deletion but don't store an empty snipe
+    if (message.partial || !message.author) {
+      await logMessageDeletion(client, message, message.author);
+      return;
+    }
+
     const snipes = client.snipes.get(message.channel.id) || [];
 
     const attachments = message.attachments?.size

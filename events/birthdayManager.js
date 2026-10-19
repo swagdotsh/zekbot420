@@ -94,8 +94,8 @@ async function handleBirthdayEntry(client, birthdays, key, birthday, config) {
         await member.roles.add(role).catch(console.error);
     }
 
+    // announce once any time on their day, so a restart or timer drift around midnight doesn't skip it
     if (birthday.lastCelebratedDate === celebratedKey) return;
-    if (localDate.hour !== 0 || localDate.minute !== 0) return;
 
     const channel = guild.channels.cache.get(guildConfig.channelId);
     if (!channel) return;

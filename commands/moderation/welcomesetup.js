@@ -7,10 +7,10 @@ module.exports = {
   async execute(message, args) {
     if (!message.member.permissions.has('Administrator')) return message.reply('You need Administrator permissions. <:smirk2:1498272372539785286>');
 
-    const channel = message.mentions.channels.first();
+    const channel = message.mentions.channels.find(c => c.guildId === message.guild.id);
     if (!channel) return message.reply('Usage: ,welcomesetup #channel');
 
-    const guildDir = path.join(__dirname, '../data', message.guild.id);
+    const guildDir = path.join(__dirname, '../../data', message.guild.id);
     const configPath = path.join(guildDir, 'welcomeConfig.json');
 
     try {

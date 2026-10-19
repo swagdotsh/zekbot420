@@ -20,7 +20,6 @@ if (missingRuntimeConfig.length) {
 
 const {
     logMessageDeletion,
-    logSnipeClear,
     logMessageEdit,
     logMemberJoin,
     logMemberLeave,
@@ -38,6 +37,7 @@ const {
 const {
     handleVoiceStateUpdate,
     handleVoiceMasterInteraction,
+    restoreManagedChannels,
 } = require('./commands/voicemaster/vmManager');
 const {initDB} = require('./leveling');
 const {initJailDB} = require('./jailHandler');
@@ -51,6 +51,11 @@ const {startBirthdayLoop} = require('./events/birthdayManager');
 const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
+
+// Async event handlers that throw would otherwise kill the process
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled promise rejection:', error);
+});
 
 const client = new Client({
     intents: [
@@ -263,6 +268,7 @@ client.once('clientReady', async () => {
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
+    await restoreManagedChannels(client).catch((error) => console.error('Failed to restore VoiceMaster channels:', error));
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
     await require('./events/giveawayManager').execute(client); // LOL NO WAY THIS TOOK ME 3 MONTHS TO FIX
@@ -296,8 +302,9 @@ client.on('interactionCreate', async (interaction) => {
             ephemeral: true,
         };
 
-        if (interaction.deferred || interaction.replied) await interaction.followUp(payload);
-        else await interaction.reply(payload);
+        // the interaction may have expired, don't let that throw too
+        if (interaction.deferred || interaction.replied) await interaction.followUp(payload).catch(() => {});
+        else await interaction.reply(payload).catch(() => {});
     }
 });
 
@@ -325,13 +332,7 @@ client.on('messageCreate', async (message) => {
         await command.execute(message, args);
     } catch (error) {
         console.error(error);
-        await message.reply('There was an error executing that command.');
-    }
-});
-
-client.on('messageCreate', async message => {
-    if (message.content === ',cs' || message.content === ',clearsnipe') {
-        await logSnipeClear(client, message, message.author);
+        await message.reply('There was an error executing that command.').catch(() => {});
     }
 });
 
@@ -475,17 +476,24 @@ client.on('messageReactionAdd', async (reaction, user) => {
         }
     }
 
-    client.reactionSnipes.set(reaction.message.channel.id, {
+    const channelId = reaction.message.channel.id;
+    const snipe = {
         emoji: reaction.emoji.toString(),
         user: user.tag,
         message: reaction.message.content || '[no text]',
         messageAuthor: reaction.message.author?.tag || 'Unknown',
         time: Date.now()
-    });
+    };
+
+    client.reactionSnipes.set(channelId, snipe);
 
     setTimeout(() => {
-        client.reactionSnipes.delete(reaction.message.channel.id);
+        if (client.reactionSnipes.get(channelId) === snipe) client.reactionSnipes.delete(channelId);
     }, 60000);
+});
+
+client.on('error', (error) => {
+    console.error('Discord client error:', error);
 });
 
 client.login(process.env.TOKEN);

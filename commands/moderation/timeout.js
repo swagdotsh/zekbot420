@@ -1,5 +1,6 @@
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { logTimeout } = require('../../log');
+const { canModerate } = require('../../hierarchy');
 
 module.exports = {
   name: 'timeout',
@@ -16,11 +17,15 @@ module.exports = {
       return message.reply("You can't timeout yourself.");
     }
 
+    if (!target.moderatable) return message.reply('I can’t timeout that user.');
+    if (!canModerate(message.member, target)) return message.reply("You can't timeout someone with the same or higher role than you. <:smirk2:1498272372539785286>");
+
     const timeArg = args[1];
     const reason = args.slice(2).join(' ') || 'No reason specified';
 
     const time = parseDuration(timeArg);
     if (!time) return message.reply('Please provide a valid duration for the timeout (e.g., "1m", "1h", "1d").');
+    if (time > 28 * 24 * 60 * 60 * 1000) return message.reply('Timeouts can be at most 28 days.');
 
     try {
       await target.timeout(time, reason);
@@ -38,7 +43,7 @@ module.exports = {
         .setFooter({ text: `Server ID: ${message.guild.id}` })
         .setTimestamp();
 
-      await target.send({ embeds: [embed] });
+      await target.send({ embeds: [embed] }).catch(() => null); // DMs closed
       await logTimeout(message.client, message.guild, target, message.author, reason, timeArg);
       message.reply(`<:timeout:1370370278873497710>`);
     } catch (err) {

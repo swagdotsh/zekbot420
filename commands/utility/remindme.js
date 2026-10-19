@@ -37,7 +37,7 @@ module.exports = {
         message.reply(`Reminder set for ${dateArg}`);
 
         setTimeout(() => {
-            message.author.send(`⏰ Reminder: ${reason}`);
+            message.author.send(`⏰ Reminder: ${reason}`).catch(() => {}); // DMs closed
         }, delay);
     }
 };

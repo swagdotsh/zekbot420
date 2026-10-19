@@ -1,5 +1,6 @@
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { logKick } = require('../../log');
+const { canModerate } = require('../../hierarchy');
 
 module.exports = {
   name: 'kick',
@@ -10,6 +11,7 @@ module.exports = {
     const target = message.mentions.members.first();
     if (!target) return message.reply('Mention a user to kick.');
     if (!target.kickable) return message.reply('I can’t kick that user.');
+    if (!canModerate(message.member, target)) return message.reply("You can't kick someone with the same or higher role than you. <:smirk2:1498272372539785286>");
 
     const reason = args.slice(1).join(' ') || 'No reason specified';
 
