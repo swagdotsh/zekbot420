@@ -158,6 +158,11 @@ module.exports = {
 
       let session = message.client.voiceSessions.get(message.guild.id);
 
+      if (session?.mode === 'tts') {
+        cleanupTrack(track);
+        return message.reply("I'm in TTS mode right now. Use `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>");
+      }
+
       if (!session) {
         const connection = joinVoiceChannel({
           channelId: voiceChannel.id,
