@@ -3,23 +3,9 @@ const {
     PermissionFlagsBits,
     InteractionContextType
 } = require('discord.js');
-const { getJailConfig, unjailUser, getJailedUser } = require('../../../jailHandler');
+const { getJailConfig, getJailedUser } = require('../../../jailHandler');
 const { logUnjail } = require('../../../log');
-
-async function doUnjail(guild, userId) {
-    const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
-
-    if (!member) return false;
-
-    const savedRolesStr = await unjailUser(guild.id, userId);
-    const savedRoles = savedRolesStr ? savedRolesStr.split(',').filter(Boolean) : [];
-
-    const rolesToRestore = savedRoles.filter((id) => guild.roles.cache.has(id));
-
-    await member.roles.set(rolesToRestore, 'Unjailed');
-
-    return member;
-}
+const { doUnjail } = require('../../../commands/moderation/jail/unjail');
 
 module.exports = {
     data: new SlashCommandBuilder()

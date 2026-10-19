@@ -59,7 +59,18 @@ module.exports = {
                 });
             }
 
-            await channel.send(text);
+            const perms = interaction.member.permissionsIn(channel);
+            if (!perms.has(PermissionFlagsBits.SendMessages)) {
+                return interaction.reply({
+                    content: `You can't send messages in ${channel}.`,
+                    ephemeral: true
+                });
+            }
+
+            // only let @everyone/@here/role pings through if the user could do that themselves
+            const allowedMentions = perms.has(PermissionFlagsBits.MentionEveryone) ? undefined : { parse: ['users'] };
+
+            await channel.send({ content: text, allowedMentions });
 
             return interaction.reply({
                 content: `Sent your echo in ${channel}.`,

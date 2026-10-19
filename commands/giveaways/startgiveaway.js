@@ -31,7 +31,7 @@ module.exports = {
         if (!['dm:yes', 'dm:no'].includes(dmArg)) return message.reply(usage)
         const dmWinner = dmArg === 'dm:yes'
 
-        const channel = message.mentions.channels.first()
+        const channel = message.mentions.channels.find(c => c.guildId === message.guild.id)
         if (!channel) return message.reply('Please mention a valid channel.')
 
         const title = args.slice(3).join(' ')

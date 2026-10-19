@@ -1,5 +1,6 @@
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { getStickyRolesEnabled, addStickyRole } = require('../../../stickyrolesDbHndlr');
+const { roleAssignBlocker } = require('../../../hierarchy');
 
 module.exports = {
   name: 'addstickyrole',
@@ -32,6 +33,9 @@ module.exports = {
     if (!role) {
       return message.reply('Role not found. Usage: `,addstickyrole @role` or `,addstickyrole role_id`');
     }
+
+    const blocker = roleAssignBlocker(message.member, role);
+    if (blocker) return message.reply(`${blocker} <:smirk2:1498272372539785286>`);
 
     try {
       await addStickyRole(message.guild.id, role.id);
