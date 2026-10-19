@@ -48,6 +48,7 @@ const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
 const {handleAfkMessage} = require('./events/afkStore');
 const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
+const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
@@ -258,6 +259,7 @@ client.once('clientReady', async () => {
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
+    await initTtsDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
@@ -273,6 +275,12 @@ client.once('clientReady', async () => {
 client.on('interactionCreate', async (interaction) => {
     try {
         if (await handleVoiceMasterInteraction(interaction)) return;
+
+        if (interaction.isAutocomplete()) {
+            const cmd = client.slashCommands.get(interaction.commandName);
+            if (cmd?.autocomplete) await cmd.autocomplete(interaction).catch(console.error);
+            return;
+        }
 
         if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) return;
 
@@ -299,6 +307,7 @@ client.on('messageCreate', async (message) => {
         await handleMessageXP(message).catch(console.error);
         await handleAfkMessage(message).catch(console.error);
         await handleTrapMessage(message).catch(console.error);
+        await handleTtsMessage(message).catch(console.error);
     }
 
     if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
