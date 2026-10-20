@@ -6,6 +6,11 @@ module.exports = (client) => {
   client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
 
+    if (message.partial || !message.author) {
+      await logMessageDeletion(client, message, message.author);
+      return;
+    }
+
     const snipes = client.snipes.get(message.channel.id) || [];
 
     const attachments = message.attachments?.size

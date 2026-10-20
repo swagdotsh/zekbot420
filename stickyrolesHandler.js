@@ -1,4 +1,4 @@
-const { getStickyRolesEnabled, getUserStickyRoles, getStickyRoles, addUserStickyRole } = require('./stickyrolesDbHndlr');
+const { getStickyRolesEnabled, getUserStickyRoles, getStickyRoles, addUserStickyRole, removeUserStickyRole } = require('./stickyrolesDbHndlr');
 
 module.exports = {
   async handle(client) {
@@ -45,17 +45,24 @@ module.exports = {
         const enabled = await getStickyRolesEnabled(guildId);
         if (!enabled) return;
 
-         // Get newly added roles
-         const newRoles = newMember.roles.cache.difference(oldMember.roles.cache);
-         if (newRoles.size === 0) return;
+        if (oldMember.partial) return;
 
-         const stickyRolesList = await getStickyRoles(guildId);
-         const stickyRoleIds = stickyRolesList.map(r => r.role_id);
+        const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+        const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+        if (addedRoles.size === 0 && removedRoles.size === 0) return;
 
-        // For each newly added role, if it's in the sticky list, track it
-        for (const [roleId] of newRoles) {
+        const stickyRolesList = await getStickyRoles(guildId);
+        const stickyRoleIds = stickyRolesList.map(r => r.role_id);
+
+        for (const roleId of addedRoles.keys()) {
           if (stickyRoleIds.includes(roleId)) {
             await addUserStickyRole(guildId, newMember.id, roleId);
+          }
+        }
+
+        for (const roleId of removedRoles.keys()) {
+          if (stickyRoleIds.includes(roleId)) {
+            await removeUserStickyRole(guildId, newMember.id, roleId);
           }
         }
 
@@ -65,4 +72,3 @@ module.exports = {
     });
   }
 };
-

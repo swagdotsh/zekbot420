@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
 const { addUserStickyRole, removeUserStickyRole } = require('../../../stickyrolesDbHndlr');
+const { roleAssignBlocker } = require('../../../hierarchy');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -50,6 +51,9 @@ module.exports = {
 
         try {
             if (subcommand === 'add') {
+                const blocker = roleAssignBlocker(interaction.member, role);
+                if (blocker) return interaction.reply({ content: blocker, ephemeral: true });
+
                 await addUserStickyRole(interaction.guild.id, user.id, role.id);
                 const embed = new EmbedBuilder()
                     .setColor('#00ff88')

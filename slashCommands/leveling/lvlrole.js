@@ -4,7 +4,7 @@ const {
     InteractionContextType,
     EmbedBuilder
 } = require('discord.js');
-const { setLevelRole, getLevelRoles } = require('../../leveling');
+const { setLevelRole, removeLevelRole, getLevelRoles } = require('../../leveling');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -29,6 +29,18 @@ module.exports = {
                         .setName('role')
                         .setDescription('The role to assign at this level')
                         .setRequired(true)
+                )
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName('remove')
+                .setDescription('Stop giving a role at a specific level')
+                .addIntegerOption((opt) =>
+                    opt
+                        .setName('level')
+                        .setDescription('The level to remove the role from')
+                        .setRequired(true)
+                        .setMinValue(1)
                 )
         )
         .addSubcommand((subcommand) =>
@@ -61,6 +73,18 @@ module.exports = {
 
             return interaction.reply({
                 embeds: [embed],
+                ephemeral: true
+            });
+        }
+
+        if (subcommand === 'remove') {
+            const level = interaction.options.getInteger('level');
+            const roleId = await removeLevelRole(interaction.guild.id, level);
+
+            return interaction.reply({
+                content: roleId
+                    ? `<@&${roleId}> will no longer be given at level **${level}**.`
+                    : `There's no level role set for level **${level}**.`,
                 ephemeral: true
             });
         }

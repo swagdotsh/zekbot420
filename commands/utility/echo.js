@@ -43,6 +43,13 @@ module.exports = {
             return message.reply('Give me something to echo.');
         }
 
-        await targetChannel.send(text);
+        const perms = message.member.permissionsIn(targetChannel);
+        if (!perms.has(PermissionFlagsBits.SendMessages)) {
+            return message.reply(`You can't send messages in ${targetChannel}.`);
+        }
+
+        const allowedMentions = perms.has(PermissionFlagsBits.MentionEveryone) ? undefined : { parse: ['users'] };
+
+        await targetChannel.send({ content: text, allowedMentions });
     },
 };

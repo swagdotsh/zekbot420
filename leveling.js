@@ -99,6 +99,11 @@ async function setLevelRole(guildId, level, roleId) {
     `;
 }
 
+async function removeLevelRole(guildId, level) {
+    const rows = await sql`DELETE FROM level_roles WHERE guild_id = ${guildId} AND level = ${level} RETURNING role_id`;
+    return rows[0]?.role_id || null;
+}
+
 async function getLevelRoles(guildId) {
     return await sql`SELECT * FROM level_roles WHERE guild_id = ${guildId} ORDER BY level ASC`;
 }
@@ -130,6 +135,7 @@ module.exports = {
     upsertUser,
     getLeaderboard,
     setLevelRole,
+    removeLevelRole,
     getLevelRoles,
     startVcSession,
     endVcSession,

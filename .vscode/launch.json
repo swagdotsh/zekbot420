@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run bot",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Deploy commands",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/deploy-commands.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Deploy commands (global)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/deploy-commands.js",
+      "args": ["--global"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Copy invite link",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/geninv.js",
+      "args": ["--copy"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

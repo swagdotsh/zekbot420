@@ -38,9 +38,9 @@ async function handleVcXP(client, guildId, userId) {
 
     await upsertUser(guildId, userId, currentXp, newLevel, existing?.last_xp_time || 0);
 
-    if (leveledUp && config.level_channel) {
+    if (leveledUp) {
         const guild = client.guilds.cache.get(guildId);
-        const channel = guild?.channels.cache.get(config.level_channel);
+        const channel = config.level_channel ? guild?.channels.cache.get(config.level_channel) : null;
         if (channel) {
             await channel.send({
                 embeds: [{

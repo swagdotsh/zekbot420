@@ -1,7 +1,7 @@
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
-const { EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require('discord.js');
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const LEGACY_MODLOG_CONFIG_PATH = path.join(DATA_DIR, 'modlogConfig.json');
@@ -536,13 +536,19 @@ async function logRoleUpdate(_client, oldRole, newRole) {
 
   if (!changedFields.length) return;
 
+  const executor = await getRecentAuditLogExecutor(
+      newRole?.guild ?? oldRole?.guild,
+      AuditLogEvent.RoleUpdate,
+      newRole?.id
+  );
+
   const embed = baseEmbed({
     color: '#f1c40f',
     title: 'Role Updated',
     actor: newRole?.client?.user,
   }).addFields(
       { name: 'Role', value: roleDisplay(newRole), inline: true },
-      { name: 'Updated By', value: roleDisplay(exectutor), inline: true },
+      { name: 'Updated By', value: safeTag(executor), inline: true },
       relativeTimeField(),
       ...changedFields
   );
@@ -994,7 +1000,14 @@ async function logUnjail(_client, guild, target, moderator, expired = false) {
   }
 }
 
+async function logTicketEvent(guild, embed) {
+  const modlogChannel = await getModlogChannelFromGuild(guild);
+  if (!modlogChannel) return;
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
 module.exports = {
+  logTicketEvent,
   logMessageDeletion,
   logMessageEdit,
   logSnipeClear,

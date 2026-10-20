@@ -5,6 +5,7 @@ const {
     EmbedBuilder
 } = require('discord.js');
 const { logTimeout } = require('../../log');
+const { canModerate } = require('../../hierarchy');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -51,11 +52,32 @@ module.exports = {
             });
         }
 
+        if (!target.moderatable) {
+            return interaction.reply({
+                content: 'I can’t timeout that user.',
+                ephemeral: true
+            });
+        }
+
+        if (!canModerate(interaction.member, target)) {
+            return interaction.reply({
+                content: "You can't timeout someone with the same or higher role than you. <:smirk2:1498272372539785286>",
+                ephemeral: true
+            });
+        }
+
         const time = parseDuration(timeArg);
 
         if (!time) {
             return interaction.reply({
                 content: 'Please provide a valid duration for the timeout, for example `1m`, `1h`, or `1d`.',
+                ephemeral: true
+            });
+        }
+
+        if (time > 28 * 24 * 60 * 60 * 1000) {
+            return interaction.reply({
+                content: 'Timeouts can be at most 28 days.',
                 ephemeral: true
             });
         }

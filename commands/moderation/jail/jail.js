@@ -51,11 +51,12 @@ module.exports = {
         if (!jailRole || !jailChannel) return message.reply('Jail role or channel is missing. Re-run `,setupjail`.');
 
         const savedRoles = target.roles.cache
-            .filter(r => r.id !== guild.roles.everyone.id)
+            .filter(r => r.id !== guild.roles.everyone.id && !r.managed)
             .map(r => r.id)
             .join(',');
 
-        await target.roles.set([jailRole], 'Jailed by ' + message.author.tag);
+        const managedRoles = [...target.roles.cache.filter(r => r.managed).values()];
+        await target.roles.set([jailRole, ...managedRoles], 'Jailed by ' + message.author.tag);
         await jailUser(guild.id, target.id, savedRoles, expiresAt);
         await logJail(null, guild, target, message.member, durationMs ? formatDuration(durationMs) : null);
 

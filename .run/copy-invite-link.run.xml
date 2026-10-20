@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Copy invite link" type="NodeJSConfigurationType" application-parameters="--copy" path-to-js-file="geninv.js" working-dir="$PROJECT_DIR$">
+    <method v="2" />
+  </configuration>
+</component>

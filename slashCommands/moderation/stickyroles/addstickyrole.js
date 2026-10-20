@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
 const { addStickyRole } = require('../../../stickyrolesDbHndlr');
+const { roleAssignBlocker } = require('../../../hierarchy');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -17,6 +18,9 @@ module.exports = {
 
     async execute(interaction) {
         const role = interaction.options.getRole('role');
+
+        const blocker = roleAssignBlocker(interaction.member, role);
+        if (blocker) return interaction.reply({ content: blocker, ephemeral: true });
 
         try {
             await addStickyRole(interaction.guild.id, role.id);

@@ -5,6 +5,7 @@ const {
     EmbedBuilder
 } = require('discord.js');
 const { logBan } = require('../../log');
+const { canModerate } = require('../../hierarchy');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -40,6 +41,13 @@ module.exports = {
         if (!target.bannable) {
             return interaction.reply({
                 content: 'I can’t ban that user.',
+                ephemeral: true
+            });
+        }
+
+        if (!canModerate(interaction.member, target)) {
+            return interaction.reply({
+                content: "You can't ban someone with the same or higher role than you. <:smirk2:1498272372539785286>",
                 ephemeral: true
             });
         }

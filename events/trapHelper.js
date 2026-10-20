@@ -127,6 +127,14 @@ async function handleTrapMessage(message) {
 
     if (memberHasExemptRole(member, config.trapExemptRoleIds)) return;
 
+    if (member?.permissions.has(PermissionsBitField.Flags.ManageGuild)) return;
+
+    if (member && !member.bannable) {
+        await message.delete().catch(() => null);
+        console.warn(`Trap triggered by ${message.author.tag} in ${message.guild.id}, but they're above the bot and can't be banned.`);
+        return;
+    }
+
     const evidence = {
         content: message.content ?? '',
         attachments: message.attachments.map(attachment => ({
