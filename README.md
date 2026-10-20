@@ -33,7 +33,7 @@ Your favorite Discord bot's open-source alternative.
 - Warn system (warn, unwarn, list warnings)
 - Jail system
 - Sticky roles system
-- Giveways system
+- Giveaway system
 - Starboard system
 
 ### Leveling
@@ -70,12 +70,29 @@ Your favorite Discord bot's open-source alternative.
 - Info to see sample rate, bitrate, etc. of currently playing track
 - Queue system
 - Skip, stop, pause, resume controls
-- SoundCloud & YouTube support
+- YouTube, SoundCloud and Spotify searches and links
+- Spotify album/playlist queueing (playlists require a Spotify login)
+- Playback buttons, track/queue looping, and automatic cleanup when voice channels empty
 
 #### VoiceMaster
 - Setup a "Join to Create" voice channel system
 - Lock/unlock voice channels, kick users from channels, rename channels
 - Usable by any server member
+
+### Text-to-speech
+- Read voice channel chats and an optional text channel aloud
+- Per-user voices, language/region voice lists, and skip controls
+- Prefix commands plus `/tts` subcommands
+
+### Support tickets
+- Ticket panels, private support channels, support roles, and transcripts
+- Claim, rename, add/remove participants, and close tickets
+- Prefix commands plus `/ticket` subcommands
+
+### Sports notifications
+- Follow NFL and NBA players and teams
+- Big-play and game notifications in DMs or a configured server channel
+- `favplayer`, `favteam`, `nbaplayer`, `nbateam`, and `sportsnotify`
 
 ### Downloading
 - Download and share videos from pretty much any video service. [_If yt-dlp supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
@@ -84,39 +101,70 @@ Your favorite Discord bot's open-source alternative.
 
 ## Requirements
 
-- [**Node.js**](https://nodejs.org/en) (recommended: current LTS)
+- [**Node.js**](https://nodejs.org/en) (22.12.0 or later; the production server runs Node 22)
 - **npm** (comes with Node.js)
 - [**A Discord application + bot token**](https://discord.com/developers/applications)
 - **Permissions to add a bot to a server** (usually a role with `Manage Server`, or you can create a test server)
 - [**Neon**](https://neon.tech) (or another Postgres-compatible database; required by the current bot)
 
 ### Optional (depending on your use case)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (for video downloading features)
-- ffmpeg (required for audio playback in voice channel features, installs with `npm install` during install)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (required for online music extraction and optional video downloads)
+- FFmpeg (a static binary installs with the dependencies) and `ffprobe` on your PATH for music metadata
 - [Last.fm API key](https://www.last.fm/api) (for Last.fm integration features)
 ---
 
 ## Setting Up
-If you're interested in hosting your own version of zekbot420, visit the [Getting Started](https://github.com/swagdotsh/zekbot420/wiki/Getting-Started) wiki page. Everything you'll need to know is there from preresiquites to cloning the repo, installing packages and making the bot live is there. 
 
-If that's all good to go, read the [Configuration](https://github.com/swagdotsh/zekbot420/wiki/Configuration) page to learn how to set up modify zekbot420.
+See [Getting Started](https://github.com/swagdotsh/zekbot420/wiki/Getting-Started) for installation and [Configuration](https://github.com/swagdotsh/zekbot420/wiki/Configuration) for environment variables and optional integrations.
+
+```sh
+npm ci
+```
+
+Create `.env` in the project root with your own values:
+
+```dotenv
+TOKEN=your_discord_bot_token
+DISCORD_CLIENT_ID=your_application_id
+PREFIX=,
+NEON_DATABASE_URL=postgresql://your_connection_string
+# Optional: use a development server for guild command registration
+GUILD_ID=your_test_server_id
+```
+
+`TOKEN`, `PREFIX`, and `NEON_DATABASE_URL` are required to start. Command registration also requires `DISCORD_CLIENT_ID`. Keep `.env` and `data/` private and backed up.
 
 ## Running the bot
-Simply head to your project root and, in your terminal, run:
-```shell script
+
+For a foreground session:
+
+```sh
 node index.js
 ```
 
+For a persistent deployment:
 
-Or, if you prefer a package script (if present in `package.json`):
-
-```shell script
-npm run start
+```sh
+npm install -g pm2
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup
 ```
+
+Run the privileged command printed by `pm2 startup` to enable boot recovery for the current user. PM2 restarts crashes after five seconds; the saved process list is restored at boot. The configuration also restarts the bot above 750 MB of memory. See [Deployment](https://github.com/swagdotsh/zekbot420/wiki/Deployment) for Linux service recovery, updates, and checks.
+
+Register slash commands after adding or changing them:
+
+```sh
+node deploy-commands.js --global
+```
+
+Without `--global`, the script uses `GUILD_ID` when configured. Browse the [command list](https://zekbot420.swagrelated.com/commands/) or the guides for [music](https://github.com/swagdotsh/zekbot420/wiki/Playing-Music), [TTS](https://github.com/swagdotsh/zekbot420/wiki/Text-to-Speech), [tickets](https://github.com/swagdotsh/zekbot420/wiki/Tickets), and [sports](https://github.com/swagdotsh/zekbot420/wiki/Sports).
+
 ---
 ## Data & Persistence
 
-Some features store data locally (for example: warnings/modlog/Last.fm configuration/audio files) and others on a PostgresSQL-database. For the local data, you’ll see data files under the `data/` directory.
+Some features store data locally (for example: warnings/modlog/Last.fm configuration/audio files) and others on a PostgreSQL-database. For the local data, you’ll see data files under the `data/` directory.
 > [!CAUTION]
 > Keep this folder on `.gitignore` to avoid accidentally committing sensitive data. 
 
@@ -125,14 +173,20 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 ## Project Structure
 
 - `index.js` — bot entry point
+- `ecosystem.config.cjs` — PM2 process and recovery configuration
+- `musicPlayer.js` / `musicSources.js` / `musicControls.js` — playback, sources, and buttons
+- `spotify.js` / `spotify-auth.js` — Spotify API and playlist login
+- `ttsHandler.js` — text-to-speech sessions and voices
+- `ticketHandler.js` — tickets and transcripts
+- `nflHandler.js` / `espn.js` — sports subscriptions and ESPN data
 - `commands/` — message/prefix style commands (organized by category)
 - `slashCommands/` — slash command handlers/definitions
-- `welcoming.js` / `welcomesetup.js` — welcoming flow
+- `events/welcoming.js` / `commands/moderation/welcomesetup.js` — welcoming flow
 - `storesnipe.js` / `snipe.js` — message snipe support
 - `deploy-commands.js` — registers slash commands with Discord
 - `data/` — local storage (warnings, modlog, downloads, audio)
 - `events/` — handlers for leveling XP (text, voice) & jail timing
-- `stickyrolesDbHandler.js` — Postgres database handler for sticky roles
+- `stickyrolesDbHndlr.js` — Postgres database handler for sticky roles
 - `stickyrolesHandler.js` — primary sticky roles manager
 - `jailHandler.js` — Postgres database and primary manager for the jail system
 - `leveling.js` — Postgres database and primary manager for the leveling system
@@ -149,7 +203,7 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 ```shell script
 node deploy-commands.js
 ```
-If your instance of zekbot420 is in mutliple servers, add a `global` at the end for it to deploy everywhere your bot is added.
+If your instance of zekbot420 is in multiple servers, add a `global` at the end for it to deploy everywhere your bot is added.
 ```shell script
 node deploy-commands.js --global
 ```
