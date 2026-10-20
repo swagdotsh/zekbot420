@@ -1000,7 +1000,14 @@ async function logUnjail(_client, guild, target, moderator, expired = false) {
   }
 }
 
+async function logTicketEvent(guild, embed) {
+  const modlogChannel = await getModlogChannelFromGuild(guild);
+  if (!modlogChannel) return;
+  await safeSend(modlogChannel, { embeds: [embed] });
+}
+
 module.exports = {
+  logTicketEvent,
   logMessageDeletion,
   logMessageEdit,
   logSnipeClear,
