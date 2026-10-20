@@ -22,13 +22,11 @@ function startJailExpiryLoop(client) {
                 return null;
             });
 
-            // they left the server, nothing to restore so just drop the record instead of retrying forever
             if (member === false) {
                 await unjailUser(row.guild_id, row.user_id);
                 continue;
             }
 
-            // restore failed, try again next tick
             if (!member) continue;
 
             const jailChannel = guild.channels.cache.get(config.jail_channel_id);

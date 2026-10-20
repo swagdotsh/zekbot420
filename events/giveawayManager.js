@@ -81,23 +81,14 @@ module.exports = {
         runExpiryCheck().catch(console.error)
 
         client.on('interactionCreate', async (interaction) => {
-            console.log('[Giveaway] interactionCreate fired')
             try {
-                if (!interaction.isButton()) return console.log('[Giveaway] Not a button interaction')
+                if (!interaction.isButton() || !interaction.customId.startsWith('giveaway_enter_')) return
 
-                console.log('[Giveaway] Button ID:', interaction.customId)
-
-                if (!interaction.customId.startsWith('giveaway_enter_')) {
-                    return console.log('[Giveaway] Button is not a giveaway button')
-                }
-
-                console.log('[Giveaway] Deferring interaction')
                 await interaction.deferUpdate()
 
                 const giveawayId = parseInt(interaction.customId.replace('giveaway_enter_', ''))
 
                 const [giveaway] = await sql`SELECT * FROM giveaways WHERE id = ${giveawayId}`
-                console.log('[Giveaway] Giveaway lookup result:', giveaway)
 
                 if (!giveaway || giveaway.ended) {
                     return interaction.followUp({
@@ -107,7 +98,6 @@ module.exports = {
                 }
 
                 try {
-                    console.log('[Giveaway] Attempting database insert')
                     await sql`
               INSERT INTO giveaway_entries (giveaway_id, user_id)
               VALUES (${giveawayId}, ${interaction.user.id})

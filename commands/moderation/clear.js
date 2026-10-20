@@ -21,7 +21,6 @@ module.exports = {
       return message.reply('You can clear between 1 and 100 messages at a time.');
     }
 
-    // delete the command first so it isn't counted in the amount
     await message.delete().catch(() => {});
 
     const messages = await message.channel.messages.fetch({ limit: amount });

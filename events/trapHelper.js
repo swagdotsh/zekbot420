@@ -127,10 +127,8 @@ async function handleTrapMessage(message) {
 
     if (memberHasExemptRole(member, config.trapExemptRoleIds)) return;
 
-    // staff are never trapped, even without an exempt role
     if (member?.permissions.has(PermissionsBitField.Flags.ManageGuild)) return;
 
-    // can't ban them (higher role than the bot), so don't claim we did
     if (member && !member.bannable) {
         await message.delete().catch(() => null);
         console.warn(`Trap triggered by ${message.author.tag} in ${message.guild.id}, but they're above the bot and can't be banned.`);

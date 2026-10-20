@@ -128,7 +128,6 @@ module.exports = {
             .map((r) => r.id)
             .join(',');
 
-        // managed roles (booster, integrations) can't be removed, keep them or the whole role set fails
         const managedRoles = [...target.roles.cache.filter((r) => r.managed).values()];
         await target.roles.set([jailRole, ...managedRoles], `Jailed by ${interaction.user.tag}`);
         await jailUser(guild.id, target.id, savedRoles, expiresAt);

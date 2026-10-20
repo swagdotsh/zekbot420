@@ -43,7 +43,7 @@ module.exports = {
         .setFooter({ text: `Server ID: ${message.guild.id}` })
         .setTimestamp();
 
-      await target.send({ embeds: [embed] }).catch(() => null); // DMs closed
+      await target.send({ embeds: [embed] }).catch(() => null);
       await logTimeout(message.client, message.guild, target, message.author, reason, timeArg);
       message.reply(`<:timeout:1370370278873497710>`);
     } catch (err) {

@@ -49,10 +49,11 @@ const {handleAfkMessage} = require('./events/afkStore');
 const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
 const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
+const {handleMusicButton} = require('./musicControls');
+const {cleanupSessionFiles} = require('./musicPlayer');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
-// Async event handlers that throw would otherwise kill the process
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled promise rejection:', error);
 });
@@ -69,7 +70,6 @@ const client = new Client({
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
-
 
 client.commands = new Collection();
 client.slashCommands = new Collection();
@@ -96,9 +96,14 @@ async function cleanupEmptyVoiceSession(client, guildId, channelId) {
     if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
     if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
 
+    if (session.mode !== 'tts') {
+        cleanupSessionFiles(session);
+        session.nowPlayingMessage?.edit({ components: [] }).catch(() => {});
+    }
+
+    client.voiceSessions.delete(guildId);
     session.player?.stop(true);
     session.connection?.destroy();
-    client.voiceSessions.delete(guildId);
 
     const textChannel = session.textChannelId
         ? await client.channels.fetch(session.textChannelId).catch(() => null)
@@ -281,6 +286,7 @@ client.once('clientReady', async () => {
 client.on('interactionCreate', async (interaction) => {
     try {
         if (await handleVoiceMasterInteraction(interaction)) return;
+        if (await handleMusicButton(interaction)) return;
 
         if (interaction.isAutocomplete()) {
             const cmd = client.slashCommands.get(interaction.commandName);
@@ -302,7 +308,6 @@ client.on('interactionCreate', async (interaction) => {
             ephemeral: true,
         };
 
-        // the interaction may have expired, don't let that throw too
         if (interaction.deferred || interaction.replied) await interaction.followUp(payload).catch(() => {});
         else await interaction.reply(payload).catch(() => {});
     }

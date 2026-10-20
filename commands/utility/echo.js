@@ -48,7 +48,6 @@ module.exports = {
             return message.reply(`You can't send messages in ${targetChannel}.`);
         }
 
-        // only let @everyone/@here/role pings through if the user could do that themselves
         const allowedMentions = perms.has(PermissionFlagsBits.MentionEveryone) ? undefined : { parse: ['users'] };
 
         await targetChannel.send({ content: text, allowedMentions });
