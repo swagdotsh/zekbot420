@@ -1,12 +1,8 @@
-// Saves VoiceMaster temp VCs to disk so they're still managed (and cleaned up) after a restart.
-// Shared by the prefix and slash VoiceMaster managers, which both keep their channels in client.voiceMaster.channels.
-
 const fs = require('fs');
 const path = require('path');
 
 const FILE = path.resolve(process.cwd(), 'data', 'voicemaster_channels.json');
 
-// A Map that writes itself to disk whenever a channel is added or removed
 class ManagedChannelMap extends Map {
     set(key, value) {
         super.set(key, value);
@@ -20,7 +16,6 @@ class ManagedChannelMap extends Map {
         return existed;
     }
 
-    // writes are queued so quick changes can't finish out of order, and each one saves whatever is current by then
     save() {
         this.pendingSave = (this.pendingSave ?? Promise.resolve())
             .then(async () => {

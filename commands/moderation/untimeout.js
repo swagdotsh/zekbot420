@@ -33,7 +33,7 @@ module.exports = {
         .setFooter({ text: `Server ID: ${message.guild.id}` })
         .setTimestamp();
 
-      await target.send({ embeds: [embed] }).catch(() => null); // DMs closed
+      await target.send({ embeds: [embed] }).catch(() => null);
       await logUntimeout(message.client, message.guild, target, message.author);
       message.reply(`👍`);
     } catch (err) {

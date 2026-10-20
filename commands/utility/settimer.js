@@ -36,7 +36,7 @@ module.exports = {
         message.reply(`⏳ Timer set for ${timeArg}`);
 
         setTimeout(() => {
-            message.author.send(`⏰ Timer finished: ${reason}`).catch(() => {}); // DMs closed
+            message.author.send(`⏰ Timer finished: ${reason}`).catch(() => {});
         }, ms);
     }
 };

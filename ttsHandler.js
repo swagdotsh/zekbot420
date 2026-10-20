@@ -1,5 +1,3 @@
-// TTS in VC handler (Edge TTS)
-
 const postgres = require('postgres');
 const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require' });
 const { Readable } = require('stream');
@@ -19,8 +17,8 @@ const DEFAULT_VOICE = 'en-US-AriaNeural';
 const MAX_TTS_CHARS = 300;
 const MAX_TTS_QUEUE = 10;
 
-const configCache = new Map(); // guildId -> { channelId }
-const userVoiceCache = new Map(); // userId -> voice
+const configCache = new Map();
+const userVoiceCache = new Map();
 let voiceListCache = null;
 
 async function initTtsDB() {
@@ -59,7 +57,6 @@ async function setTtsChannel(guildId, channelId) {
     configCache.delete(guildId);
 }
 
-// voices are per user and follow them across servers
 async function getUserVoice(userId) {
     if (userVoiceCache.has(userId)) return userVoiceCache.get(userId);
 
@@ -137,7 +134,6 @@ async function synthesize(text, voice) {
     }
 }
 
-// turn a discord message into something that sounds ok read out loud
 function cleanTtsText(message) {
     let text = message.cleanContent || '';
 
@@ -176,7 +172,6 @@ async function playNextTts(client, guildId) {
     }
 }
 
-// ctx is a message or an interaction, both have client/guild/channel
 async function createTtsSession(ctx, voiceChannel) {
     const client = ctx.client;
     const guildId = ctx.guild.id;
@@ -193,7 +188,6 @@ async function createTtsSession(ctx, voiceChannel) {
     const player = createAudioPlayer();
     connection.subscribe(player);
 
-    // queue/current stay empty so leave + empty-vc cleanup treat this like any other session
     const session = {
         mode: 'tts',
         connection,
@@ -226,7 +220,6 @@ async function createTtsSession(ctx, voiceChannel) {
     return session;
 }
 
-// shared by ,jointts and /tts join, returns the reply text
 async function startTts(ctx, member) {
     if (!ctx.client.voiceSessions) ctx.client.voiceSessions = new Map();
 
@@ -284,7 +277,6 @@ async function handleTtsMessage(message) {
     const inTtsChannel = config.channelId && message.channel.id === config.channelId;
     if (!inVcChat && !inTtsChannel) return;
 
-    // only read people who are actually in the vc
     if (message.member?.voice?.channelId !== vcId) return;
 
     let text = cleanTtsText(message);
@@ -306,7 +298,7 @@ function skipTts(client, guildId) {
     const session = client.voiceSessions?.get(guildId);
     if (!session || session.mode !== 'tts') return false;
 
-    session.player.stop(true); // fires Idle, which plays the next message
+    session.player.stop(true);
     return true;
 }
 

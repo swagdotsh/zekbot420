@@ -170,7 +170,6 @@ async function updateStarboardMessage(client, reaction) {
         if (!config.channelId || sourceMessage.channel.id === config.channelId) return;
 
         const starboardChannel = await client.channels.fetch(config.channelId).catch(() => null);
-        // also guards configs saved before cross-server channels were rejected
         if (!starboardChannel?.isTextBased?.() || starboardChannel.guildId !== sourceMessage.guild.id) return;
 
         const stars = await getStarCount(reaction, sourceMessage.author.id, config.allowSelf).catch(() => 0);

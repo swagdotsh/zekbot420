@@ -604,7 +604,6 @@ async function handleOwnerLeave(oldState, newState) {
     scheduleOwnerLeaveCheck(client, oldChannelId, managed);
 }
 
-// Deletes the VC if its owner still isn't back after the grace period
 function scheduleOwnerLeaveCheck(client, channelId, managed) {
     const state = ensureState(client);
 
@@ -632,7 +631,6 @@ function scheduleOwnerLeaveCheck(client, channelId, managed) {
     state.ownerLeaveTimers.set(channelId, timer);
 }
 
-// Picks the saved temp VCs back up after a restart, cleaning up ones that emptied while the bot was down
 async function restoreManagedChannels(client) {
     const state = ensureState(client);
 
@@ -649,7 +647,6 @@ async function restoreManagedChannels(client) {
         }
     }
 
-    // drops VCs that were deleted while the bot was offline
     state.channels.save();
 }
 

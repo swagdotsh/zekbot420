@@ -1,4 +1,4 @@
-const { buildResource } = require('../../musicPlayer');
+const { buildResource, prepareTrack } = require('../../musicPlayer');
 
 function getTrackName(track) {
   if (!track) return 'current track';
@@ -16,6 +16,7 @@ module.exports = {
     }
 
     try {
+      if (!(await prepareTrack(session.current))) return message.reply('Could not restart the current track.');
       const resource = buildResource(session.current);
       session.current.startedAt = Date.now();
       session.player.play(resource);

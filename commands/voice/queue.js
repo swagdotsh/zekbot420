@@ -13,26 +13,17 @@ function getTrackExtra(track) {
         parts.push("`"+track.durationRaw+"`");
     }
 
-    if (track?.sourceType === 'soundcloud') {
-        parts.push('SoundCloud');
+    const sourceLabels = { soundcloud: 'SoundCloud', spotify: 'Spotify' };
+    if (sourceLabels[track?.sourceType]) {
+        parts.push(sourceLabels[track.sourceType]);
     }
 
     return parts.length ? ` ${parts.join(' • ')}` : '';
 }
 
-module.exports = {
-    name: 'queue',
-    aliases: ['q'],
-    async execute(message) {
-        const session = message.client.voiceSessions?.get(message.guild.id);
-        if (!session) return message.reply('There is no active queue right now.');
-
+function buildQueueEmbed(session) {
         const current = session.current;
         const upcoming = session.queue || [];
-
-        if (!current && upcoming.length === 0) {
-            return message.reply('Queue is empty.');
-        }
 
         const lines = upcoming.slice(0, 10).map((item, idx) => {
             const name = getTrackName(item);
@@ -68,6 +59,21 @@ module.exports = {
             embed.setThumbnail(current.thumbnail);
         }
 
-        return message.reply({ embeds: [embed] });
+        return embed;
+}
+
+module.exports = {
+    name: 'queue',
+    aliases: ['q'],
+    buildQueueEmbed,
+    async execute(message) {
+        const session = message.client.voiceSessions?.get(message.guild.id);
+        if (!session || session.mode === 'tts') return message.reply('There is no active queue right now.');
+
+        if (!session.current && !session.queue?.length) {
+            return message.reply('Queue is empty.');
+        }
+
+        return message.reply({ embeds: [buildQueueEmbed(session)] });
     }
 };

@@ -33,12 +33,17 @@ function getTrackUrl(track) {
 }
 
 function isOnlineTrack(track) {
-    return track?.sourceType === 'soundcloud' || track?.sourceType === 'youtube';
+    return ['youtube', 'soundcloud', 'spotify'].includes(track?.sourceType);
 }
 
 function getSourceName(track) {
-    if (track?.sourceType === 'youtube') return 'YouTube';
+    const fromSoundCloud = track?.playSource === 'soundcloud';
+    if (track?.sourceType === 'youtube') {
+        if (fromSoundCloud) return 'YouTube (blocked, playing from SoundCloud)';
+        return track.playSource === 'youtube' ? 'YouTube (blocked, playing another upload)' : 'YouTube';
+    }
     if (track?.sourceType === 'soundcloud') return 'SoundCloud';
+    if (track?.sourceType === 'spotify') return fromSoundCloud ? 'Spotify (via SoundCloud)' : 'Spotify (via YouTube)';
     return 'Local File';
 }
 

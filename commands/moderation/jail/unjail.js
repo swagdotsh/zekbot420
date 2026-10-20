@@ -8,8 +8,6 @@ async function doUnjail(guild, userId, config) {
     const jailed = await getJailedUser(guild.id, userId);
     const savedRoles = jailed?.saved_roles ? jailed.saved_roles.split(',').filter(Boolean) : [];
 
-    // restore roles before dropping the record, so a failed restore doesn't lose their saved roles
-    // managed roles can't be added back by hand, and ones they still have must stay in the set
     const rolesToRestore = savedRoles.filter(id => guild.roles.cache.has(id) && !guild.roles.cache.get(id).managed);
     const keepManaged = member.roles.cache.filter(r => r.managed).map(r => r.id);
     await member.roles.set([...new Set([...rolesToRestore, ...keepManaged])], 'Unjailed');

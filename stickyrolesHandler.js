@@ -45,7 +45,6 @@ module.exports = {
         const enabled = await getStickyRolesEnabled(guildId);
         if (!enabled) return;
 
-        // without the old roles we can't tell what changed
         if (oldMember.partial) return;
 
         const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
@@ -61,7 +60,6 @@ module.exports = {
           }
         }
 
-        // a mod taking the role away means it shouldn't come back on rejoin
         for (const roleId of removedRoles.keys()) {
           if (stickyRoleIds.includes(roleId)) {
             await removeUserStickyRole(guildId, newMember.id, roleId);
@@ -74,4 +72,3 @@ module.exports = {
     });
   }
 };
-

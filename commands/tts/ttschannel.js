@@ -14,7 +14,6 @@ module.exports = {
                 return message.reply('Removed the TTS channel. Only VC chats will be read now.');
             }
 
-            // no channel given = use the one the command was ran in
             const channel = args[0]
                 ? message.mentions.channels.find(c => c.guildId === message.guild.id) || message.guild.channels.cache.get(args[0])
                 : message.channel;
