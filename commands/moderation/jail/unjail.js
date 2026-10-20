@@ -5,11 +5,13 @@ async function doUnjail(guild, userId, config) {
     const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
     if (!member) return false;
 
-    const savedRolesStr = await unjailUser(guild.id, userId);
-    const savedRoles = savedRolesStr ? savedRolesStr.split(',').filter(Boolean) : [];
+    const jailed = await getJailedUser(guild.id, userId);
+    const savedRoles = jailed?.saved_roles ? jailed.saved_roles.split(',').filter(Boolean) : [];
 
-    const rolesToRestore = savedRoles.filter(id => guild.roles.cache.has(id));
-    await member.roles.set(rolesToRestore, 'Unjailed');
+    const rolesToRestore = savedRoles.filter(id => guild.roles.cache.has(id) && !guild.roles.cache.get(id).managed);
+    const keepManaged = member.roles.cache.filter(r => r.managed).map(r => r.id);
+    await member.roles.set([...new Set([...rolesToRestore, ...keepManaged])], 'Unjailed');
+    await unjailUser(guild.id, userId);
 
     return member;
 }

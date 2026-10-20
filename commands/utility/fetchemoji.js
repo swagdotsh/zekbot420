@@ -2,7 +2,7 @@ const { AttachmentBuilder } = require('discord.js');
 
 module.exports = {
   name: 'fetchemoji',
-  aliases: ['emoji', 'getemoji', 'ee'],
+  aliases: ['emoji', 'getemoji', 'ee', 'e'],
   async execute(message, args) {
     const input = args[0];
 

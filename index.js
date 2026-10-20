@@ -20,7 +20,6 @@ if (missingRuntimeConfig.length) {
 
 const {
     logMessageDeletion,
-    logSnipeClear,
     logMessageEdit,
     logMemberJoin,
     logMemberLeave,
@@ -38,6 +37,7 @@ const {
 const {
     handleVoiceStateUpdate,
     handleVoiceMasterInteraction,
+    restoreManagedChannels,
 } = require('./commands/voicemaster/vmManager');
 const {initDB} = require('./leveling');
 const {initJailDB} = require('./jailHandler');
@@ -48,8 +48,19 @@ const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
 const {handleAfkMessage} = require('./events/afkStore');
 const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
+const {initNflDB} = require('./nflHandler');
+const {startNflPlayLoop} = require('./events/nflPlayLoop');
+const {startNbaGameLoop} = require('./events/nbaGameLoop');
+const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
+const {handleMusicButton} = require('./musicControls');
+const {initTicketDB, handleTicketInteraction, markDeletedTicket, noteOpenerLeft} = require('./ticketHandler');
+const {cleanupSessionFiles} = require('./musicPlayer');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled promise rejection:', error);
+});
 
 const client = new Client({
     intents: [
@@ -63,7 +74,6 @@ const client = new Client({
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
-
 
 client.commands = new Collection();
 client.slashCommands = new Collection();
@@ -90,9 +100,14 @@ async function cleanupEmptyVoiceSession(client, guildId, channelId) {
     if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
     if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
 
+    if (session.mode !== 'tts') {
+        cleanupSessionFiles(session);
+        session.nowPlayingMessage?.edit({ components: [] }).catch(() => {});
+    }
+
+    client.voiceSessions.delete(guildId);
     session.player?.stop(true);
     session.connection?.destroy();
-    client.voiceSessions.delete(guildId);
 
     const textChannel = session.textChannelId
         ? await client.channels.fetch(session.textChannelId).catch(() => null)
@@ -254,13 +269,19 @@ if (fs.existsSync(slashCommandsPath)) {
 
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
-    client.user.setActivity('NFL Week 1 in 2 weeks!!!!', {type: 3}); // watching [...]
+    client.user.setActivity('the national football league', {type: 3}); // watching [...]
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
+    await initNflDB();
+    await initTtsDB();
+    await initTicketDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
+    startNflPlayLoop(client);
+    startNbaGameLoop(client);
+    await restoreManagedChannels(client).catch((error) => console.error('Failed to restore VoiceMaster channels:', error));
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
     await require('./events/giveawayManager').execute(client); // LOL NO WAY THIS TOOK ME 3 MONTHS TO FIX
@@ -273,6 +294,14 @@ client.once('clientReady', async () => {
 client.on('interactionCreate', async (interaction) => {
     try {
         if (await handleVoiceMasterInteraction(interaction)) return;
+        if (await handleMusicButton(interaction)) return;
+        if (await handleTicketInteraction(interaction)) return;
+
+        if (interaction.isAutocomplete()) {
+            const cmd = client.slashCommands.get(interaction.commandName);
+            if (cmd?.autocomplete) await cmd.autocomplete(interaction).catch(console.error);
+            return;
+        }
 
         if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) return;
 
@@ -288,8 +317,8 @@ client.on('interactionCreate', async (interaction) => {
             ephemeral: true,
         };
 
-        if (interaction.deferred || interaction.replied) await interaction.followUp(payload);
-        else await interaction.reply(payload);
+        if (interaction.deferred || interaction.replied) await interaction.followUp(payload).catch(() => {});
+        else await interaction.reply(payload).catch(() => {});
     }
 });
 
@@ -299,6 +328,7 @@ client.on('messageCreate', async (message) => {
         await handleMessageXP(message).catch(console.error);
         await handleAfkMessage(message).catch(console.error);
         await handleTrapMessage(message).catch(console.error);
+        await handleTtsMessage(message).catch(console.error);
     }
 
     if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
@@ -316,13 +346,7 @@ client.on('messageCreate', async (message) => {
         await command.execute(message, args);
     } catch (error) {
         console.error(error);
-        await message.reply('There was an error executing that command.');
-    }
-});
-
-client.on('messageCreate', async message => {
-    if (message.content === ',cs' || message.content === ',clearsnipe') {
-        await logSnipeClear(client, message, message.author);
+        await message.reply('There was an error executing that command.').catch(() => {});
     }
 });
 
@@ -415,6 +439,7 @@ client.on('userUpdate', async (oldUser, newUser) => {
 
 client.on('guildMemberRemove', async member => {
     try {
+        await noteOpenerLeft(member).catch(console.error);
         await logMemberLeave(client, member);
     } catch (error) {
         console.error('Failed to log member leave:', error);
@@ -433,6 +458,7 @@ client.on('channelCreate', async channel => {
 client.on('channelDelete', async channel => {
     try {
         if (!channel.guild) return;
+        await markDeletedTicket(channel.id).catch(console.error);
         await logChannelDelete(client, channel);
     } catch (error) {
         console.error('Failed to log channel delete:', error);
@@ -466,17 +492,24 @@ client.on('messageReactionAdd', async (reaction, user) => {
         }
     }
 
-    client.reactionSnipes.set(reaction.message.channel.id, {
+    const channelId = reaction.message.channel.id;
+    const snipe = {
         emoji: reaction.emoji.toString(),
         user: user.tag,
         message: reaction.message.content || '[no text]',
         messageAuthor: reaction.message.author?.tag || 'Unknown',
         time: Date.now()
-    });
+    };
+
+    client.reactionSnipes.set(channelId, snipe);
 
     setTimeout(() => {
-        client.reactionSnipes.delete(reaction.message.channel.id);
+        if (client.reactionSnipes.get(channelId) === snipe) client.reactionSnipes.delete(channelId);
     }, 60000);
+});
+
+client.on('error', (error) => {
+    console.error('Discord client error:', error);
 });
 
 client.login(process.env.TOKEN);

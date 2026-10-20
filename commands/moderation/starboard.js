@@ -58,7 +58,7 @@ module.exports = {
             );
         }
 
-        const channel = message.mentions.channels.first();
+        const channel = message.mentions.channels.find(c => c.guildId === message.guild.id);
         if (!channel || !channel.isTextBased?.() || channel.isDMBased?.()) {
             return message.reply("Mention a server text channel. Example: `,starboard #starboard`.\nAfter that, use `,starboardthreshold <number>` to set the starboard minimum amount before a message gets featured, and `,starboardself <yes:no>` to allow self-starring.\n-# To disable starboard, run `,starboard off`. Keep in mind that this **will delete your server's starboard config.");
         }

@@ -1,3 +1,5 @@
+const { skipCurrent } = require('../../musicPlayer');
+
 function getTrackName(track) {
     if (!track) return 'track';
     if (track.title && track.uploader) return ""+track.title+" - "+track.uploader;
@@ -16,7 +18,7 @@ module.exports = {
         const currentName = getTrackName(session.current);
         const nextName = getTrackName(session.queue?.[0]);
 
-        session.player.stop(true);
+        skipCurrent(session);
 
         if (session.queue?.[0]) {
             return message.reply(`⏭ Skipped **${currentName}**. Next up: **${nextName}**`);

@@ -1,6 +1,7 @@
 // Helper file. Do not deploy.
 
 const fs = require('fs');
+const { ManagedChannelMap } = require('../../voicemasterStore');
 const path = require('path');
 const {
     ChannelType,
@@ -23,7 +24,7 @@ function ensureState(client) {
     if (!client.voiceMaster) {
         client.voiceMaster = {
             configs: new Map(),
-            channels: new Map(),
+            channels: new ManagedChannelMap(),
             ownerLeaveTimers: new Map(),
         };
     }
