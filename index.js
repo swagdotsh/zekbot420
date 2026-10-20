@@ -48,6 +48,9 @@ const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
 const {handleAfkMessage} = require('./events/afkStore');
 const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
+const {initNflDB} = require('./nflHandler');
+const {startNflPlayLoop} = require('./events/nflPlayLoop');
+const {startNbaGameLoop} = require('./events/nbaGameLoop');
 const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
 const {handleMusicButton} = require('./musicControls');
 const {initTicketDB, handleTicketInteraction, markDeletedTicket, noteOpenerLeft} = require('./ticketHandler');
@@ -266,15 +269,18 @@ if (fs.existsSync(slashCommandsPath)) {
 
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
-    client.user.setActivity('NFL Week 1 in 2 weeks!!!!', {type: 3}); // watching [...]
+    client.user.setActivity('the national football league', {type: 3}); // watching [...]
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
+    await initNflDB();
     await initTtsDB();
     await initTicketDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
+    startNflPlayLoop(client);
+    startNbaGameLoop(client);
     await restoreManagedChannels(client).catch((error) => console.error('Failed to restore VoiceMaster channels:', error));
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
