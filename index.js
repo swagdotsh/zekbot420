@@ -50,6 +50,7 @@ const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
 const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
 const {handleMusicButton} = require('./musicControls');
+const {initTicketDB, handleTicketInteraction, markDeletedTicket, noteOpenerLeft} = require('./ticketHandler');
 const {cleanupSessionFiles} = require('./musicPlayer');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
@@ -270,6 +271,7 @@ client.once('clientReady', async () => {
     await initJailDB();
     await initStickyRoleDB();
     await initTtsDB();
+    await initTicketDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
@@ -287,6 +289,7 @@ client.on('interactionCreate', async (interaction) => {
     try {
         if (await handleVoiceMasterInteraction(interaction)) return;
         if (await handleMusicButton(interaction)) return;
+        if (await handleTicketInteraction(interaction)) return;
 
         if (interaction.isAutocomplete()) {
             const cmd = client.slashCommands.get(interaction.commandName);
@@ -430,6 +433,7 @@ client.on('userUpdate', async (oldUser, newUser) => {
 
 client.on('guildMemberRemove', async member => {
     try {
+        await noteOpenerLeft(member).catch(console.error);
         await logMemberLeave(client, member);
     } catch (error) {
         console.error('Failed to log member leave:', error);
@@ -448,6 +452,7 @@ client.on('channelCreate', async channel => {
 client.on('channelDelete', async channel => {
     try {
         if (!channel.guild) return;
+        await markDeletedTicket(channel.id).catch(console.error);
         await logChannelDelete(client, channel);
     } catch (error) {
         console.error('Failed to log channel delete:', error);
