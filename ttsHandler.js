@@ -1,17 +1,14 @@
-const postgres = require('postgres');
-const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require' });
+const { sql } = require('./db');
 const { Readable } = require('stream');
 const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
 const { PermissionsBitField } = require('discord.js');
 const {
-    joinVoiceChannel,
     createAudioPlayer,
     createAudioResource,
     AudioPlayerStatus,
-    VoiceConnectionStatus,
-    StreamType,
-    entersState
+    StreamType
 } = require('@discordjs/voice');
+const { connectVoice, watchConnection, createSessionOnce, isConnectionAlive } = require('./voiceConnection');
 
 const DEFAULT_VOICE = 'en-US-AriaNeural';
 const MAX_TTS_CHARS = 300;
@@ -176,14 +173,7 @@ async function createTtsSession(ctx, voiceChannel) {
     const client = ctx.client;
     const guildId = ctx.guild.id;
 
-    const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId,
-        adapterCreator: ctx.guild.voiceAdapterCreator,
-        selfDeaf: true
-    });
-
-    await entersState(connection, VoiceConnectionStatus.Ready, 30000);
+    const connection = await connectVoice(ctx.guild, voiceChannel.id);
 
     const player = createAudioPlayer();
     connection.subscribe(player);
@@ -217,6 +207,14 @@ async function createTtsSession(ctx, voiceChannel) {
         onDone().catch(console.error);
     });
 
+    watchConnection(connection, () => {
+        if (client.voiceSessions?.get(guildId) !== session) return;
+        if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
+        session.ttsQueue = [];
+        session.player.stop(true);
+        client.voiceSessions.delete(guildId);
+    });
+
     return session;
 }
 
@@ -240,7 +238,10 @@ async function startTts(ctx, member) {
         return "I'm playing music right now. Stop it with `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>";
     }
 
-    await createTtsSession(ctx, voiceChannel);
+    const created = await createSessionOnce(ctx.client, ctx.guild.id, () => createTtsSession(ctx, voiceChannel));
+    if (created.mode !== 'tts') {
+        return "I'm playing music right now. Stop it with `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>";
+    }
 
     const config = await getTtsConfig(ctx.guild.id);
     const where = config.channelId
@@ -256,9 +257,9 @@ function leaveTts(client, guildId) {
 
     if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
     session.ttsQueue = [];
-    session.player.stop(true);
-    session.connection.destroy();
     client.voiceSessions.delete(guildId);
+    session.player.stop(true);
+    if (isConnectionAlive(session.connection)) session.connection.destroy();
     return true;
 }
 

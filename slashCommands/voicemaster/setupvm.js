@@ -3,7 +3,8 @@ const {
     PermissionFlagsBits,
     PermissionsBitField,
     InteractionContextType,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
 const { setupVoiceMaster } = require('./_vmManager');
 
@@ -29,7 +30,7 @@ module.exports = {
         ) {
             return interaction.reply({
                 content: 'You do not have the required permissions to run this command. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

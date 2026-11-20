@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 const { logUnban } = require('../../log');
 
@@ -33,7 +34,7 @@ module.exports = {
             if (!target) {
                 return interaction.reply({
                     content: 'User not found in ban list.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -47,7 +48,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'Failed to unban the user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

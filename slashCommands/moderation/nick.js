@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     PermissionsBitField,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -29,7 +30,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
             return interaction.reply({
                 content: 'You need the Manage Members permission to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -39,14 +40,14 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'User not found in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!target.manageable) {
             return interaction.reply({
                 content: 'I can’t change that nickname.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -56,20 +57,20 @@ module.exports = {
             if (newNickname) {
                 return interaction.reply({
                     content: `Changed ${target.user.username}'s nickname to **${newNickname}**.`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
             return interaction.reply({
                 content: `Reset ${target.user.username}'s nickname.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         } catch (err) {
             console.error('Error changing nickname:', err);
 
             return interaction.reply({
                 content: 'Something went wrong while changing that nickname.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

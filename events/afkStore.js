@@ -1,11 +1,39 @@
+const { sql } = require('../db');
+
 const afkUsers = new Map();
 
 function getAfkKey(guildId, userId) {
     return `${guildId}:${userId}`;
 }
 
+function persist(promise) {
+    promise.catch((error) => console.error('Failed to save AFK status:', error));
+}
+
+async function initAfkDB() {
+    await sql`
+        CREATE TABLE IF NOT EXISTS afk_status (
+            guild_id TEXT,
+            user_id TEXT,
+            reason TEXT NOT NULL,
+            started_at BIGINT NOT NULL,
+            PRIMARY KEY (guild_id, user_id)
+        )
+    `;
+
+    const rows = await sql`SELECT guild_id, user_id, reason, started_at FROM afk_status`;
+    for (const row of rows) {
+        afkUsers.set(getAfkKey(row.guild_id, row.user_id), { reason: row.reason, startedAt: Number(row.started_at) });
+    }
+}
+
 function setAfk(guildId, userId, data) {
     afkUsers.set(getAfkKey(guildId, userId), data);
+    persist(sql`
+        INSERT INTO afk_status (guild_id, user_id, reason, started_at)
+        VALUES (${guildId}, ${userId}, ${data.reason}, ${data.startedAt})
+        ON CONFLICT (guild_id, user_id) DO UPDATE SET reason = EXCLUDED.reason, started_at = EXCLUDED.started_at
+    `);
 }
 
 function getAfk(guildId, userId) {
@@ -13,7 +41,9 @@ function getAfk(guildId, userId) {
 }
 
 function removeAfk(guildId, userId) {
-    return afkUsers.delete(getAfkKey(guildId, userId));
+    const existed = afkUsers.delete(getAfkKey(guildId, userId));
+    if (existed) persist(sql`DELETE FROM afk_status WHERE guild_id = ${guildId} AND user_id = ${userId}`);
+    return existed;
 }
 
 function hasAfk(guildId, userId) {
@@ -104,6 +134,7 @@ async function handleAfkMessage(message) {
 }
 
 module.exports = {
+    initAfkDB,
     setAfk,
     getAfk,
     removeAfk,

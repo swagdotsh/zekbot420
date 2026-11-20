@@ -3,7 +3,8 @@ const {
     PermissionFlagsBits,
     InteractionContextType,
     ChannelType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { getJailConfig, setJailConfig } = require('../../../jailHandler');
 
@@ -16,7 +17,7 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const guild = interaction.guild;
         const existingConfig = await getJailConfig(guild.id);

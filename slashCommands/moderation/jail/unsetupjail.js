@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
 const { getJailConfig, deleteJailConfig } = require('../../../jailHandler');
 
@@ -26,7 +27,7 @@ module.exports = {
         if (!confirmed) {
             return interaction.reply({
                 content: 'Jail unsetup cancelled.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -36,7 +37,7 @@ module.exports = {
         if (!config) {
             return interaction.reply({
                 content: 'Jail system is not set up in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -65,7 +66,7 @@ module.exports = {
 
         return interaction.reply({
             content: '✅ Jail system has been removed.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 };

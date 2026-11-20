@@ -1,8 +1,7 @@
 const axios = require('axios');
 const { SlashCommandBuilder } = require('discord.js');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 async function getRecentAlbum({ apiKey, username }) {
     const recentUrl =

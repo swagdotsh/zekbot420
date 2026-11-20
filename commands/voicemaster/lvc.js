@@ -31,6 +31,6 @@ module.exports = {
             Connect: currentlyLocked ? null : false,
         });
 
-        return message.reply(currentlyLocked ? 'VC unlocked.\n-# Tip: To lock, run ,lvc` again.' : 'VC locked.\n-# Tip: To unlock, run `,lvc` again.');
+        return message.reply(currentlyLocked ? `VC unlocked.\n-# Tip: To lock, run \`${process.env.PREFIX}lvc\` again.` : `VC locked.\n-# Tip: To unlock, run \`${process.env.PREFIX}lvc\` again.`);
     },
 };

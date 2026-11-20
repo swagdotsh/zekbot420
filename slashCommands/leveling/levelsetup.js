@@ -3,7 +3,8 @@ const {
     PermissionFlagsBits,
     InteractionContextType,
     ChannelType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { getConfig, setConfig } = require('../../leveling');
 
@@ -52,7 +53,7 @@ module.exports = {
         if (existingConfig) {
             return interaction.reply({
                 content: `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`/rank\`, \`/leaderboard\`, or \`/lvlrole\` to manage it. <:smirk2:1498272372539785286>`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -64,14 +65,14 @@ module.exports = {
         if (!channel) {
             return interaction.reply({
                 content: 'Invalid channel.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (xpMin >= xpMax) {
             return interaction.reply({
                 content: 'Invalid XP range. Minimum XP must be less than maximum XP.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -106,14 +107,14 @@ module.exports = {
 
             return interaction.reply({
                 embeds: [embed],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         } catch (err) {
             console.error(err);
 
             return interaction.reply({
                 content: 'Something went wrong saving the config.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

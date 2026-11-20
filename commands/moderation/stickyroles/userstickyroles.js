@@ -15,7 +15,7 @@ module.exports = {
     const roleArg = args[2];
 
     if (!action || !userArg || !roleArg) {
-      return message.reply('Usage: `,userstickyroles add <@user> <@role>` or `,userstickyroles remove <@user> <@role>`');
+      return message.reply(`Usage: \`${process.env.PREFIX}userstickyroles add <@user> <@role>\` or \`${process.env.PREFIX}userstickyroles remove <@user> <@role>\``);
     }
 
     // Parse user

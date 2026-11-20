@@ -59,11 +59,12 @@ const RANK_EMOJIS = [
 
 module.exports = {
     name: 'r6stats',
+    cooldown: 5,
     aliases: ['r6', 'r6s'],
     description: 'Fetch Rainbow Six Siege stats for a player',
     async execute(message, args) {
         if (!args.length) {
-            return message.reply('Usage: `,r6stats <username> [pc|psn|xbox]`');
+            return message.reply(`Usage: \`${process.env.PREFIX}r6stats <username> [pc|psn|xbox]\``);
         }
 
         const platformArg = VALID_PLATFORMS.includes(args[args.length - 1].toLowerCase())

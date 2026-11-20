@@ -1,7 +1,6 @@
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 function parseQuotedAlbumArtistUsername(args) {
     const raw = (args || []).join(' ').trim();
@@ -113,7 +112,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                'Provide a Last.fm username or link yours first. Example: `,alp "The Dark Side of the Moon" "Pink Floyd" someUser`'
+                `Provide a Last.fm username or link yours first. Example: \`${process.env.PREFIX}alp "The Dark Side of the Moon" "Pink Floyd" someUser\``
             );
         }
 
@@ -124,8 +123,8 @@ module.exports = {
             if (!artist || !album) {
                 if ((args || []).length) {
                     return message.reply(
-                        'For album plays, please use: `,alp "Album Name" "Artist Name" [username]` (quotes required when there are spaces). ' +
-                        'Or run `,alp` with no args to use your currently playing album.'
+                        `For album plays, please use: \`${process.env.PREFIX}alp "Album Name" "Artist Name" [username]\` (quotes required when there are spaces). ` +
+                        `Or run \`${process.env.PREFIX}alp\` with no args to use your currently playing album.`
                     );
                 }
 

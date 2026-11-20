@@ -1,7 +1,6 @@
-const { neon } = require('@neondatabase/serverless')
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 module.exports = {
     name: 'deletegiveaway',
@@ -12,7 +11,7 @@ module.exports = {
         }
 
         const id = parseInt(args[0])
-        if (!id) return message.reply('Usage: `,deletegiveaway <giveaway ID>`')
+        if (!id) return message.reply(`Usage: \`${process.env.PREFIX}deletegiveaway <giveaway ID>\``)
 
         const [giveaway] = await sql`
       SELECT * FROM giveaways WHERE id = ${id} AND guild_id = ${message.guild.id}

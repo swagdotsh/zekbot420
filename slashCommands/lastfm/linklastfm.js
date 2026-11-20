@@ -1,7 +1,6 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { neon } = require("@neondatabase/serverless")
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,7 +15,7 @@ module.exports = {
         if (rows[0]) {
             return interaction.reply({
                 content: `You're already logged in as **${rows[0].lastfm_username}**!`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -36,7 +35,7 @@ module.exports = {
         return interaction.reply({
             content: '**Connect your Last.fm**\nIf you have a last.fm account, you can link it to zekbot420 and access various music stat tracking related features!',
             components: [row],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 };

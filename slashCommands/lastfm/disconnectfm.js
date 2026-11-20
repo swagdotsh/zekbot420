@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 module.exports = {
     data: new SlashCommandBuilder()

@@ -130,9 +130,13 @@ PREFIX=,
 NEON_DATABASE_URL=postgresql://your_connection_string
 # Optional: use a development server for guild command registration
 GUILD_ID=your_test_server_id
+# Optional: max shared database connections (default 10)
+DB_POOL_MAX=10
+# Optional: verbose music playback logging for troubleshooting
+MUSIC_DEBUG=1
 ```
 
-`TOKEN`, `PREFIX`, and `NEON_DATABASE_URL` are required to start. Command registration also requires `DISCORD_CLIENT_ID`. Keep `.env` and `data/` private and backed up.
+`TOKEN`, `PREFIX`, and `NEON_DATABASE_URL` are required to start. Database tables are created automatically on first start. Command registration also requires `DISCORD_CLIENT_ID`. Keep `.env` and `data/` private and backed up.
 
 ## Running the bot
 
@@ -175,6 +179,11 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 - `index.js` — bot entry point
 - `ecosystem.config.cjs` — PM2 process and recovery configuration
 - `musicPlayer.js` / `musicSources.js` / `musicControls.js` — playback, sources, and buttons
+- `voiceConnection.js` — shared voice join, reconnect, and disconnect handling for music and TTS
+- `db.js` — the shared Postgres connection pool
+- `jsonStore.js` / `paths.js` — safe JSON file storage under `data/`
+- `reminders.js` — persistent reminders and timers
+- `safeFetch.js` — size-limited downloads that refuse private addresses
 - `spotify.js` / `spotify-auth.js` — Spotify API and playlist login
 - `ttsHandler.js` — text-to-speech sessions and voices
 - `ticketHandler.js` — tickets and transcripts
@@ -184,6 +193,7 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 - `events/welcoming.js` / `commands/moderation/welcomesetup.js` — welcoming flow
 - `storesnipe.js` / `snipe.js` — message snipe support
 - `deploy-commands.js` — registers slash commands with Discord
+- `geninv.js` — prints an invite link with only the permissions the bot uses (`--admin` for Administrator)
 - `data/` — local storage (warnings, modlog, downloads, audio)
 - `events/` — handlers for leveling XP (text, voice) & jail timing
 - `stickyrolesDbHndlr.js` — Postgres database handler for sticky roles

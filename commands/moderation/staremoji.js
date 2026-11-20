@@ -11,7 +11,7 @@ module.exports = {
 
         const emoji = parseReactionEmoji(args.join(' '));
         if (!emoji) {
-            return message.reply('Provide one standard or custom emoji. Example: `,staremoji ⭐` or `,staremoji <:star:123456789012345678>`');
+            return message.reply(`Provide one standard or custom emoji. Example: \`${process.env.PREFIX}staremoji ⭐\` or \`${process.env.PREFIX}staremoji <:star:123456789012345678>\``);
         }
 
         await updateConfig(message.guild.id, (config) => {

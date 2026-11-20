@@ -12,7 +12,7 @@ module.exports = {
 
         if (existingConfig) {
             return message.reply(
-                'Jail is already configured. Use `,jail @user <duration>`, `,unjail @user`, or `,unsetupjail` to manage it. <:smirk2:1498272372539785286>'
+                `Jail is already configured. Use \`${process.env.PREFIX}jail @user <duration>\`, \`${process.env.PREFIX}unjail @user\`, or \`${process.env.PREFIX}unsetupjail\` to manage it. <:smirk2:1498272372539785286>`
             );
         }
 

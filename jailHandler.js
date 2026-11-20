@@ -1,5 +1,5 @@
-const postgres = require('postgres');
-const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require' });
+const { sql } = require('./db');
+const { notifyDue } = require('./dueScheduler');
 
 async function initJailDB() {
     await sql`
@@ -49,6 +49,7 @@ async function jailUser(guildId, userId, savedRoles, expiresAt) {
             jailed_at = ${Date.now()},
             expires_at = ${expiresAt}
     `;
+    if (expiresAt) notifyDue('jails', Number(expiresAt));
 }
 
 async function getJailedUser(guildId, userId) {
@@ -62,8 +63,13 @@ async function unjailUser(guildId, userId) {
     return rows[0]?.saved_roles || null;
 }
 
+async function getNextJailExpiry() {
+    const [row] = await sql`SELECT MIN(expires_at) AS next FROM jailed_users WHERE expires_at > ${Date.now()}`;
+    return row?.next == null ? null : Number(row.next);
+}
+
 async function getExpiredJails() {
     return await sql`SELECT * FROM jailed_users WHERE expires_at IS NOT NULL AND expires_at <= ${Date.now()}`;
 }
 
-module.exports = { initJailDB, getJailConfig, setJailConfig, deleteJailConfig, jailUser, getJailedUser, unjailUser, getExpiredJails };
+module.exports = { initJailDB, getJailConfig, setJailConfig, deleteJailConfig, jailUser, getJailedUser, unjailUser, getExpiredJails, getNextJailExpiry };

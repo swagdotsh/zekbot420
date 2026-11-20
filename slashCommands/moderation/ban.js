@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { logBan } = require('../../log');
 const { canModerate } = require('../../hierarchy');
@@ -34,21 +35,21 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'User not found in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!target.bannable) {
             return interaction.reply({
                 content: 'I can’t ban that user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!canModerate(interaction.member, target)) {
             return interaction.reply({
                 content: "You can't ban someone with the same or higher role than you. <:smirk2:1498272372539785286>",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -79,7 +80,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'Failed to ban the user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

@@ -1,21 +1,17 @@
-const { getExpiredJails, getJailConfig, unjailUser } = require('../jailHandler');
+const { getExpiredJails, getNextJailExpiry, getJailConfig, unjailUser } = require('../jailHandler');
+const { createDueScheduler } = require('../dueScheduler');
 const { doUnjail } = require('../commands/moderation/jail/unjail');
 const { logUnjail } = require('../log');
 
 function startJailExpiryLoop(client) {
-    let isRunning = false;
-
-    const checkExpiredJails = async () => {
-        if (isRunning) return;
-        isRunning = true;
-
-        try {
+    const releaseExpiredJails = async () => {
+        let hadFailures = false;
         const expired = await getExpiredJails();
         for (const row of expired) {
             const guild = client.guilds.cache.get(row.guild_id);
-            if (!guild) continue;
+            if (!guild) { hadFailures = true; continue; }
             const config = await getJailConfig(row.guild_id);
-            if (!config) continue;
+            if (!config) { hadFailures = true; continue; }
 
             const member = await doUnjail(guild, row.user_id, config).catch((error) => {
                 console.error(`Failed to release ${row.user_id} from jail in ${row.guild_id}:`, error);
@@ -27,7 +23,7 @@ function startJailExpiryLoop(client) {
                 continue;
             }
 
-            if (!member) continue;
+            if (!member) { hadFailures = true; continue; }
 
             const jailChannel = guild.channels.cache.get(config.jail_channel_id);
             if (jailChannel) {
@@ -41,18 +37,13 @@ function startJailExpiryLoop(client) {
 
             await logUnjail(null, guild, member, null, true);
         }
-        } catch (error) {
-            console.error('Jail expiry check failed:', error);
-        } finally {
-            isRunning = false;
-        }
+        return hadFailures;
     };
 
-    setInterval(() => {
-        checkExpiredJails().catch(console.error);
-    }, 30 * 1000);
-
-    checkExpiredJails().catch(console.error);
+    createDueScheduler('jails', {
+        runDue: releaseExpiredJails,
+        getNextDue: getNextJailExpiry,
+    }).start();
 }
 
 module.exports = { startJailExpiryLoop };

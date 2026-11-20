@@ -6,9 +6,10 @@ const TIME_WINDOWS = ['season', 'lifetime'];
 
 module.exports = {
     name: 'fnstats',
+    cooldown: 5,
     aliases: ['fortnite', 'fnstat', 'fort'],
     async execute(message, args) {
-        if (!args.length) return message.reply('Usage: `,fnstats <username> [epic/psn/xbl] [season/lifetime]`');
+        if (!args.length) return message.reply(`Usage: \`${process.env.PREFIX}fnstats <username> [epic/psn/xbl] [season/lifetime]\``);
 
         let accountType = 'epic';
         let timeWindow = 'lifetime';

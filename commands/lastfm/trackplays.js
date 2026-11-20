@@ -1,7 +1,6 @@
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 function parseQuotedTrackArtistUsername(args) {
     const raw = (args || []).join(' ').trim();
@@ -115,7 +114,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                'Provide a Last.fm username or link yours first. Example: `,tp "No Surprises" "Radiohead" someUser`'
+                `Provide a Last.fm username or link yours first. Example: \`${process.env.PREFIX}tp "No Surprises" "Radiohead" someUser\``
             );
         }
 
@@ -126,8 +125,8 @@ module.exports = {
             if (!track || !artist) {
                 if ((args || []).length) {
                     return message.reply(
-                        'For track plays, please use: `,tp "Track Name" "Artist Name" [username]` (quotes required when there are spaces). ' +
-                        'Or run `,tp` with no args to use your currently playing track.'
+                        `For track plays, please use: \`${process.env.PREFIX}tp "Track Name" "Artist Name" [username]\` (quotes required when there are spaces). ` +
+                        `Or run \`${process.env.PREFIX}tp\` with no args to use your currently playing track.`
                     );
                 }
 

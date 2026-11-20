@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
+const { updateJson } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
 
-const dataDir = path.resolve(process.cwd(), 'data');
+const dataDir = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(dataDir, String(guildId));
@@ -42,7 +45,7 @@ async function writeGuildConfig(guildId, config) {
     const cfgPath = guildConfigPath(guildId);
 
     await fs.promises.mkdir(dir, { recursive: true });
-    await fs.promises.writeFile(cfgPath, JSON.stringify(config, null, 2), 'utf8');
+    await updateJson(cfgPath, {}, (current) => ({ ...current, ...config }));
 }
 
 module.exports = {
@@ -86,7 +89,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'Modlog has been disabled for this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -96,7 +99,7 @@ module.exports = {
             if (!channel || !channel.isTextBased?.() || channel.isDMBased?.()) {
                 return interaction.reply({
                     content: 'Please choose a server text channel.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -106,7 +109,7 @@ module.exports = {
                 return interaction.reply({
                     content:
                         `Modlog is already configured in <#${config.channelId}>. Use \`/modlog disable\` to disable it, then run \`/modlog set\` to choose another channel. AutoMod alerts can be managed with \`/automod words\`. <:smirk2:1498272372539785286>`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -116,7 +119,7 @@ module.exports = {
 
             return interaction.reply({
                 content: `Modlog channel has been set to ${channel}.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

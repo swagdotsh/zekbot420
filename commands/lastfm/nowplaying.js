@@ -1,8 +1,7 @@
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 const sharp = require('sharp');
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 async function getCoverArtColor(albumArt) {
   if (!albumArt) return 0xd51007;
@@ -63,7 +62,7 @@ module.exports = {
       username = rows[0]?.lastfm_username
     }
 
-    if (!username) return message.reply('Provide a Last.fm username or link your account with `,linklastfm`!')
+    if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${process.env.PREFIX}linklastfm\`!`)
 
     const url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${username}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=200`;
 

@@ -1,6 +1,7 @@
 const {
     InteractionContextType,
     SlashCommandBuilder,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -23,7 +24,7 @@ module.exports = {
         if (!member.banner) {
             return interaction.reply({
                 content: "That user doesn't have a server-specific banner set. <:smirk2:1498272372539785286>",
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 

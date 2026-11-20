@@ -34,8 +34,9 @@ async function handleMusicButton(interaction) {
         return true;
     }
 
-    if (interaction.member?.voice?.channelId !== session.connection.joinConfig.channelId) {
-        await interaction.reply({ content: 'Join my voice channel to use these. <:smirk2:1498272372539785286>', flags: MessageFlags.Ephemeral });
+    const blocked = music.voiceChannelBlocker(interaction.member, session);
+    if (blocked) {
+        await interaction.reply({ content: blocked, flags: MessageFlags.Ephemeral });
         return true;
     }
 

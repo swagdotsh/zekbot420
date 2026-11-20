@@ -1,4 +1,4 @@
-const { buildResource, prepareTrack } = require('../../musicPlayer');
+const { buildResource, prepareTrack, voiceChannelBlocker } = require('../../musicPlayer');
 
 function getTrackName(track) {
   if (!track) return 'current track';
@@ -14,6 +14,8 @@ module.exports = {
     if (!session || !session.current) {
       return message.reply('Nothing is currently playing to restart.');
     }
+    const blocked = voiceChannelBlocker(message.member, session);
+    if (blocked) return message.reply(blocked);
 
     try {
       if (!(await prepareTrack(session.current))) return message.reply('Could not restart the current track.');

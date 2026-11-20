@@ -1,8 +1,7 @@
 const axios = require('axios');
-const { neon } = require('@neondatabase/serverless');
 const { EmbedBuilder } = require('discord.js');
 
-const sql = neon(process.env.NEON_DATABASE_URL);
+const { sql } = require('../../db');
 const LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/';
 const LASTFM_PLACEHOLDER_IMAGE = '2a96cbd8b46e442fc41c2b86b821562f.png';
 
@@ -106,7 +105,7 @@ module.exports = {
         const username = rows[0]?.lastfm_username;
 
         if (!username) {
-            return message.reply('Link your Last.fm account first with `,linklastfm`.');
+            return message.reply(`Link your Last.fm account first with \`${process.env.PREFIX}linklastfm\`.`);
         }
 
         try {

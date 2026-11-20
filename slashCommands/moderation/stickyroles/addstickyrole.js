@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { addStickyRole } = require('../../../stickyrolesDbHndlr');
 const { roleAssignBlocker } = require('../../../hierarchy');
 
@@ -20,7 +20,7 @@ module.exports = {
         const role = interaction.options.getRole('role');
 
         const blocker = roleAssignBlocker(interaction.member, role);
-        if (blocker) return interaction.reply({ content: blocker, ephemeral: true });
+        if (blocker) return interaction.reply({ content: blocker, flags: MessageFlags.Ephemeral });
 
         try {
             await addStickyRole(interaction.guild.id, role.id);
@@ -30,12 +30,12 @@ module.exports = {
                 .setTitle('✅ Sticky Role Added')
                 .setDescription(`${role} is now a sticky role.\n\n**Note:** Sticky roles must be enabled using \`/stickyroles action: Enable\` to take effect.`);
 
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         } catch (err) {
             console.error(err);
             return interaction.reply({
                 content: 'Something went wrong adding the sticky role.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

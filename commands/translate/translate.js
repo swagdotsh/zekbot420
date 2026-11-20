@@ -23,6 +23,7 @@ async function translate(text, source, target) {
 
 module.exports = {
     name: 'translate',
+    cooldown: 4,
     aliases: ['tr'],
     async execute(message, args) {
         const reply = message.reference
@@ -49,7 +50,7 @@ module.exports = {
                 text = args.slice(1).join(' ');
             }
         } else {
-            return message.reply('Usage: `,translate` (reply) • `,translate [lang]` (reply) • `,translate [lang] [text]` • `,translate [source] [dest] [text]`');
+            return message.reply(`Usage: \`${process.env.PREFIX}translate\` (reply) • \`${process.env.PREFIX}translate [lang]\` (reply) • \`${process.env.PREFIX}translate [lang] [text]\` • \`${process.env.PREFIX}translate [source] [dest] [text]\``);
         }
 
         if (!text) return message.reply('No text to translate.');

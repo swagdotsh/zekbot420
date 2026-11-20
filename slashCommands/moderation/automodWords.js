@@ -11,9 +11,11 @@ const {
     SlashCommandBuilder,
     TextInputBuilder,
     TextInputStyle,
+    MessageFlags
 } = require('discord.js');
 const automodProfile = require('./_automodProfile');
 const automodSpam = require('./_automodSpam');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 
 const RULE_NAME = 'zekbot420 AutoMod Keywords';
 const LEGACY_TIMEOUT_RULE_NAME = 'zekbot420 AutoMod Keyword Timeout';
@@ -26,7 +28,7 @@ const MAX_KEYWORD_LENGTH = 60;
 const MAX_TIMEOUT_MINUTES = 28 * 24 * 60;
 
 function modlogPath(guildId) {
-    return path.resolve(process.cwd(), 'data', String(guildId), 'modlog.json');
+    return path.join(PROJECT_DATA_DIR, String(guildId), 'modlog.json');
 }
 
 async function getModlogChannelId(guildId) {
@@ -90,7 +92,7 @@ module.exports = {
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
             return interaction.reply({
                 content: 'Only server administrators can configure AutoMod words. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -98,7 +100,7 @@ module.exports = {
         if (!botMember?.permissions.has(PermissionFlagsBits.ManageGuild)) {
             return interaction.reply({
                 content: 'I need the `Manage Server` permission to update Discord AutoMod rules. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -109,7 +111,7 @@ module.exports = {
         if (!botMember.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
                 content: 'I need the `Timeout Members` permission to create this AutoMod rule. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -162,13 +164,13 @@ module.exports = {
 
         const keywords = parseKeywords(submission.fields.getTextInputValue(WORDS_INPUT_ID));
         const keywordError = getKeywordValidationError(keywords);
-        if (keywordError) return submission.reply({ content: keywordError, ephemeral: true });
+        if (keywordError) return submission.reply({ content: keywordError, flags: MessageFlags.Ephemeral });
 
         const timeoutMinutes = Number(submission.fields.getTextInputValue(TIMEOUT_INPUT_ID).trim());
         if (!Number.isInteger(timeoutMinutes) || timeoutMinutes < 1 || timeoutMinutes > MAX_TIMEOUT_MINUTES) {
             return submission.reply({
                 content: `Enter a whole number of minutes from 1 to ${MAX_TIMEOUT_MINUTES.toLocaleString()}.`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -176,7 +178,7 @@ module.exports = {
         if (!['yes', 'no'].includes(alertModsAnswer)) {
             return submission.reply({
                 content: 'For mod alerts, enter exactly `yes` or `no`.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -190,12 +192,12 @@ module.exports = {
             if (!modlogChannel?.isTextBased?.() || modlogChannel.isDMBased?.()) {
                 return submission.reply({
                     content: 'Mod alerts need a valid modlog channel. Set one first with `,modlog #channel`, then run this command again.',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
         }
 
-        await submission.deferReply({ ephemeral: true });
+        await submission.deferReply({ flags: MessageFlags.Ephemeral });
 
         try {
             const rules = await interaction.guild.autoModerationRules.fetch();

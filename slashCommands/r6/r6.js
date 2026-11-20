@@ -60,6 +60,7 @@ const RANK_EMOJIS = [
 ]; // sigh
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('r6stats')
         .setDescription('Fetch Rainbow Six Siege stats for a player')

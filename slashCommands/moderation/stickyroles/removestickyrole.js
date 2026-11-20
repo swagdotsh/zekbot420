@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { removeStickyRole, getStickyRoles } = require('../../../stickyrolesDbHndlr');
 
 module.exports = {
@@ -26,7 +26,7 @@ module.exports = {
             if (!isSticky) {
                 return interaction.reply({
                     content: `${role} is not a sticky role.`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -37,12 +37,12 @@ module.exports = {
                 .setTitle('✅ Sticky Role Removed')
                 .setDescription(`${role} is no longer a sticky role.`);
 
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         } catch (err) {
             console.error(err);
             return interaction.reply({
                 content: 'Something went wrong removing the sticky role.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

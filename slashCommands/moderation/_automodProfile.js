@@ -2,6 +2,7 @@ const {
     AutoModerationActionType,
     AutoModerationRuleEventType,
     AutoModerationRuleTriggerType,
+    MessageFlags
 } = require('discord.js');
 
 const WORDS_RULE_NAME = 'zekbot420 AutoMod Keywords';
@@ -15,7 +16,7 @@ module.exports = {
     },
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         try {
             const rules = await interaction.guild.autoModerationRules.fetch();

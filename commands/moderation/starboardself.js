@@ -12,7 +12,7 @@ module.exports = {
 
         const value = args[0]?.toLowerCase();
         if (!['yes', 'no'].includes(value)) {
-            return message.reply('Choose `yes` or `no`. Example: `,starboardself yes`');
+            return message.reply(`Choose \`yes\` or \`no\`. Example: \`${process.env.PREFIX}starboardself yes\``);
         }
 
         const allowSelf = value === 'yes';

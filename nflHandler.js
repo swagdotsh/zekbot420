@@ -1,5 +1,4 @@
-const postgres = require('postgres');
-const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require', onnotice: () => {} });
+const { sql } = require('./db');
 
 const MAX_FAV_PLAYERS = 10;
 const MAX_FAV_TEAMS = 5;
@@ -88,11 +87,13 @@ async function addFavPlayer(userId, player, league = 'nfl') {
         INSERT INTO ${tables(league).players} (user_id, athlete_id, athlete_name, team_abbr)
         VALUES (${userId}, ${player.id}, ${player.name}, ${player.teamAbbr})
     `;
+    followedCache.delete(league);
     return 'added';
 }
 
 async function removeFavPlayer(userId, athleteId, league = 'nfl') {
     const rows = await sql`DELETE FROM ${tables(league).players} WHERE user_id = ${userId} AND athlete_id = ${athleteId} RETURNING athlete_id`;
+    followedCache.delete(league);
     return rows.length > 0;
 }
 
@@ -109,11 +110,13 @@ async function addFavTeam(userId, team, league = 'nfl') {
         INSERT INTO ${tables(league).teams} (user_id, team_id, team_abbr)
         VALUES (${userId}, ${team.id}, ${team.abbreviation})
     `;
+    followedCache.delete(league);
     return 'added';
 }
 
 async function removeFavTeam(userId, teamId, league = 'nfl') {
     const rows = await sql`DELETE FROM ${tables(league).teams} WHERE user_id = ${userId} AND team_id = ${teamId} RETURNING team_id`;
+    followedCache.delete(league);
     return rows.length > 0;
 }
 
@@ -154,13 +157,22 @@ async function getFollowers(athleteIds, teamIds, league = 'nfl') {
 }
 
 // Lets the play loop skip games nobody cares about
-async function getFollowedIds(league = 'nfl') {
-    const players = await sql`SELECT DISTINCT athlete_id FROM ${tables(league).players}`;
-    const teams = await sql`SELECT DISTINCT team_id FROM ${tables(league).teams}`;
-    return {
-        athleteIds: new Set(players.map(r => r.athlete_id)),
-        teamIds: new Set(teams.map(r => r.team_id)),
-    };
+const followedCache = new Map();
+
+function getFollowedIds(league = 'nfl') {
+    if (!followedCache.has(league)) {
+        const loading = (async () => {
+            const players = await sql`SELECT DISTINCT athlete_id FROM ${tables(league).players}`;
+            const teams = await sql`SELECT DISTINCT team_id FROM ${tables(league).teams}`;
+            return {
+                athleteIds: new Set(players.map(r => r.athlete_id)),
+                teamIds: new Set(teams.map(r => r.team_id)),
+            };
+        })();
+        loading.catch(() => followedCache.delete(league));
+        followedCache.set(league, loading);
+    }
+    return followedCache.get(league);
 }
 
 module.exports = {

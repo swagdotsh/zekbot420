@@ -5,7 +5,7 @@ module.exports = {
     aliases: ['away', 'awayfromkeyboard'],
     description: 'Set yourself as AFK',
     async execute(message, args) {
-        const reason = args.join(' ').trim() || 'No reason provided.';
+        const reason = (args.join(' ').trim() || 'No reason provided.').slice(0, 500);
         const startedAt = Date.now();
 
         setAfk(message.guild.id, message.author.id, {
@@ -16,6 +16,7 @@ module.exports = {
         await message.reply({
             content: `Your AFK has been set to ${reason}.`,
             allowedMentions: {
+                parse: [],
                 repliedUser: false,
             },
         });

@@ -2,7 +2,8 @@ const axios = require('axios');
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
 const LIBRE_URL = 'https://translate.cutie.dating';
@@ -39,6 +40,7 @@ async function translateText(text, source, target) {
 }
 
 module.exports = {
+    cooldown: 4,
     data: new SlashCommandBuilder()
         .setName('translate')
         .setDescription('Translate text to another language')
@@ -74,21 +76,21 @@ module.exports = {
         if (!text) {
             return interaction.reply({
                 content: 'No text to translate.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (source !== 'auto' && !POSSIBLE_LANGS.includes(source)) {
             return interaction.reply({
                 content: `Invalid source language code: \`${source}\`.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!POSSIBLE_LANGS.includes(target)) {
             return interaction.reply({
                 content: `Invalid target language code: \`${target}\`.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

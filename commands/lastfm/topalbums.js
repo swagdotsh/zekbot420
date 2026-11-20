@@ -1,7 +1,6 @@
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 const PERIOD_MAP = {
     week: '7day',
@@ -44,7 +43,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                'Provide a Last.fm username or link yours first. e.g. `,topalbums username week` or `,ta month`'
+                `Provide a Last.fm username or link yours first. e.g. \`${process.env.PREFIX}topalbums username week\` or \`${process.env.PREFIX}ta month\``
             );
         }
 

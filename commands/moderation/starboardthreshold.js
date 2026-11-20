@@ -12,7 +12,7 @@ module.exports = {
 
         const threshold = Number(args[0]);
         if (!Number.isInteger(threshold) || threshold < 1 || threshold > 1000) {
-            return message.reply('Provide a whole-number threshold from 1 to 1000. Example: `,starboardthreshold 3`');
+            return message.reply(`Provide a whole-number threshold from 1 to 1000. Example: \`${process.env.PREFIX}starboardthreshold 3\``);
         }
 
         await updateConfig(message.guild.id, (config) => {

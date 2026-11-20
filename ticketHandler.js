@@ -1,5 +1,4 @@
-const postgres = require('postgres');
-const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require', onnotice: () => {} });
+const { sql } = require('./db');
 const {
     ActionRowBuilder,
     AttachmentBuilder,

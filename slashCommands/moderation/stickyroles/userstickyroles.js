@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { addUserStickyRole, removeUserStickyRole } = require('../../../stickyrolesDbHndlr');
 const { roleAssignBlocker } = require('../../../hierarchy');
 
@@ -52,27 +52,27 @@ module.exports = {
         try {
             if (subcommand === 'add') {
                 const blocker = roleAssignBlocker(interaction.member, role);
-                if (blocker) return interaction.reply({ content: blocker, ephemeral: true });
+                if (blocker) return interaction.reply({ content: blocker, flags: MessageFlags.Ephemeral });
 
                 await addUserStickyRole(interaction.guild.id, user.id, role.id);
                 const embed = new EmbedBuilder()
                     .setColor('#00ff88')
                     .setTitle('✅ Sticky Role Added to User')
                     .setDescription(`${user} will now keep ${role} if they rejoin.`);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             } else if (subcommand === 'remove') {
                 await removeUserStickyRole(interaction.guild.id, user.id, role.id);
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle('✅ Sticky Role Removed from User')
                     .setDescription(`${user} will no longer keep ${role} if they rejoin.`);
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
         } catch (err) {
             console.error(err);
             return interaction.reply({
                 content: 'Something went wrong updating user sticky roles.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

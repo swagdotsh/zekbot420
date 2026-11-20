@@ -31,6 +31,7 @@ function splitText(text) {
 
 module.exports = {
     name: 'badtranslate',
+    cooldown: 8,
     aliases: ['bt'],
     async execute(message, args) {
         const reply = message.reference
@@ -57,7 +58,7 @@ module.exports = {
         } else if (!reply && args.length >= 1) {
             text = args.join(' ');
         } else {
-            return message.reply('Usage:\n`,badtranslate [text]`\n`,badtranslate [source] [dest] [text]`\n`,badtranslate` (reply)\n`,badtranslate [dest]` (reply)\n`,badtranslate [source] [dest]` (reply)');
+            return message.reply(`Usage:\n\`${process.env.PREFIX}badtranslate [text]\`\n\`${process.env.PREFIX}badtranslate [source] [dest] [text]\`\n\`${process.env.PREFIX}badtranslate\` (reply)\n\`${process.env.PREFIX}badtranslate [dest]\` (reply)\n\`${process.env.PREFIX}badtranslate [source] [dest]\` (reply)`);
         }
 
         if (!text) return message.reply('No text to badly translate. <:smirk2:1498272372539785286>');

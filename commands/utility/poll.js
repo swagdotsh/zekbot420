@@ -5,7 +5,7 @@ module.exports = {
         const pollQuestion = args.join(' ').trim();
         if (!pollQuestion) {
             return message.reply({
-                content: 'Usage: `,poll <question>`\nExample: `,poll should i go for a walk today`'
+                content: `Usage: \`${process.env.PREFIX}poll <question>\`\nExample: \`${process.env.PREFIX}poll should i go for a walk today\``
             });
         }
 

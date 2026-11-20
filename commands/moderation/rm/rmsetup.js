@@ -1,8 +1,10 @@
 const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits } = require('discord.js');
+const { writeJsonAtomic } = require('../../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const ROLE_NAME = 'Reaction Muted';
 
 function guildDir(guildId) {
@@ -19,11 +21,7 @@ async function ensureGuildDirExists(guildId) {
 
 async function writeReactionMuteConfig(guildId, data) {
     await ensureGuildDirExists(guildId);
-    await fs.writeFile(
-        reactionMuteConfigPath(guildId),
-        JSON.stringify(data, null, 2),
-        'utf8'
-    );
+    await writeJsonAtomic(reactionMuteConfigPath(guildId), data);
 }
 
 async function reactMuteConfigExists(guildId) {
@@ -62,7 +60,7 @@ module.exports = {
                     `Role: **${config.roleName}** (ID: ${config.roleId})\n` +
                     `Set up by: **${setupByTag}**\n` +
                     `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>\n` +
-                    `Use \`,reactionmute @user\` or \`,unreactionmute @user\` to manage it. <:smirk2:1498272372539785286>`
+                    `Use \`${process.env.PREFIX}reactionmute @user\` or \`${process.env.PREFIX}unreactionmute @user\` to manage it. <:smirk2:1498272372539785286>`
             });
         }
 

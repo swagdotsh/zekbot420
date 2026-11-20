@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
+    MessageFlags
 } = require('discord.js');
 
 const CUSTOM_EMOJI_REGEX = /^<a?:\w+:(\d+)>$/;
@@ -31,7 +32,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
             return interaction.reply({
                 content: 'You need the `Manage Messages` permission to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -48,7 +49,7 @@ module.exports = {
             if (!emoji) {
                 return interaction.reply({
                     content: `I can't remove that emoji because it's not in ${interaction.guild.name} <:smirk2:1498272372539785286>`,
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 
@@ -56,7 +57,7 @@ module.exports = {
         } else if (!UNICODE_EMOJI_REGEX.test(emojiInput)) {
             return interaction.reply({
                 content: 'That does not look like a valid emoji. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -67,7 +68,7 @@ module.exports = {
         } catch {
             return interaction.reply({
                 content: 'I could not find a message with that ID in this channel. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -79,7 +80,7 @@ module.exports = {
             if (!reaction) {
                 return interaction.reply({
                     content: 'That reaction is not on the message. <:smirk2:1498272372539785286>',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 
@@ -88,7 +89,7 @@ module.exports = {
             if (!users.has(interaction.client.user.id)) {
                 return interaction.reply({
                     content: 'I did not add that reaction to the message. <:smirk2:1498272372539785286>',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 
@@ -96,14 +97,14 @@ module.exports = {
 
             return interaction.reply({
                 content: '✅ Reaction removed.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         } catch (err) {
             console.error(err);
 
             return interaction.reply({
                 content: 'Failed to remove that reaction. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

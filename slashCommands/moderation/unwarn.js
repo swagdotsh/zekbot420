@@ -4,11 +4,14 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { logUnwarn } = require('../../log');
+const { updateJson } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(DATA_DIR, String(guildId));
@@ -38,10 +41,6 @@ async function readWarns(guildId) {
     }
 }
 
-async function writeWarns(guildId, data) {
-    await ensureGuildDirExists(guildId);
-    await fs.writeFile(warnsPath(guildId), JSON.stringify(data, null, 2), 'utf8');
-}
 
 function parsePositiveInt(s) {
     const n = Number.parseInt(String(s ?? ''), 10);
@@ -55,7 +54,11 @@ async function persistWarnStore({ guildId, store, userId, list }) {
     if (list.length === 0) delete store[userId];
     else store[userId] = list;
 
-    await writeWarns(guildId, store);
+    await ensureGuildDirExists(guildId);
+    await updateJson(warnsPath(guildId), {}, (current) => {
+        if (list.length === 0) delete current[userId];
+        else current[userId] = list;
+    });
 }
 
 async function sendUnwarnDm({ target, guild, removedByTag, removedCount, newCount, note, warnId = null }) {
@@ -183,14 +186,14 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'User not found in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === interaction.user.id) {
             return interaction.reply({
                 content: "You can't unwarn yourself.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -203,7 +206,7 @@ module.exports = {
         if (list.length === 0) {
             return interaction.reply({
                 content: `**${target.user.tag}** has no warnings to remove.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -211,14 +214,14 @@ module.exports = {
             if (!warnId) {
                 return interaction.reply({
                     content: 'Please provide `warn_id` when using specific warning ID mode.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
             if (warnId > list.length) {
                 return interaction.reply({
                     content: `That warn ID is out of range. **${target.user.tag}** has **${list.length}** warning(s).`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 

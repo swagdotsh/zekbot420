@@ -4,6 +4,7 @@ const {
     PermissionsBitField,
     SlashCommandBuilder,
     InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -37,21 +38,21 @@ module.exports = {
         if (!interaction.guild) {
             return interaction.reply({
                 content: 'This command can only be used in a server.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: 'You need the `Manage Channels` permission to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: 'I need the `Manage Channels` permission to create channels. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -108,7 +109,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'Failed to create the channel.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

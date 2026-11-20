@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { logTimeout } = require('../../log');
 const { canModerate } = require('../../hierarchy');
@@ -41,28 +42,28 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'User not found in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === interaction.user.id) {
             return interaction.reply({
                 content: "You can't timeout yourself.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!target.moderatable) {
             return interaction.reply({
                 content: 'I can’t timeout that user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!canModerate(interaction.member, target)) {
             return interaction.reply({
                 content: "You can't timeout someone with the same or higher role than you. <:smirk2:1498272372539785286>",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -71,14 +72,14 @@ module.exports = {
         if (!time) {
             return interaction.reply({
                 content: 'Please provide a valid duration for the timeout, for example `1m`, `1h`, or `1d`.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (time > 28 * 24 * 60 * 60 * 1000) {
             return interaction.reply({
                 content: 'Timeouts can be at most 28 days.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -110,7 +111,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'There was an error executing the timeout.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

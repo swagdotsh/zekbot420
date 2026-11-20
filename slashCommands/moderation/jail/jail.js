@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { getJailConfig, jailUser, getJailedUser } = require('../../../jailHandler');
 const { logJail } = require('../../../log');
@@ -62,21 +63,21 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'Could not find that user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === interaction.user.id) {
             return interaction.reply({
                 content: "You can't jail yourself.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.permissions.has(PermissionFlagsBits.ManageGuild)) {
             return interaction.reply({
                 content: "You can't jail an admin.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -85,7 +86,7 @@ module.exports = {
         if (!config) {
             return interaction.reply({
                 content: 'Jail system is not set up. Run `/setupjail` first.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -94,7 +95,7 @@ module.exports = {
         if (alreadyJailed) {
             return interaction.reply({
                 content: 'That user is already jailed.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -106,7 +107,7 @@ module.exports = {
             if (!durationMs) {
                 return interaction.reply({
                     content: 'Invalid duration. Use something like `10m`, `2h`, or `1d`.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }
@@ -119,7 +120,7 @@ module.exports = {
         if (!jailRole || !jailChannel) {
             return interaction.reply({
                 content: 'Jail role or channel is missing. Re-run `/setupjail`.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

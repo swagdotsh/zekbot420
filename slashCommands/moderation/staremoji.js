@@ -2,6 +2,7 @@ const {
     InteractionContextType,
     PermissionFlagsBits,
     SlashCommandBuilder,
+    MessageFlags
 } = require('discord.js');
 const { parseReactionEmoji, updateConfig } = require('../../starboardHandler');
 
@@ -23,7 +24,7 @@ module.exports = {
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
             return interaction.reply({
                 content: 'You need the `Manage Server` permission to configure the starboard. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -31,7 +32,7 @@ module.exports = {
         if (!emoji) {
             return interaction.reply({
                 content: 'Provide one standard or custom emoji, such as `⭐` or `<:star:123456789012345678>`.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -42,7 +43,7 @@ module.exports = {
         const display = emoji.id ? `<:${emoji.name}:${emoji.id}>` : emoji.name;
         return interaction.reply({
             content: `Starboard reactions are now counted with ${display}.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     },
 };

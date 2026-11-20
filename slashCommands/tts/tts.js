@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
 const {
     startTts,
@@ -93,39 +94,39 @@ module.exports = {
 
             if (sub === 'leave') {
                 if (!leaveTts(interaction.client, interaction.guild.id)) {
-                    return interaction.reply({ content: "TTS isn't running right now. <:smirk2:1498272372539785286>", ephemeral: true });
+                    return interaction.reply({ content: "TTS isn't running right now. <:smirk2:1498272372539785286>", flags: MessageFlags.Ephemeral });
                 }
                 return interaction.reply('👋 Stopped TTS and left the voice channel.');
             }
 
             if (sub === 'skip') {
                 if (!skipTts(interaction.client, interaction.guild.id)) {
-                    return interaction.reply({ content: "TTS isn't running right now. <:smirk2:1498272372539785286>", ephemeral: true });
+                    return interaction.reply({ content: "TTS isn't running right now. <:smirk2:1498272372539785286>", flags: MessageFlags.Ephemeral });
                 }
-                return interaction.reply({ content: '⏭️ Skipped.', ephemeral: true });
+                return interaction.reply({ content: '⏭️ Skipped.', flags: MessageFlags.Ephemeral });
             }
 
             if (sub === 'channel') {
                 if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
-                    return interaction.reply({ content: 'You need **Manage Server** to set the TTS channel. <:smirk2:1498272372539785286>', ephemeral: true });
+                    return interaction.reply({ content: 'You need **Manage Server** to set the TTS channel. <:smirk2:1498272372539785286>', flags: MessageFlags.Ephemeral });
                 }
 
                 if (!interaction.options.getBoolean('enabled')) {
                     await setTtsChannel(interaction.guild.id, null);
-                    return interaction.reply({ content: 'Removed the TTS channel. Only VC chats will be read now.', ephemeral: true });
+                    return interaction.reply({ content: 'Removed the TTS channel. Only VC chats will be read now.', flags: MessageFlags.Ephemeral });
                 }
 
                 const channel = interaction.options.getChannel('channel') || interaction.channel;
                 if (!channel?.isTextBased()) {
-                    return interaction.reply({ content: "That's not a valid text channel. <:smirk2:1498272372539785286>", ephemeral: true });
+                    return interaction.reply({ content: "That's not a valid text channel. <:smirk2:1498272372539785286>", flags: MessageFlags.Ephemeral });
                 }
 
                 await setTtsChannel(interaction.guild.id, channel.id);
-                return interaction.reply({ content: `TTS channel set to <#${channel.id}>. VC chats still work too.`, ephemeral: true });
+                return interaction.reply({ content: `TTS channel set to <#${channel.id}>. VC chats still work too.`, flags: MessageFlags.Ephemeral });
             }
 
             if (sub === 'voicelist') {
-                await interaction.deferReply({ ephemeral: true });
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 return interaction.editReply(await formatVoiceList(interaction.options.getString('locale') || undefined));
             }
 
@@ -134,21 +135,21 @@ module.exports = {
 
                 if (!name) {
                     const voice = await getUserVoice(interaction.user.id);
-                    return interaction.reply({ content: `Your TTS voice: **${voice}**`, ephemeral: true });
+                    return interaction.reply({ content: `Your TTS voice: **${voice}**`, flags: MessageFlags.Ephemeral });
                 }
 
                 const voice = await findVoice(name);
                 if (!voice) {
-                    return interaction.reply({ content: `No voice called **${name}**. Use \`/tts voicelist\` to see them.`, ephemeral: true });
+                    return interaction.reply({ content: `No voice called **${name}**. Use \`/tts voicelist\` to see them.`, flags: MessageFlags.Ephemeral });
                 }
 
                 await setUserVoice(interaction.user.id, voice);
-                return interaction.reply({ content: `Your TTS voice is now **${voice}**.`, ephemeral: true });
+                return interaction.reply({ content: `Your TTS voice is now **${voice}**.`, flags: MessageFlags.Ephemeral });
             }
         } catch (err) {
             console.error(`/tts ${sub} failed:`, err);
 
-            const payload = { content: 'Something went wrong with TTS. <:smirk2:1498272372539785286>', ephemeral: true };
+            const payload = { content: 'Something went wrong with TTS. <:smirk2:1498272372539785286>', flags: MessageFlags.Ephemeral };
             if (interaction.deferred || interaction.replied) return interaction.editReply(payload);
             return interaction.reply(payload);
         }

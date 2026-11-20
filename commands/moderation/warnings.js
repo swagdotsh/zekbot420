@@ -1,8 +1,9 @@
 const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(DATA_DIR, String(guildId));

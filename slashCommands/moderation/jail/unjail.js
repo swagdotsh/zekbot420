@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 const { getJailConfig, getJailedUser } = require('../../../jailHandler');
 const { logUnjail } = require('../../../log');
@@ -28,7 +29,7 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'Could not find that user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -37,7 +38,7 @@ module.exports = {
         if (!config) {
             return interaction.reply({
                 content: 'Jail system is not set up.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -46,7 +47,7 @@ module.exports = {
         if (!jailedUser) {
             return interaction.reply({
                 content: 'That user is not jailed.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -55,7 +56,7 @@ module.exports = {
         if (!success) {
             return interaction.reply({
                 content: 'Could not find that member in the server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

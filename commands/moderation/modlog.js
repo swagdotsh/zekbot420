@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const { updateJson } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 
-const dataDir = path.resolve(process.cwd(), 'data');
+const dataDir = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
   return path.join(dataDir, String(guildId));
@@ -66,7 +68,7 @@ async function writeGuildConfig(guildId, config) {
   const cfgPath = guildConfigPath(guildId);
 
   await fs.promises.mkdir(dir, { recursive: true });
-  await fs.promises.writeFile(cfgPath, JSON.stringify(config, null, 2), 'utf8');
+  await updateJson(cfgPath, {}, (current) => ({ ...current, ...config }));
 }
 
 module.exports = {
@@ -82,8 +84,8 @@ module.exports = {
       return message.reply({
         content:
           'Please provide a channel (#channel, channel ID, or channel name).\n' +
-          'Example: `,modlog #mod-logs`\n' +
-          'To disable: `,modlog off`',
+          `Example: \`${process.env.PREFIX}modlog #mod-logs\`\n` +
+          `To disable: \`${process.env.PREFIX}modlog off\``,
       });
     }
 
@@ -120,7 +122,7 @@ module.exports = {
     if (config.channelId) {
       return message.reply({
         content:
-          `Modlog is already configured in <#${config.channelId}>. Use \`,modlog off\` to disable it, then run \`,modlog #channel\` to choose another channel. AutoMod alerts can be managed with \`/automod words\`. <:smirk2:1498272372539785286>`,
+          `Modlog is already configured in <#${config.channelId}>. Use \`${process.env.PREFIX}modlog off\` to disable it, then run \`${process.env.PREFIX}modlog #channel\` to choose another channel. AutoMod alerts can be managed with \`/automod words\`. <:smirk2:1498272372539785286>`,
       });
     }
 

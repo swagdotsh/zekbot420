@@ -1,4 +1,4 @@
-const { skipCurrent } = require('../../musicPlayer');
+const { skipCurrent, voiceChannelBlocker } = require('../../musicPlayer');
 
 function getTrackName(track) {
     if (!track) return 'track';
@@ -14,6 +14,8 @@ module.exports = {
         if (!session || !session.current) {
             return message.reply('Nothing is currently playing to skip.');
         }
+        const blocked = voiceChannelBlocker(message.member, session);
+        if (blocked) return message.reply(blocked);
 
         const currentName = getTrackName(session.current);
         const nextName = getTrackName(session.queue?.[0]);

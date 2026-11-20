@@ -19,6 +19,7 @@ function interactionMessage(interaction) {
 }
 
 module.exports = {
+    cooldown: 10,
     data: new SlashCommandBuilder()
         .setName('chart')
         .setDescription('Build a Last.fm album or artist collage')

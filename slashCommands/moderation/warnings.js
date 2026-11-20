@@ -1,13 +1,15 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(DATA_DIR, String(guildId));
@@ -58,7 +60,7 @@ module.exports = {
         if (!viewingSelf && !interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
                 content: "You don't have permission to view other users' warnings. <:smirk2:1498272372539785286>",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -69,7 +71,7 @@ module.exports = {
         if (total === 0) {
             return interaction.reply({
                 content: `**${targetUser.tag}** has no warnings.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -94,7 +96,7 @@ module.exports = {
 
         return interaction.reply({
             embeds: [embed],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 };

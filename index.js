@@ -7,6 +7,7 @@ const {
     GatewayIntentBits,
     Collection,
     Partials,
+    MessageFlags
 } = require('discord.js');
 
 require('dotenv').config();
@@ -39,13 +40,15 @@ const {
     handleVoiceMasterInteraction,
     restoreManagedChannels,
 } = require('./commands/voicemaster/vmManager');
-const {initDB} = require('./leveling');
+const {initDB, flushXp} = require('./leveling');
+const {sql} = require('./db');
 const {initJailDB} = require('./jailHandler');
 const {initStickyRoleDB} = require('./stickyrolesDbHndlr');
 const {handleMessageXP} = require('./events/xpHandler');
 const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/VCxpHandler');
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
-const {handleAfkMessage} = require('./events/afkStore');
+const {handleAfkMessage, initAfkDB} = require('./events/afkStore');
+const {initRemindersDB, startReminderLoop} = require('./reminders');
 const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
 const {initNflDB} = require('./nflHandler');
@@ -54,7 +57,8 @@ const {startNbaGameLoop} = require('./events/nbaGameLoop');
 const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
 const {handleMusicButton} = require('./musicControls');
 const {initTicketDB, handleTicketInteraction, markDeletedTicket, noteOpenerLeft} = require('./ticketHandler');
-const {cleanupSessionFiles} = require('./musicPlayer');
+const {teardownSession} = require('./musicPlayer');
+const {isConnectionAlive} = require('./voiceConnection');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 
@@ -97,24 +101,21 @@ async function cleanupEmptyVoiceSession(client, guildId, channelId) {
     const channel = await client.channels.fetch(channelId).catch(() => null);
     if (!channel || voiceChannelHasNonBotMembers(channel)) return;
 
-    if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
-    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
-
-    if (session.mode !== 'tts') {
-        cleanupSessionFiles(session);
-        session.nowPlayingMessage?.edit({ components: [] }).catch(() => {});
+    if (session.mode === 'tts') {
+        if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
+        client.voiceSessions.delete(guildId);
+        session.player?.stop(true);
+        if (isConnectionAlive(session.connection)) session.connection.destroy();
+    } else {
+        teardownSession(client, guildId, session);
     }
-
-    client.voiceSessions.delete(guildId);
-    session.player?.stop(true);
-    session.connection?.destroy();
 
     const textChannel = session.textChannelId
         ? await client.channels.fetch(session.textChannelId).catch(() => null)
         : null;
 
     if (textChannel?.isTextBased()) {
-        await textChannel.send('Left voice channel because everyone left.');
+        await textChannel.send('Left voice channel because everyone left.').catch(() => {});
     }
 }
 
@@ -227,6 +228,29 @@ async function logTimeoutChange(client, oldMember, newMember) {
     }
 }
 
+const DEFAULT_COOLDOWN_SECONDS = 2;
+const commandCooldowns = new Map();
+
+function checkCooldown(userId, commandName, cooldownSeconds = DEFAULT_COOLDOWN_SECONDS) {
+    const key = `${userId}:${commandName}`;
+    const now = Date.now();
+    const entry = commandCooldowns.get(key);
+
+    if (entry && now < entry.until) {
+        const firstHit = !entry.warned;
+        entry.warned = true;
+        return { remaining: Math.ceil((entry.until - now) / 1000), warn: firstHit };
+    }
+
+    commandCooldowns.set(key, { until: now + cooldownSeconds * 1000, warned: false });
+    return null;
+}
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of commandCooldowns) if (entry.until < now) commandCooldowns.delete(key);
+}, 60 * 1000).unref();
+
 const commandsPath = path.join(__dirname, 'commands');
 
 const loadCommands = (dir) => {
@@ -276,11 +300,15 @@ client.once('clientReady', async () => {
     await initNflDB();
     await initTtsDB();
     await initTicketDB();
+    await initRemindersDB();
+    await initAfkDB();
+    await require('./events/giveawayManager').initGiveawayDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
     startNflPlayLoop(client);
     startNbaGameLoop(client);
+    startReminderLoop(client);
     await restoreManagedChannels(client).catch((error) => console.error('Failed to restore VoiceMaster channels:', error));
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
@@ -308,13 +336,22 @@ client.on('interactionCreate', async (interaction) => {
         const cmd = client.slashCommands.get(interaction.commandName);
         if (!cmd) return;
 
+        const cooldown = checkCooldown(interaction.user.id, `/${interaction.commandName}`, cmd.cooldown);
+        if (cooldown) {
+            await interaction.reply({
+                content: `Slow down! You can use that again in ${cooldown.remaining}s.`,
+                flags: MessageFlags.Ephemeral,
+            }).catch(() => {});
+            return;
+        }
+
         await cmd.execute(interaction);
     } catch (error) {
         console.error(error);
 
         const payload = {
-            content: 'There was an error executing that interaction.',
-            ephemeral: true,
+            content: 'Something went wrong running that. Try again in a moment.',
+            flags: MessageFlags.Ephemeral,
         };
 
         if (interaction.deferred || interaction.replied) await interaction.followUp(payload).catch(() => {});
@@ -342,11 +379,20 @@ client.on('messageCreate', async (message) => {
 
     if (!command) return;
 
+    const cooldown = checkCooldown(message.author.id, command.name, command.cooldown);
+    if (cooldown) {
+        if (cooldown.warn) {
+            const notice = await message.reply(`Slow down! You can use that again in ${cooldown.remaining}s.`).catch(() => null);
+            if (notice) setTimeout(() => notice.delete().catch(() => {}), 5000);
+        }
+        return;
+    }
+
     try {
         await command.execute(message, args);
     } catch (error) {
         console.error(error);
-        await message.reply('There was an error executing that command.').catch(() => {});
+        await message.reply('Something went wrong running that command. Try again in a moment.').catch(() => {});
     }
 });
 
@@ -513,6 +559,27 @@ client.on('error', (error) => {
 });
 
 client.login(process.env.TOKEN);
+
+let shuttingDown = false;
+async function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`${signal} received, saving XP and shutting down...`);
+
+    const forceExit = setTimeout(() => process.exit(1), 10 * 1000);
+    try {
+        await flushXp();
+    } catch (error) {
+        console.error('Failed to save XP during shutdown:', error);
+    }
+    await client.destroy().catch(() => {});
+    await sql.end({ timeout: 5 }).catch(() => {});
+    clearTimeout(forceExit);
+    process.exit(0);
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
     try {

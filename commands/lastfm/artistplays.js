@@ -1,7 +1,6 @@
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 function parseQuotedArtistAndUsername(args) {
     const raw = (args || []).join(' ').trim();
@@ -107,7 +106,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                'Provide a Last.fm username or link yours first. Example: `,ap "Red Hot Chili Peppers" someUser`'
+                `Provide a Last.fm username or link yours first. Example: \`${process.env.PREFIX}ap "Red Hot Chili Peppers" someUser\``
             );
         }
 

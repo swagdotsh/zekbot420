@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const { writeJsonAtomic } = require('./jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('./paths');
 
 const API = 'https://api.spotify.com/v1';
 const MAX_COLLECTION_TRACKS = 50;
-const REFRESH_TOKEN_FILE = path.resolve(process.cwd(), 'data', 'spotify_refresh_token.json');
+const REFRESH_TOKEN_FILE = path.join(PROJECT_DATA_DIR, 'spotify_refresh_token.json');
 
 const tokens = {
     app: { value: null, expiresAt: 0 },
@@ -56,7 +58,7 @@ async function getToken(kind) {
         data = await requestToken({ grant_type: 'refresh_token', refresh_token: getRefreshToken() });
         if (data.refresh_token) {
             await fs.promises.mkdir(path.dirname(REFRESH_TOKEN_FILE), { recursive: true });
-            await fs.promises.writeFile(REFRESH_TOKEN_FILE, JSON.stringify({ refreshToken: data.refresh_token }), 'utf8');
+            await writeJsonAtomic(REFRESH_TOKEN_FILE, { refreshToken: data.refresh_token });
         }
     } else {
         data = await requestToken({ grant_type: 'client_credentials' });

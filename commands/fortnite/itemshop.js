@@ -54,11 +54,12 @@ function buildRow(page, totalPages) {
 
 module.exports = {
     name: 'itemshop',
+    cooldown: 5,
     aliases: ['fnshop', 'is'],
     async execute(message, args) {
         const section = args[0]?.toLowerCase();
         if (section && !['featured', 'daily'].includes(section)) {
-            return message.reply('Usage: `,itemshop` • `,itemshop featured` • `,itemshop daily`');
+            return message.reply(`Usage: \`${process.env.PREFIX}itemshop\` • \`${process.env.PREFIX}itemshop featured\` • \`${process.env.PREFIX}itemshop daily\``);
         }
 
         try {

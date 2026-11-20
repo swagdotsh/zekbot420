@@ -3,7 +3,8 @@ const {
     ContextMenuCommandBuilder,
     ApplicationCommandType,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
 const LIBRE_URL = 'https://translate.cutie.dating';
@@ -70,7 +71,7 @@ module.exports = {
             if (!text) {
                 return interaction.reply({
                     content: 'That message has no text to translate.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -115,7 +116,7 @@ module.exports = {
             if (!interaction.replied && !interaction.deferred) {
                 return interaction.reply({
                     content: 'An error occurred while processing your request.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }

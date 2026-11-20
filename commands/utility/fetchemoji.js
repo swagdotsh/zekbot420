@@ -7,7 +7,7 @@ module.exports = {
     const input = args[0];
 
     if (!input) {
-      return message.reply('Usage: `,fetchemoji [emoji]`');
+      return message.reply(`Usage: \`${process.env.PREFIX}fetchemoji [emoji]\``);
     }
 
     const match = input.match(/^<a?:\w+:(\d+)>$/);

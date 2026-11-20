@@ -1,20 +1,30 @@
 const fs = require('fs');
+const { PermissionFlagsBits } = require('discord.js');
 const { spawn } = require('child_process');
 const {
-    joinVoiceChannel,
     createAudioPlayer,
     createAudioResource,
     AudioPlayerStatus,
-    VoiceConnectionStatus,
-    StreamType,
-    entersState
+    StreamType
 } = require('@discordjs/voice');
+const { connectVoice, watchConnection, createSessionOnce, isConnectionAlive } = require('./voiceConnection');
 const { resolveSpotifyMatch, resolveStream, findFallback, SOURCE_EMOJIS } = require('./musicSources');
 const { buildControls } = require('./musicControls');
 
 const FFMPEG_BIN = process.env.FFMPEG_PATH || require('ffmpeg-static') || 'ffmpeg';
 const INACTIVITY_MS = 2 * 60 * 1000;
 const MAX_HISTORY = 20;
+
+const MUSIC_DEBUG = /^(1|true|yes)$/i.test(process.env.MUSIC_DEBUG ?? '');
+
+function musicLog(event, details = {}) {
+    if (!MUSIC_DEBUG) return;
+    console.log(`[music] ${JSON.stringify({ time: new Date().toISOString(), event, ...details })}`);
+}
+
+function trackDetails(track) {
+    return { source: track?.sourceType, title: track?.title, duration: track?.duration };
+}
 
 function isOnlineTrack(track) {
     return ['youtube', 'soundcloud', 'spotify'].includes(track?.sourceType);
@@ -25,6 +35,7 @@ const OPUS_OUTPUT_ARGS = ['-vn', '-c:a', 'libopus', '-b:a', '128k', '-ar', '4800
 const RECONNECTED_NOISE = /Error in the pull function|IO error: Error number -10054|Connection reset by peer|Will reconnect at/i;
 
 function spawnFfmpegOpus(input, headers = null) {
+    const startedAt = Date.now();
     const inputArgs = headers
         ? [
             '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_on_network_error', '1', '-reconnect_delay_max', '5',
@@ -36,6 +47,14 @@ function spawnFfmpegOpus(input, headers = null) {
     const ffmpeg = spawn(FFMPEG_BIN, ['-hide_banner', '-loglevel', 'error', '-nostdin', ...inputArgs, ...OPUS_OUTPUT_ARGS], {
         stdio: ['ignore', 'pipe', 'pipe']
     });
+
+    ffmpeg.on('spawn', () => musicLog('ffmpeg-start', { pid: ffmpeg.pid }));
+    ffmpeg.stdout.once('end', () => musicLog('ffmpeg-output-end', {
+        pid: ffmpeg.pid, elapsedMs: Date.now() - startedAt
+    }));
+    ffmpeg.on('close', (code, signal) => musicLog('ffmpeg-exit', {
+        pid: ffmpeg.pid, code, signal, elapsedMs: Date.now() - startedAt
+    }));
 
     ffmpeg.stderr.on('data', (chunk) => {
         const text = chunk.toString()
@@ -58,6 +77,7 @@ function spawnFfmpegOpus(input, headers = null) {
 }
 
 function buildResource(track) {
+    musicLog('resource-create', trackDetails(track));
     if (isOnlineTrack(track) && !track.stream) throw new Error(`No stream resolved for ${track.url}`);
 
     const ffmpeg = isOnlineTrack(track)
@@ -70,6 +90,7 @@ function buildResource(track) {
 const STREAM_MAX_AGE_MS = 30 * 60 * 1000;
 
 async function prepareTrack(track, onFallback) {
+    musicLog('track-prepare', trackDetails(track));
     if (!isOnlineTrack(track)) return true;
     if (track.stream && Date.now() - track.stream.resolvedAt < STREAM_MAX_AGE_MS) return true;
 
@@ -79,6 +100,7 @@ async function prepareTrack(track, onFallback) {
     if (playUrl) {
         try {
             track.stream = await resolveStream(playUrl);
+            musicLog('stream-resolved', { ...trackDetails(track), format: track.stream.formatId });
             return true;
         } catch (err) {
             if (!err.blocked) throw err;
@@ -95,6 +117,7 @@ async function prepareTrack(track, onFallback) {
     track.fallbackUrl = fallback.url;
     track.playSource = fallback.source;
     track.stream = fallback.stream;
+    musicLog('fallback-resolved', { ...trackDetails(track), playSource: track.playSource });
     return true;
 }
 
@@ -203,9 +226,7 @@ async function playNext(client, guildId) {
                 ? await client.channels.fetch(latest.textChannelId).catch(() => null)
                 : null;
 
-            cleanupSessionFiles(latest);
-            if (latest.connection) latest.connection.destroy();
-            client.voiceSessions.delete(guildId);
+            teardownSession(client, guildId, latest);
 
             if (channel?.isTextBased()) {
                 await channel.send('Left voice channel after 2 minutes of inactivity.').catch(() => {});
@@ -246,6 +267,7 @@ async function playNext(client, guildId) {
         if (client.voiceSessions?.get(guildId) !== session) return;
 
         nextTrack.startedAt = Date.now();
+        musicLog('play-request', { guildId, connection: session.connection.state.status, ...trackDetails(nextTrack) });
         session.player.play(buildResource(nextTrack));
         await announceNowPlaying(client, session, nextTrack);
     } catch (err) {
@@ -295,19 +317,37 @@ async function getOrCreateSession(message, voiceChannel) {
     if (!client.voiceSessions) client.voiceSessions = new Map();
 
     const existing = client.voiceSessions.get(guildId);
-    if (existing) return existing;
+    if (existing && isConnectionAlive(existing.connection)) {
+        musicLog('session-reuse', { guildId, connection: existing.connection.state.status, player: existing.player.state.status });
+        return existing;
+    }
+    if (existing) teardownSession(client, guildId, existing);
 
-    const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId,
-        adapterCreator: message.guild.voiceAdapterCreator,
-        selfDeaf: true
-    });
+    return createSessionOnce(client, guildId, () => createSession(message, voiceChannel));
+}
 
-    await entersState(connection, VoiceConnectionStatus.Ready, 30000);
+async function createSession(message, voiceChannel) {
+    const client = message.client;
+    const guildId = message.guild.id;
+
+    musicLog('voice-join', { guildId, channelId: voiceChannel.id });
+
+    const connection = await connectVoice(message.guild, voiceChannel.id);
+
+    connection.on('stateChange', (oldState, newState) => musicLog('voice-state', {
+        guildId, from: oldState.status, to: newState.status,
+        reason: newState.reason, closeCode: newState.closeCode
+    }));
+    connection.on('error', (error) => console.error('[music] voice-error', { guildId, message: error.message, stack: error.stack }));
 
     const player = createAudioPlayer();
-    connection.subscribe(player);
+    const subscription = connection.subscribe(player);
+    musicLog('player-subscribe', { guildId, subscribed: Boolean(subscription) });
+    player.on('stateChange', (oldState, newState) => musicLog('player-state', {
+        guildId, from: oldState.status, to: newState.status,
+        playbackDuration: newState.resource?.playbackDuration ?? oldState.resource?.playbackDuration,
+        missedFrames: newState.missedFrames
+    }));
 
     const session = {
         connection,
@@ -336,7 +376,47 @@ async function getOrCreateSession(message, voiceChannel) {
         if (active) active.skipRequested = true;
     });
 
+    watchConnection(connection, async () => {
+        if (client.voiceSessions?.get(guildId) !== session) return;
+        teardownSession(client, guildId, session);
+
+        const channel = await client.channels.fetch(session.textChannelId).catch(() => null);
+        if (channel?.isTextBased()) {
+            await channel.send('Got disconnected from the voice channel, so I cleared the queue.').catch(() => {});
+        }
+    });
+
     return session;
+}
+
+function teardownSession(client, guildId, session) {
+    if (client.voiceSessions?.get(guildId) === session) client.voiceSessions.delete(guildId);
+
+    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
+    if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
+    session.inactivityTimeout = null;
+    session.emptyVoiceTimeout = null;
+
+    retireNowPlaying(session).catch(() => {});
+    cleanupSessionFiles(session);
+
+    session.queue = [];
+    session.history = [];
+    session.current = null;
+
+    session.player.removeAllListeners(AudioPlayerStatus.Idle);
+    session.player.stop(true);
+    if (isConnectionAlive(session.connection)) session.connection.destroy();
+}
+
+const SMIRK = '<:smirk2:1498272372539785286>';
+
+function voiceChannelBlocker(member, session) {
+    const channelId = session?.connection?.joinConfig?.channelId;
+    if (!channelId || !member) return null;
+    if (member.voice?.channelId === channelId) return null;
+    if (member.permissions?.has(PermissionFlagsBits.MoveMembers)) return null;
+    return `Join <#${channelId}> to control the music. ${SMIRK}`;
 }
 
 function skipCurrent(session) {
@@ -376,18 +456,7 @@ function stopSession(client, guildId) {
     const session = client.voiceSessions?.get(guildId);
     if (!session) return false;
 
-    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
-    retireNowPlaying(session);
-    cleanupSessionFiles(session);
-
-    session.queue = [];
-    session.history = [];
-    session.current = null;
-    client.voiceSessions.delete(guildId);
-
-    session.player.removeAllListeners(AudioPlayerStatus.Idle);
-    session.player.stop(true);
-    if (session.connection.state.status !== 'destroyed') session.connection.destroy();
+    teardownSession(client, guildId, session);
     return true;
 }
 
@@ -397,11 +466,14 @@ module.exports = {
     buildResource,
     prepareTrack,
     cleanupTrack,
+    releaseTrack,
     cleanupSessionFiles,
     skipCurrent,
     togglePause,
     goBack,
     stopSession,
+    teardownSession,
+    voiceChannelBlocker,
     trackLabel,
     nowPlayingText
 };

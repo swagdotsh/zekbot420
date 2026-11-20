@@ -7,6 +7,7 @@ const {
     InteractionContextType,
     PermissionFlagsBits,
     SlashCommandBuilder,
+    MessageFlags
 } = require('discord.js');
 const { deleteConfig, readConfig, updateConfig } = require('../../starboardHandler');
 
@@ -39,7 +40,7 @@ module.exports = {
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
             return interaction.reply({
                 content: 'You need the `Manage Server` permission to configure the starboard. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -50,7 +51,7 @@ module.exports = {
             if (!existingConfig.channelId) {
                 return interaction.reply({
                     content: 'Starboard is not configured for this server. Use `/starboard set` to configure it. <:smirk2:1498272372539785286>',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 
@@ -65,7 +66,7 @@ module.exports = {
                             .setStyle(ButtonStyle.Danger)
                     ),
                 ],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
 
             const confirmationMessage = await interaction.fetchReply();
@@ -93,7 +94,7 @@ module.exports = {
         if (existingConfig.channelId) {
             return interaction.reply({
                 content: `Starboard is already configured in <#${existingConfig.channelId}>. Use \`/starboardthreshold\`, \`/starboardself\`, or \`/staremoji\` to manage it. Use \`/starboard off\` to remove it. <:smirk2:1498272372539785286>`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -101,7 +102,7 @@ module.exports = {
         if (!channel?.isTextBased?.() || channel.isDMBased?.()) {
             return interaction.reply({
                 content: 'Choose a server text channel for the starboard.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -111,7 +112,7 @@ module.exports = {
 
         return interaction.reply({
             content: `Starboard channel set to ${channel}.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     },
 };

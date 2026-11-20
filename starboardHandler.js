@@ -1,6 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const { EmbedBuilder } = require('discord.js');
+const { writeJsonAtomic } = require('./jsonStore');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DEFAULT_CONFIG = {
@@ -70,7 +71,7 @@ async function readConfig(guildId) {
 async function writeConfig(guildId, config) {
     const filePath = configPath(guildId);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(config, null, 2), 'utf8');
+    await writeJsonAtomic(filePath, config);
 }
 
 function withGuildLock(guildId, task) {

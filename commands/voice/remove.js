@@ -1,4 +1,4 @@
-const fs = require('fs');
+const { voiceChannelBlocker, releaseTrack } = require('../../musicPlayer');
 
 function getTrackName(track) {
     if (!track) return 'track';
@@ -12,10 +12,12 @@ module.exports = {
     async execute(message, args) {
         const session = message.client.voiceSessions?.get(message.guild.id);
         if (!session) return message.reply('There is no active queue right now.');
+        const blocked = voiceChannelBlocker(message.member, session);
+        if (blocked) return message.reply(blocked);
 
         const pos = Number(args[0]);
         if (!Number.isInteger(pos) || pos < 1) {
-            return message.reply('Usage: `,remove <position>` (position starts at 1 for next-up queue).');
+            return message.reply(`Usage: \`${process.env.PREFIX}remove <position>\` (position starts at 1 for next-up queue).`);
         }
 
         if (!session.queue || session.queue.length === 0) {
@@ -27,7 +29,7 @@ module.exports = {
         }
 
         const [removed] = session.queue.splice(pos - 1, 1);
-        if (removed?.filePath && fs.existsSync(removed.filePath)) fs.unlinkSync(removed.filePath);
+        releaseTrack(session, removed);
 
         return message.reply(`Removed **${getTrackName(removed)}** from queue.`);
     }

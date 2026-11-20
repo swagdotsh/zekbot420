@@ -2,6 +2,7 @@ const {
     InteractionContextType,
     PermissionFlagsBits,
     SlashCommandBuilder,
+    MessageFlags
 } = require('discord.js');
 const { updateConfig } = require('../../starboardHandler');
 
@@ -25,7 +26,7 @@ module.exports = {
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
             return interaction.reply({
                 content: 'You need the `Manage Server` permission to configure the starboard. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -36,7 +37,7 @@ module.exports = {
 
         return interaction.reply({
             content: `Starboard threshold set to ${threshold} star${threshold === 1 ? '' : 's'}.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     },
 };

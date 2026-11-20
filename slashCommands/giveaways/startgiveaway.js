@@ -1,4 +1,3 @@
-const { neon } = require('@neondatabase/serverless');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
@@ -6,10 +5,12 @@ const {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const sql = neon(process.env.NEON_DATABASE_URL);
+const { sql } = require('../../db');
+const { notifyDue } = require('../../dueScheduler');
 
 function parseDuration(str) {
     const match = str.match(/^(\d+)(s|m|h|d)$/);
@@ -58,7 +59,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
                 content: 'You need mod permissions to start a giveaway. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -68,7 +69,7 @@ module.exports = {
         if (!duration) {
             return interaction.reply({
                 content: 'Invalid duration. Use format like `10m`, `2h`, or `1d`.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -79,7 +80,7 @@ module.exports = {
         if (!title) {
             return interaction.reply({
                 content: 'Giveaway title cannot be empty.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -90,6 +91,7 @@ module.exports = {
             VALUES (${interaction.guild.id}, ${channel.id}, ${title}, ${endsAt}, ${dmWinner}, ${interaction.user.id})
             RETURNING id
         `;
+        notifyDue('giveaways', endsAt);
 
         const button = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -114,7 +116,7 @@ module.exports = {
 
         return interaction.reply({
             content: `Giveaway **${title}** started in ${channel}! Ends <t:${Math.floor(endsAt.getTime() / 1000)}:R>.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 };

@@ -11,7 +11,7 @@ module.exports = {
 
     const roleArg = args[0];
     if (!roleArg) {
-      return message.reply('Please specify a role. Usage: `,removestickyrole @role` or `,removestickyrole role_id`');
+      return message.reply(`Please specify a role. Usage: \`${process.env.PREFIX}removestickyrole @role\` or \`${process.env.PREFIX}removestickyrole role_id\``);
     }
 
     let role;
@@ -30,7 +30,7 @@ module.exports = {
     }
 
     if (!role) {
-      return message.reply('Role not found. Usage: `,removestickyrole @role` or `,removestickyrole role_id`');
+      return message.reply(`Role not found. Usage: \`${process.env.PREFIX}removestickyrole @role\` or \`${process.env.PREFIX}removestickyrole role_id\``);
     }
 
     try {

@@ -10,10 +10,6 @@ module.exports = {
         const enabled = await getStickyRolesEnabled(guildId);
         if (!enabled) return;
 
-        // Check if user is banned
-        const bans = await member.guild.bans.fetch().catch(() => null);
-        if (bans?.has(member.id)) return;
-
         // Get user's sticky roles
         const stickyRoles = await getUserStickyRoles(guildId, member.id);
 
@@ -40,16 +36,14 @@ module.exports = {
     client.on('guildMemberUpdate', async (oldMember, newMember) => {
       try {
         const guildId = newMember.guild.id;
-
-        // Check if sticky roles are enabled for this guild
-        const enabled = await getStickyRolesEnabled(guildId);
-        if (!enabled) return;
-
         if (oldMember.partial) return;
 
         const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
         const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
         if (addedRoles.size === 0 && removedRoles.size === 0) return;
+
+        const enabled = await getStickyRolesEnabled(guildId);
+        if (!enabled) return;
 
         const stickyRolesList = await getStickyRoles(guildId);
         const stickyRoleIds = stickyRolesList.map(r => r.role_id);

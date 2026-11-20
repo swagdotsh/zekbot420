@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 const {
     getManagedChannel,
@@ -28,7 +29,7 @@ module.exports = {
         if (!voiceChannel) {
             return interaction.reply({
                 content: 'You need to be in a VoiceMaster VC to use this command.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -37,14 +38,14 @@ module.exports = {
         if (!managed) {
             return interaction.reply({
                 content: 'This is not a VoiceMaster VC.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!isVoiceMasterOrStaff(interaction.member, managed)) {
             return interaction.reply({
                 content: 'Only the voicemaster or staff with **Manage Channels** can use this command.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -61,7 +62,7 @@ module.exports = {
                 content:
                     'Please provide a user limit from **2** to **99**.\n' +
                     'Use `0` or run `/sl` with no input to remove the limit.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

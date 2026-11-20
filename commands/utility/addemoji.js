@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 const ffmpegPath = require('ffmpeg-static');
+const { fetchLimited } = require('../../safeFetch');
 const { PermissionFlagsBits } = require('discord.js');
 
 const MAX_EMOJI_SIZE = 256 * 1024;
@@ -37,23 +38,7 @@ function getExtensionFromUrl(url) {
 }
 
 async function downloadFile(url, outputPath) {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error(`Failed to download file. HTTP ${response.status}`);
-    }
-
-    const contentLength = Number(response.headers.get('content-length') || 0);
-    if (contentLength > MAX_DOWNLOAD_SIZE) {
-        throw new Error('That file is too large to download.');
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    if (buffer.length > MAX_DOWNLOAD_SIZE) {
-        throw new Error('That file is too large to download.');
-    }
+    const buffer = await fetchLimited(url, { maxBytes: MAX_DOWNLOAD_SIZE });
 
     await fs.writeFile(outputPath, buffer);
 }
@@ -118,6 +103,7 @@ async function compressAnimatedEmoji(inputPath, outputPath) {
 
 module.exports = {
     name: 'addemoji',
+    cooldown: 5,
     aliases: ['createemoji'],
     async execute(message, args) {
         if (!message.guild) {
@@ -137,7 +123,7 @@ module.exports = {
         const attachment = message.attachments.first();
 
         if (!emojiName) {
-            return message.reply('Usage: `,addemoji [emoji name] [link to file]` or attach an image/gif.');
+            return message.reply(`Usage: \`${process.env.PREFIX}addemoji [emoji name] [link to file]\` or attach an image/gif.`);
         }
 
         if (!isValidEmojiName(emojiName)) {

@@ -2,8 +2,10 @@ const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { logUnwarn } = require('../../log');
+const { updateJson } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(DATA_DIR, String(guildId));
@@ -29,10 +31,6 @@ async function readWarns(guildId) {
     }
 }
 
-async function writeWarns(guildId, data) {
-    await ensureGuildDirExists(guildId);
-    await fs.writeFile(warnsPath(guildId), JSON.stringify(data, null, 2), 'utf8');
-}
 
 function parsePositiveInt(s) {
     const n = Number.parseInt(String(s ?? ''), 10);
@@ -58,7 +56,12 @@ function parseWarnIdToken(token) {
 async function persistWarnStore({ guildId, store, userId, list }) {
     if (list.length === 0) delete store[userId];
     else store[userId] = list;
-    await writeWarns(guildId, store);
+
+    await ensureGuildDirExists(guildId);
+    await updateJson(warnsPath(guildId), {}, (current) => {
+        if (list.length === 0) delete current[userId];
+        else current[userId] = list;
+    });
 }
 
 async function sendUnwarnDm({ target, guild, removedByTag, removedCount, newCount, note, warnId = null }) {

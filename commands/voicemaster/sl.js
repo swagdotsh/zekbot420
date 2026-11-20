@@ -35,7 +35,7 @@ module.exports = {
         if (!Number.isInteger(limit) || limit < 0 || limit > 99 || limit === 1) {
             return message.reply(
                 'Please provide a user limit from **2** to **99**.\n' +
-                'Use `0` or run `,sl` with no input to remove the limit.'
+                `Use \`0\` or run \`${process.env.PREFIX}sl\` with no input to remove the limit.`
             );
         }
 

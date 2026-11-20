@@ -41,7 +41,7 @@ module.exports = {
 
         if (config.trapChannelId && message.guild.channels.cache.has(config.trapChannelId)) {
             return message.reply(
-                `A trap channel is already configured: <#${config.trapChannelId}>. Use \`,trapstats\` to review it or \`,removetrap\` to disable it. <:smirk2:1498272372539785286>`
+                `A trap channel is already configured: <#${config.trapChannelId}>. Use \`${process.env.PREFIX}trapstats\` to review it or \`${process.env.PREFIX}removetrap\` to disable it. <:smirk2:1498272372539785286>`
             );
         }
 

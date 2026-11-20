@@ -1,24 +1,12 @@
-const { neon } = require('@neondatabase/serverless');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const sql = neon(process.env.NEON_DATABASE_URL);
-
-function disabledGiveawayButton(id) {
-    return new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId(`giveaway_enter_${id}`)
-            .setLabel('🎉 Enter')
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(true)
-    );
-}
+const { sql } = require('../../db');
+const { endGiveaway } = require('../../events/giveawayManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -37,7 +25,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
                 content: 'You need mod permissions to end a giveaway. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -48,77 +36,22 @@ module.exports = {
         `;
 
         if (!giveaway) {
-            return interaction.reply({
-                content: `No giveaway found with ID **${id}**.`,
-                ephemeral: true
-            });
+            return interaction.reply({ content: `No giveaway found with ID **${id}**.`, flags: MessageFlags.Ephemeral });
         }
 
         if (giveaway.ended) {
-            return interaction.reply({
-                content: 'That giveaway has already ended.',
-                ephemeral: true
-            });
+            return interaction.reply({ content: 'That giveaway has already ended.', flags: MessageFlags.Ephemeral });
         }
 
-        const entries = await sql`SELECT user_id FROM giveaway_entries WHERE giveaway_id = ${id}`;
+        await interaction.deferReply();
+        await endGiveaway(interaction.client, giveaway);
 
-        if (entries.length === 0) {
-            await sql`UPDATE giveaways SET ended = TRUE WHERE id = ${id}`;
-
-            const channel = interaction.guild.channels.cache.get(giveaway.channel_id);
-
-            if (channel && giveaway.message_id) {
-                const msg = await channel.messages.fetch(giveaway.message_id).catch(() => null);
-
-                if (msg) {
-                    await msg.edit({
-                        components: [disabledGiveawayButton(id)]
-                    });
-                }
-            }
-
-            return interaction.reply({
-                content: `Giveaway **${giveaway.title}** ended with no entries.`,
-                ephemeral: false
-            });
-        }
-
-        const winner = entries[Math.floor(Math.random() * entries.length)];
-
-        await sql`
-            UPDATE giveaways
-            SET ended = TRUE, winner_id = ${winner.user_id}
-            WHERE id = ${id}
-        `;
-
-        const channel = interaction.guild.channels.cache.get(giveaway.channel_id);
-
-        if (channel && giveaway.message_id) {
-            const msg = await channel.messages.fetch(giveaway.message_id).catch(() => null);
-
-            if (msg) {
-                await msg.edit({
-                    components: [disabledGiveawayButton(id)]
-                });
-            }
-
-            await channel.send({
-                content: `🎉 <@${winner.user_id}> won the **${giveaway.title}** giveaway! Congratulations!`
-            });
-        }
-
-        if (giveaway.dm_winner) {
-            const user = await interaction.client.users.fetch(winner.user_id).catch(() => null);
-
-            if (user) {
-                user.send(`🎉 You won the **${giveaway.title}** giveaway in **${interaction.guild.name}**! Congratulations!`).catch(() => null);
-            }
-        }
-
-        return interaction.reply({
-            content: `Giveaway **${giveaway.title}** ended. Winner: <@${winner.user_id}>`,
-            ephemeral: false
+        const [ended] = await sql`SELECT winner_id FROM giveaways WHERE id = ${id}`;
+        return interaction.editReply({
+            content: ended?.winner_id
+                ? `Giveaway **${giveaway.title}** ended. Winner: <@${ended.winner_id}>`
+                : `Giveaway **${giveaway.title}** ended with no winner.`,
+            allowedMentions: { parse: [] }
         });
     }
 };

@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     PermissionsBitField,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 const { unsetupVoiceMaster } = require('./_vmManager');
 
@@ -27,7 +28,7 @@ module.exports = {
         ) {
             return interaction.reply({
                 content: 'You do not have the required permissions to run this command. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -36,7 +37,7 @@ module.exports = {
         if (!confirmed) {
             return interaction.reply({
                 content: 'VoiceMaster unsetup cancelled.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

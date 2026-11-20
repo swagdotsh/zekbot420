@@ -1,9 +1,8 @@
 const axios = require('axios');
-const { neon } = require('@neondatabase/serverless');
 const sharp = require('sharp');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
-const sql = neon(process.env.NEON_DATABASE_URL);
+const { sql } = require('../../db');
 const LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/';
 const TILE_SIZE = 300;
 const MAX_GRID_SIDE = 5;
@@ -143,13 +142,14 @@ function formatChartList(entries, chartType) {
 
 module.exports = {
     name: 'chart',
+    cooldown: 10,
     aliases: ['fmchart', 'weeklychart'],
 
     async execute(message, args) {
         const options = parseChartArgs(args);
         if (!options) {
             return message.reply(
-                'Usage: `,chart albums|artists 3x3 [period] [lastfm username]`\n' +
+                `Usage: \`${process.env.PREFIX}chart albums|artists 3x3 [period] [lastfm username]\`\n` +
                 'Chart sizes can be from `1x1` to `5x5`. Periods include `7d`, `30d`, `3m`, `6m`, `1y`, and `all-time`. Leave off the username to use your linked Last.fm account.'
             );
         }
@@ -164,7 +164,7 @@ module.exports = {
         }
 
         if (!username) {
-            return message.reply('Link your Last.fm account with `,linklastfm`, or provide a username: `,chart albums 3x3 username`.');
+            return message.reply(`Link your Last.fm account with \`${process.env.PREFIX}linklastfm\`, or provide a username: \`${process.env.PREFIX}chart albums 3x3 username\`.`);
         }
 
         const requestedAlbums = options.columns * options.rows;
