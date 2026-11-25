@@ -61,6 +61,9 @@ const {teardownSession} = require('./musicPlayer');
 const {isConnectionAlive} = require('./voiceConnection');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
+const {loadSlashCommands} = require('./slashLoader');
+const {handleSocialEmbed} = require('./socialEmbeds');
+const {gatewayPlatformOptions} = require('./platformIcon');
 
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled promise rejection:', error);
@@ -76,7 +79,8 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.AutoModerationExecution
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+    ws: gatewayPlatformOptions(),
 });
 
 client.commands = new Collection();
@@ -274,21 +278,8 @@ const loadCommands = (dir) => {
 
 loadCommands(commandsPath);
 
-const slashCommandsPath = path.join(__dirname, 'slashCommands');
-if (fs.existsSync(slashCommandsPath)) {
-    const walk = (dir) => {
-        const entries = fs.readdirSync(dir, {withFileTypes: true});
-        for (const entry of entries) {
-            const full = path.join(dir, entry.name);
-            if (entry.isDirectory()) walk(full);
-            else if (entry.isFile() && entry.name.endsWith('.js')) {
-                const slashCommand = require(full);
-                if (!slashCommand?.data?.name || typeof slashCommand.execute !== 'function') continue;
-                client.slashCommands.set(slashCommand.data.name, slashCommand);
-            }
-        }
-    };
-    walk(slashCommandsPath);
+for (const slashCommand of loadSlashCommands()) {
+    client.slashCommands.set(slashCommand.data.name, slashCommand);
 }
 
 client.once('clientReady', async () => {
@@ -336,7 +327,14 @@ client.on('interactionCreate', async (interaction) => {
         const cmd = client.slashCommands.get(interaction.commandName);
         if (!cmd) return;
 
-        const cooldown = checkCooldown(interaction.user.id, `/${interaction.commandName}`, cmd.cooldown);
+        const subcommand = interaction.isChatInputCommand()
+            ? [interaction.options.getSubcommandGroup(false), interaction.options.getSubcommand(false)].filter(Boolean).join(' ')
+            : '';
+        const cooldown = checkCooldown(
+            interaction.user.id,
+            `/${interaction.commandName}${subcommand ? ` ${subcommand}` : ''}`,
+            cmd.getCooldown?.(interaction) ?? cmd.cooldown
+        );
         if (cooldown) {
             await interaction.reply({
                 content: `Slow down! You can use that again in ${cooldown.remaining}s.`,
@@ -366,6 +364,7 @@ client.on('messageCreate', async (message) => {
         await handleAfkMessage(message).catch(console.error);
         await handleTrapMessage(message).catch(console.error);
         await handleTtsMessage(message).catch(console.error);
+        handleSocialEmbed(message).catch(console.error);
     }
 
     if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;

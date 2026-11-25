@@ -9,6 +9,7 @@ const {
     InteractionContextType,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 
 const DATA_DIR = PROJECT_DATA_DIR;
 const CONFIG_PATH = path.join(DATA_DIR, 'birthdayConfig.json');
@@ -87,7 +88,7 @@ module.exports = {
 
         if (existingGuildConfig.roleId || existingGuildConfig.channelId) {
             return interaction.editReply(
-                'Birthday system is already configured. Use `/setbirthday`, `/birthdays`, or `/removebirthday` to manage it. <:smirk2:1498272372539785286>'
+                'Birthday system is already configured. Members can use `/birthday set`, `/birthday list` and `/birthday remove`. <:smirk2:1498272372539785286>'
             );
         }
 
@@ -134,7 +135,7 @@ module.exports = {
         await saveConfig(config);
 
         return interaction.editReply(
-            `✅ Birthday system setup complete!\n` +
+            ok('Birthday system is set up!\n') +
             `Birthday role: ${birthdayRole}\n` +
             `Birthday announcement channel: ${birthdayChannel}`
         );

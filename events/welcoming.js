@@ -1,32 +1,24 @@
-const { EmbedBuilder } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
+const { PermissionFlagsBits } = require('discord.js');
+const { getWelcomeConfig, buildWelcomeMessage } = require('../welcomeStore');
 
 module.exports = (client) => {
-    client.on('guildMemberAdd', (member) => {
+    client.on('guildMemberAdd', async (member) => {
         try {
-            const configPath = path.join(__dirname, '../data', member.guild.id, 'welcomeConfig.json');
-            if (!fs.existsSync(configPath)) return;
+            const config = await getWelcomeConfig(member.guild.id);
+            if (!config.channelId) return;
 
-            const { channelId } = JSON.parse(fs.readFileSync(configPath));
-            if (!channelId) return;
+            const channel = member.guild.channels.cache.get(config.channelId);
+            if (!channel?.isTextBased()) return;
 
-            const channel = member.guild.channels.cache.get(channelId);
-            if (!channel) return;
+            const perms = channel.permissionsFor(member.guild.members.me);
+            if (!perms?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) return;
 
-            const embed = new EmbedBuilder()
-                .setColor('#00ff88')
-                .setTitle(`Welcome ${member.user.username}!`)
-                .setDescription('Enjoy your stay!')
-                .setThumbnail(member.user.displayAvatarURL())
-                .setAuthor({ name: member.guild.name, iconURL: member.guild.iconURL() })
-                .setFooter({ text: `${member.guild.name} is now at ${member.guild.memberCount} members.` });
+            const payload = buildWelcomeMessage(member, config);
+            if (!payload.content && !payload.embeds.length) return;
 
-            channel.send({ content: `Welcome ${member}!`, embeds: [embed] }).catch((err) => {
-                console.error('[welcoming] failed to send welcome:', err);
-            });
+            await channel.send(payload);
         } catch (err) {
-            console.error('[welcoming]', err);
+            console.error('[welcoming] failed to send welcome:', err);
         }
     });
 };

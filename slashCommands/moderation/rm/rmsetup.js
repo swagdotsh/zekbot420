@@ -8,6 +8,7 @@ const {
     InteractionContextType,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../../ui');
 
 const DATA_DIR = PROJECT_DATA_DIR;
 const ROLE_NAME = 'Reaction Muted';
@@ -144,7 +145,7 @@ module.exports = {
             console.error('rmsetup error:', error);
 
             return interaction.reply({
-                content: 'There was an error setting up reaction muting. Make sure my role is high enough to manage the new role and channel overwrites.',
+                content: fail('Something went wrong setting up reaction mute. Make sure my role is high enough to manage the new role and channel overwrites.'),
                 flags: MessageFlags.Ephemeral
             });
         }

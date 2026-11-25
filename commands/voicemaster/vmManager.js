@@ -391,7 +391,7 @@ async function createJoinChannel(client, guild, category, actorTag) {
         const existingChannel = guild.channels.cache.get(existingConfig.joinChannelId)
             ?? await guild.channels.fetch(existingConfig.joinChannelId).catch(() => null);
         if (existingChannel) {
-            return { error: `VoiceMaster is already set up: ${existingChannel}. Run unsetupvm first to move it. ${SMIRK}` };
+            return { error: `VoiceMaster is already set up: ${existingChannel}. Remove it first (\`/disable voicemaster\` or \`${process.env.PREFIX}unsetupvm\`) to move it. ${SMIRK}` };
         }
     }
 

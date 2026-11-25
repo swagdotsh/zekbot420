@@ -28,13 +28,13 @@ async function assertPublicUrl(rawUrl) {
     return url;
 }
 
-async function fetchLimited(rawUrl, { maxBytes, timeoutMs = 15000, maxRedirects = 5 } = {}) {
+async function fetchLimited(rawUrl, { maxBytes, timeoutMs = 15000, maxRedirects = 5, headers } = {}) {
     const signal = AbortSignal.timeout(timeoutMs);
     let url = await assertPublicUrl(rawUrl);
     let response;
 
     for (let hop = 0; ; hop++) {
-        response = await fetch(url, { redirect: 'manual', signal });
+        response = await fetch(url, { redirect: 'manual', signal, headers });
         const location = response.headers.get('location');
         if (response.status < 300 || response.status >= 400 || !location) break;
         if (hop >= maxRedirects) throw new Error('Too many redirects.');

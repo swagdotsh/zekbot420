@@ -101,7 +101,7 @@ module.exports = {
 
         if (!config?.roleId) {
             return interaction.reply({
-                content: 'Reaction mute has not been set up yet. Run `/rmsetup` first.',
+                content: 'Reaction mute has not been set up yet. Run `/setup reactionmute` first.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -110,7 +110,7 @@ module.exports = {
 
         if (!role) {
             return interaction.reply({
-                content: 'The reaction mute role could not be found. Run `/rmsetup` again.',
+                content: 'The reaction mute role could not be found. Run `/setup reactionmute` again.',
                 flags: MessageFlags.Ephemeral
             });
         }

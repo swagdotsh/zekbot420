@@ -85,7 +85,7 @@ module.exports = {
 
         if (!config) {
             return interaction.reply({
-                content: 'Jail system is not set up. Run `/setupjail` first.',
+                content: 'Jail system is not set up. Run `/setup jail` first.',
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -119,7 +119,7 @@ module.exports = {
 
         if (!jailRole || !jailChannel) {
             return interaction.reply({
-                content: 'Jail role or channel is missing. Re-run `/setupjail`.',
+                content: 'Jail role or channel is missing. Run `/setup jail` again.',
                 flags: MessageFlags.Ephemeral
             });
         }

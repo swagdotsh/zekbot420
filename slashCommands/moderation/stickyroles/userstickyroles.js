@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js');
+const { ok, fail } = require('../../../ui');
 const { addUserStickyRole, removeUserStickyRole } = require('../../../stickyrolesDbHndlr');
 const { roleAssignBlocker } = require('../../../hierarchy');
 
@@ -71,7 +72,7 @@ module.exports = {
         } catch (err) {
             console.error(err);
             return interaction.reply({
-                content: 'Something went wrong updating user sticky roles.',
+                content: fail('Something went wrong updating sticky roles. Try again in a moment.'),
                 flags: MessageFlags.Ephemeral
             });
         }

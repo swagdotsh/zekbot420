@@ -5,6 +5,7 @@ const {
     EmbedBuilder,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { setLevelRole, removeLevelRole, getLevelRoles } = require('../../leveling');
 
 module.exports = {
@@ -58,7 +59,7 @@ module.exports = {
 
             if (!roles.length) {
                 return interaction.reply({
-                    content: 'No level roles set up yet.',
+                    content: fail('No level roles yet. Add one with `/level role set`.'),
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -96,14 +97,14 @@ module.exports = {
 
             if (!level || level < 1) {
                 return interaction.reply({
-                    content: 'Please provide a valid level number.',
+                    content: fail('Please provide a valid level number.'),
                     flags: MessageFlags.Ephemeral
                 });
             }
 
             if (!role) {
                 return interaction.reply({
-                    content: 'Please provide a valid role.',
+                    content: fail('Please provide a valid role.'),
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -112,14 +113,14 @@ module.exports = {
                 await setLevelRole(interaction.guild.id, level, role.id);
 
                 return interaction.reply({
-                    content: `${role} will now be assigned when a user reaches level **${level}**.`,
+                    content: ok(`${role} will now be given when a member reaches level **${level}**.`),
                     flags: MessageFlags.Ephemeral
                 });
             } catch (err) {
                 console.error(err);
 
                 return interaction.reply({
-                    content: 'Something went wrong saving the role.',
+                    content: fail('Something went wrong saving the role. Try again in a moment.'),
                     flags: MessageFlags.Ephemeral
                 });
             }

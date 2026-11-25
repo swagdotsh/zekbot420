@@ -4,6 +4,7 @@ const {
     SlashCommandBuilder,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { parseReactionEmoji, updateConfig } = require('../../starboardHandler');
 
 module.exports = {
@@ -31,7 +32,7 @@ module.exports = {
         const emoji = parseReactionEmoji(interaction.options.getString('emoji', true));
         if (!emoji) {
             return interaction.reply({
-                content: 'Provide one standard or custom emoji, such as `⭐` or `<:star:123456789012345678>`.',
+                content: fail('Provide one standard or custom emoji, such as `⭐` or `<:star:123456789012345678>`.'),
                 flags: MessageFlags.Ephemeral,
             });
         }
@@ -42,7 +43,7 @@ module.exports = {
 
         const display = emoji.id ? `<:${emoji.name}:${emoji.id}>` : emoji.name;
         return interaction.reply({
-            content: `Starboard reactions are now counted with ${display}.`,
+            content: ok(`Starboard reactions are now counted with ${display}.`),
             flags: MessageFlags.Ephemeral,
         });
     },

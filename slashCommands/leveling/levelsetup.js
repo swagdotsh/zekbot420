@@ -6,6 +6,7 @@ const {
     EmbedBuilder,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { getConfig, setConfig } = require('../../leveling');
 
 module.exports = {
@@ -52,7 +53,7 @@ module.exports = {
         const existingConfig = await getConfig(interaction.guild.id);
         if (existingConfig) {
             return interaction.reply({
-                content: `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`/rank\`, \`/leaderboard\`, or \`/lvlrole\` to manage it. <:smirk2:1498272372539785286>`,
+                content: `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`/level role\`, \`/level channel\`, \`/rank\` or \`/leaderboard\` to manage it. <:smirk2:1498272372539785286>`,
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -64,14 +65,14 @@ module.exports = {
 
         if (!channel) {
             return interaction.reply({
-                content: 'Invalid channel.',
+                content: fail('Please choose a server text channel.'),
                 flags: MessageFlags.Ephemeral
             });
         }
 
         if (xpMin >= xpMax) {
             return interaction.reply({
-                content: 'Invalid XP range. Minimum XP must be less than maximum XP.',
+                content: fail('Minimum XP must be less than maximum XP.'),
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -113,7 +114,7 @@ module.exports = {
             console.error(err);
 
             return interaction.reply({
-                content: 'Something went wrong saving the config.',
+                content: fail('Something went wrong saving the leveling settings. Try again in a moment.'),
                 flags: MessageFlags.Ephemeral
             });
         }

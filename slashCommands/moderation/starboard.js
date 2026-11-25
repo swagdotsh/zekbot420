@@ -10,6 +10,7 @@ const {
     MessageFlags
 } = require('discord.js');
 const { deleteConfig, readConfig, updateConfig } = require('../../starboardHandler');
+const { ok, fail } = require('../../ui');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -37,81 +38,73 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
-            return interaction.reply({
-                content: 'You need the `Manage Server` permission to configure the starboard. <:smirk2:1498272372539785286>',
-                flags: MessageFlags.Ephemeral,
-            });
-        }
+        return interaction.options.getSubcommand() === 'off' ? this.runOff(interaction) : this.runSet(interaction);
+    },
 
-        const subcommand = interaction.options.getSubcommand();
+    async runOff(interaction) {
         const existingConfig = await readConfig(interaction.guild.id);
-
-        if (subcommand === 'off') {
-            if (!existingConfig.channelId) {
-                return interaction.reply({
-                    content: 'Starboard is not configured for this server. Use `/starboard set` to configure it. <:smirk2:1498272372539785286>',
-                    flags: MessageFlags.Ephemeral,
-                });
-            }
-
-            const confirmId = `starboard-off:${interaction.guild.id}:${interaction.user.id}`;
-            await interaction.reply({
-                content: 'This will delete this server\'s saved starboard configuration. Already-posted starboard messages will stay. Continue?',
-                components: [
-                    new ActionRowBuilder().addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(confirmId)
-                            .setLabel('Confirm')
-                            .setStyle(ButtonStyle.Danger)
-                    ),
-                ],
-                flags: MessageFlags.Ephemeral,
-            });
-
-            const confirmationMessage = await interaction.fetchReply();
-            try {
-                const confirmation = await confirmationMessage.awaitMessageComponent({
-                    componentType: ComponentType.Button,
-                    time: 30_000,
-                    filter: (buttonInteraction) =>
-                        buttonInteraction.customId === confirmId && buttonInteraction.user.id === interaction.user.id,
-                });
-
-                await deleteConfig(interaction.guild.id);
-                return confirmation.update({
-                    content: 'Starboard has been turned off and its saved configuration was deleted.',
-                    components: [],
-                });
-            } catch {
-                return interaction.editReply({
-                    content: 'Starboard shutdown cancelled.',
-                    components: [],
-                }).catch(() => null);
-            }
-        }
-
-        if (existingConfig.channelId) {
+        if (!existingConfig.channelId) {
             return interaction.reply({
-                content: `Starboard is already configured in <#${existingConfig.channelId}>. Use \`/starboardthreshold\`, \`/starboardself\`, or \`/staremoji\` to manage it. Use \`/starboard off\` to remove it. <:smirk2:1498272372539785286>`,
+                content: fail('Starboard is not set up in this server. Use `/setup starboard` to set it up.'),
                 flags: MessageFlags.Ephemeral,
             });
         }
 
+        const confirmId = `starboard-off:${interaction.guild.id}:${interaction.user.id}`;
+        await interaction.reply({
+            content: 'This will delete this server\'s saved starboard settings. Messages already on the starboard will stay. Continue?',
+            components: [
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(confirmId)
+                        .setLabel('Confirm')
+                        .setStyle(ButtonStyle.Danger)
+                ),
+            ],
+            flags: MessageFlags.Ephemeral,
+        });
+
+        const confirmationMessage = await interaction.fetchReply();
+        try {
+            const confirmation = await confirmationMessage.awaitMessageComponent({
+                componentType: ComponentType.Button,
+                time: 30_000,
+                filter: (buttonInteraction) =>
+                    buttonInteraction.customId === confirmId && buttonInteraction.user.id === interaction.user.id,
+            });
+
+            await deleteConfig(interaction.guild.id);
+            return confirmation.update({
+                content: ok('Starboard has been disabled and its settings were deleted.'),
+                components: [],
+            });
+        } catch {
+            return interaction.editReply({
+                content: 'Cancelled. Starboard is still on.',
+                components: [],
+            }).catch(() => null);
+        }
+    },
+
+    async runSet(interaction) {
         const channel = interaction.options.getChannel('channel');
         if (!channel?.isTextBased?.() || channel.isDMBased?.()) {
             return interaction.reply({
-                content: 'Choose a server text channel for the starboard.',
+                content: fail('Choose a server text channel for the starboard.'),
                 flags: MessageFlags.Ephemeral,
             });
         }
 
+        const existingConfig = await readConfig(interaction.guild.id);
         await updateConfig(interaction.guild.id, (config) => {
             config.channelId = channel.id;
         });
 
+        const moved = existingConfig.channelId && existingConfig.channelId !== channel.id
+            ? ` (moved from <#${existingConfig.channelId}>)`
+            : '';
         return interaction.reply({
-            content: `Starboard channel set to ${channel}.`,
+            content: ok(`Starboard channel set to ${channel}${moved}. Tweak it with \`/starboard threshold\`, \`/starboard emoji\`, and \`/starboard selfstar\`.`),
             flags: MessageFlags.Ephemeral,
         });
     },

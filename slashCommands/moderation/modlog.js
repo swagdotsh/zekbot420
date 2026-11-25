@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { updateJson } = require('../../jsonStore');
+const { ok, fail } = require('../../ui');
 const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     SlashCommandBuilder,
@@ -78,49 +79,44 @@ module.exports = {
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
-        const guildId = interaction.guild.id;
+        return subcommand === 'disable' ? this.runDisable(interaction) : this.runSet(interaction);
+    },
 
-        if (subcommand === 'disable') {
-            const config = await readGuildConfig(guildId);
+    async runDisable(interaction) {
+        const config = await readGuildConfig(interaction.guild.id);
 
-            config.channelId = null;
-
-            await writeGuildConfig(guildId, config);
-
+        if (!config.channelId) {
             return interaction.reply({
-                content: 'Modlog has been disabled for this server.',
+                content: fail('Modlog is not set up in this server.'),
                 flags: MessageFlags.Ephemeral
             });
         }
 
-        if (subcommand === 'set') {
-            const channel = interaction.options.getChannel('channel');
+        await writeGuildConfig(interaction.guild.id, { channelId: null });
 
-            if (!channel || !channel.isTextBased?.() || channel.isDMBased?.()) {
-                return interaction.reply({
-                    content: 'Please choose a server text channel.',
-                    flags: MessageFlags.Ephemeral
-                });
-            }
+        return interaction.reply({
+            content: ok('Modlog has been disabled for this server.'),
+            flags: MessageFlags.Ephemeral
+        });
+    },
 
-            const config = await readGuildConfig(guildId);
+    async runSet(interaction) {
+        const channel = interaction.options.getChannel('channel');
 
-            if (config.channelId) {
-                return interaction.reply({
-                    content:
-                        `Modlog is already configured in <#${config.channelId}>. Use \`/modlog disable\` to disable it, then run \`/modlog set\` to choose another channel. AutoMod alerts can be managed with \`/automod words\`. <:smirk2:1498272372539785286>`,
-                    flags: MessageFlags.Ephemeral
-                });
-            }
-
-            config.channelId = channel.id;
-
-            await writeGuildConfig(guildId, config);
-
+        if (!channel || !channel.isTextBased?.() || channel.isDMBased?.()) {
             return interaction.reply({
-                content: `Modlog channel has been set to ${channel}.`,
+                content: fail('Please choose a server text channel.'),
                 flags: MessageFlags.Ephemeral
             });
         }
+
+        const config = await readGuildConfig(interaction.guild.id);
+        await writeGuildConfig(interaction.guild.id, { channelId: channel.id });
+
+        const moved = config.channelId && config.channelId !== channel.id ? ` (moved from <#${config.channelId}>)` : '';
+        return interaction.reply({
+            content: ok(`Modlog channel set to ${channel}${moved}. AutoMod alerts can be managed with \`/automod words\`.`),
+            flags: MessageFlags.Ephemeral
+        });
     }
 };

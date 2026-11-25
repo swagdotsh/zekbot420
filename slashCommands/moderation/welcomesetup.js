@@ -1,19 +1,17 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
-    PermissionsBitField,
     InteractionContextType,
     ChannelType,
     MessageFlags
 } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
-const { writeJsonAtomic } = require('../../jsonStore');
+const { getWelcomeConfig, updateWelcomeConfig } = require('../../welcomeStore');
+const { ok, fail } = require('../../ui');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('welcomesetup')
-        .setDescription('Set the welcome channel for this server')
+        .setDescription('Set the channel where new members are welcomed')
         .setContexts(InteractionContextType.Guild)
         .setIntegrationTypes(0)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
@@ -22,28 +20,42 @@ module.exports = {
                 .setName('channel')
                 .setDescription('Channel to send welcome messages in')
                 .setRequired(true)
-                .addChannelTypes(ChannelType.GuildText)
+                .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
         ),
 
     async execute(interaction) {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
+        const channel = interaction.options.getChannel('channel', true);
+        const perms = channel.permissionsFor(interaction.guild.members.me);
+        if (!perms?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks])) {
             return interaction.reply({
-                content: 'You need the Manage Server permission to use this command. <:smirk2:1498272372539785286>',
-                flags: MessageFlags.Ephemeral
+                content: fail(`I need the \`View Channel\`, \`Send Messages\` and \`Embed Links\` permissions in ${channel}.`),
+                flags: MessageFlags.Ephemeral,
             });
         }
 
-        const channel = interaction.options.getChannel('channel');
-        const guildDir = path.join(__dirname, '../../data', interaction.guild.id);
-        const configPath = path.join(guildDir, 'welcomeConfig.json');
+        await updateWelcomeConfig(interaction.guild.id, (config) => {
+            config.channelId = channel.id;
+        });
 
-        try {
-            fs.mkdirSync(guildDir, { recursive: true });
-            await writeJsonAtomic(configPath, { channelId: channel.id });
-            return interaction.reply({ content: `Welcome channel set to ${channel}.`, flags: MessageFlags.Ephemeral });
-        } catch (err) {
-            console.error('[welcomesetup]', err);
-            return interaction.reply({ content: 'Failed to save config: ' + err.message, flags: MessageFlags.Ephemeral });
+        return interaction.reply({
+            content: ok(`Welcome messages will be sent in ${channel}. Customize them with \`/welcome edit\` and preview with \`/welcome test\`.`),
+            flags: MessageFlags.Ephemeral,
+        });
+    },
+
+    async runDisable(interaction) {
+        const current = await getWelcomeConfig(interaction.guild.id);
+        if (!current.channelId) {
+            return interaction.reply({ content: fail('Welcome messages are not set up in this server.'), flags: MessageFlags.Ephemeral });
         }
-    }
+
+        await updateWelcomeConfig(interaction.guild.id, (config) => {
+            config.channelId = null;
+        });
+
+        return interaction.reply({
+            content: ok('Welcome messages are off. Your custom message is saved for when you run `/setup welcome` again.'),
+            flags: MessageFlags.Ephemeral,
+        });
+    },
 };

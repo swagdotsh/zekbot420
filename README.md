@@ -56,8 +56,13 @@ Your favorite Discord bot's open-source alternative.
 
 ### Logging 
 - Logs support (stores moderation actions)
-- Welcome setup + welcoming messages
+- Welcome messages with a custom text, embed title, description, footer, color, image and placeholders like `{user}` and `{membercount_ordinal}` (`/welcome edit`, `/welcome style`, `/welcome test`)
 - `snipe` / `editsnipe` message recall for deleted and edited messages
+
+### Social embeds (opt-in)
+- Replies to X/Twitter and Instagram links with the post's caption and re-uploads its photos and videos (several per post), with a loading indicator while it works
+- Turn on with `/setup socialembeds` and off with `/disable socialembeds`; optionally hides Discord's own link preview
+- X posts come from the public [FxTwitter API](https://github.com/FixTweet/FxTwitter). Instagram has no public API, so only the caption and cover image are available; videos and extra carousel photos link back to the post
 
 ### Integrations
 - Last.fm login and commands (optional; requires API key)
@@ -93,6 +98,9 @@ Your favorite Discord bot's open-source alternative.
 - Follow NFL and NBA players and teams
 - Big-play and game notifications in DMs or a configured server channel
 - `favplayer`, `favteam`, `nbaplayer`, `nbateam`, and `sportsnotify`
+
+### Setting things up
+Features are turned on with `/setup <feature>` and off with `/disable <feature>`: `birthdays`, `jail`, `leveling`, `modlog`, `reactionmute`, `socialembeds`, `starboard`, `voicemaster` and `welcome`. Related commands share one name too: `/birthday set|remove|list`, `/giveaway start|end|delete`, `/level channel|role`, `/starboard threshold|emoji|selfstar`, `/stickyroles mode|add|remove|user` and `/welcome`.
 
 ### Downloading
 - Download and share videos from pretty much any video service. [_If yt-dlp supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
@@ -134,7 +142,11 @@ GUILD_ID=your_test_server_id
 DB_POOL_MAX=10
 # Optional: verbose music playback logging for troubleshooting
 MUSIC_DEBUG=1
+# Optional: the device icon next to the bot's status: vr (default), mobile or desktop
+BOT_PLATFORM=vr
 ```
+
+`BOT_PLATFORM` uses an undocumented Discord behavior (the device the bot reports when it connects), so it may stop working without notice. It only changes after a full restart.
 
 `TOKEN`, `PREFIX`, and `NEON_DATABASE_URL` are required to start. Database tables are created automatically on first start. Command registration also requires `DISCORD_CLIENT_ID`. Keep `.env` and `data/` private and backed up.
 
@@ -190,7 +202,11 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 - `nflHandler.js` / `espn.js` — sports subscriptions and ESPN data
 - `commands/` — message/prefix style commands (organized by category)
 - `slashCommands/` — slash command handlers/definitions
-- `events/welcoming.js` / `commands/moderation/welcomesetup.js` — welcoming flow
+- `welcomeStore.js` / `events/welcoming.js` — welcome message settings, placeholders and sending
+- `socialEmbeds.js` — opt-in X/Instagram link embeds
+- `commandGroup.js` / `slashLoader.js` / `slashCommands/groups/` — groups existing commands under one name (`/setup`, `/disable`, ...) and loads slash commands
+- `platformIcon.js` — the `BOT_PLATFORM` status icon
+- `ui.js` — shared reply wording and emoji
 - `storesnipe.js` / `snipe.js` — message snipe support
 - `deploy-commands.js` — registers slash commands with Discord
 - `geninv.js` — prints an invite link with only the permissions the bot uses (`--admin` for Administrator)

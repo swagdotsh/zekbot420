@@ -4,6 +4,7 @@ const {
     SlashCommandBuilder,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { updateConfig } = require('../../starboardHandler');
 
 module.exports = {
@@ -36,7 +37,7 @@ module.exports = {
         });
 
         return interaction.reply({
-            content: `Starboard threshold set to ${threshold} star${threshold === 1 ? '' : 's'}.`,
+            content: ok(`Starboard threshold set to ${threshold} star${threshold === 1 ? '' : 's'}.`),
             flags: MessageFlags.Ephemeral,
         });
     },

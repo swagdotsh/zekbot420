@@ -4,6 +4,7 @@ const {
     SlashCommandBuilder,
     MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { updateConfig } = require('../../starboardHandler');
 
 module.exports = {
@@ -34,7 +35,7 @@ module.exports = {
         });
 
         return interaction.reply({
-            content: `Self-stars are now ${allowSelf ? 'allowed' : 'not counted'} for the starboard.`,
+            content: ok(`Self-stars are now ${allowSelf ? 'allowed' : 'not counted'} for the starboard.`),
             flags: MessageFlags.Ephemeral,
         });
     },
