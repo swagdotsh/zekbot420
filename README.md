@@ -290,7 +290,7 @@ Some features store data locally (for example: warnings/modlog/last.fm configura
 
 ## Credits
 
-- `/image` uses the image processing code from [esmBot](https://github.com/esmBot/esmBot) by Essem, under the MIT License. The vendored code, fonts and images are in `esmBot/`, with the license in [`esmBot/LICENSE`](esmBot/LICENSE). Every edited image says "Modifying image through esmBot..." while it's being made.
+- `/image` uses the image processing code from [esmBot](https://github.com/esmBot/esmBot) by TheEssem, under the MIT License. The vendored code, fonts and images are in `esmBot/`, with the license in [`esmBot/LICENSE`](esmBot/LICENSE). Every edited image says "Modifying image through esmBot..." while it's being made.
 - Movie and TV data from [TMDB](https://www.themoviedb.org). This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ---
