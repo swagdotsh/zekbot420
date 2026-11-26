@@ -230,7 +230,7 @@ module.exports = defineGroup({
                 await streakStore.update(interaction.guild.id, (data) => { data.channelId = channel.id; data.minDays = minDays; });
                 return interaction.reply({
                     content: ok(`Streaks are on. Members who send a message every day build a streak, and I'll post it in ${channel} from day ${minDays} on.`) +
-                        '\n-# Days follow each member\'s `/settimezone` (UTC if they haven\'t set one). Members can check theirs with `/streak view`.',
+                        '\n-# Days follow each member\'s `/time timezone` (UTC if they haven\'t set one). Members can check theirs with `/streak view`.',
                     flags: MessageFlags.Ephemeral,
                 });
             },

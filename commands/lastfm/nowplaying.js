@@ -67,7 +67,7 @@ module.exports = {
       username = rows[0]?.lastfm_username
     }
 
-    if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${currentPrefix()}fm connect\`!`)
+    if (!username) return message.reply(`Provide a last.fm username or link your account with \`${currentPrefix()}fm connect\`!`)
 
     const url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${username}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=200`;
 
@@ -133,13 +133,13 @@ module.exports = {
         url: trackUrl || undefined,
         description: `**${artist}**${album ? ` • *${album}*` : ''}`,
         thumbnail: albumArt ? { url: albumArt } : null,
-        footer: { text: footerParts.join(' • ') || 'Last.fm' }
+        footer: { text: footerParts.join(' • ') || 'last.fm' }
       };
 
       message.reply({ embeds: [embed] });
     } catch (e) {
       console.log(e.response?.data || e.message);
-      message.reply('Couldn\'t find that Last.fm user. Double-check the username!')
+      message.reply('Couldn\'t find that last.fm user. Double-check the username!')
     }
   }
 };

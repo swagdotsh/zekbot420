@@ -181,7 +181,7 @@ module.exports = {
 
         if (!savedTimezone) {
             return interaction.reply({
-                content: 'You do not have a timezone saved yet. Set one with `/set timezone` first.',
+                content: 'You do not have a timezone saved yet. Set one with `/time timezone` first.',
                 flags: MessageFlags.Ephemeral,
             });
         }

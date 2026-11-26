@@ -113,7 +113,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                `Provide a Last.fm username or link yours first. Example: \`${currentPrefix()}alp "The Dark Side of the Moon" "Pink Floyd" someUser\``
+                `Provide a last.fm username or link yours first. Example: \`${currentPrefix()}alp "The Dark Side of the Moon" "Pink Floyd" someUser\``
             );
         }
 

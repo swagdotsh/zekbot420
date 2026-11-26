@@ -164,7 +164,7 @@ async function showLeaderboard(interaction) {
     const top = Object.entries(wins).sort((a, b) => b[1] - a[1]).slice(0, 10);
     const description = top.length
         ? top.map(([userId, count], i) => `**${i + 1}.** <@${userId}> with ${count} correct`).join('\n')
-        : 'Nobody has played yet. Start with `/flags play`!';
+        : 'Nobody has played yet. Start with `/game flags play`!';
     const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🌍 Flag game leaderboard').setDescription(description);
     return interaction.reply({ embeds: [embed], allowedMentions: { parse: [] } });
 }

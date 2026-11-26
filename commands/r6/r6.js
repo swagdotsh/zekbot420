@@ -126,7 +126,7 @@ module.exports = {
                     { name: 'K/D', value: kd, inline: true },
                     { name: 'Win Rate', value: winRate, inline: true },
                 )
-                .setFooter({ text: 'Powered by r6data.eu' })
+                .setFooter({ text: 'Powered by r6.arenyze.com' })
                 .setTimestamp();
 
             if (account.profilePicture) embed.setThumbnail(account.profilePicture);

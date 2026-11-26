@@ -61,7 +61,7 @@ module.exports = {
 
     async autocomplete(interaction) {
         const query = interaction.options.getFocused().toLowerCase().trim();
-        const names = media.isAvailable() ? media.availableEffects() : Object.keys(media.EFFECTS);
+        const names = media.isAvailable() ? await media.availableEffects() : Object.keys(media.EFFECTS);
         const matches = names
             .filter((name) => !query || name.includes(query) || media.EFFECTS[name].desc.toLowerCase().includes(query))
             .sort((a, b) => Number(!a.startsWith(query)) - Number(!b.startsWith(query)) || a.localeCompare(b))
@@ -77,7 +77,7 @@ module.exports = {
         if (!media.isAvailable()) {
             return interaction.reply({ content: fail('Image editing isn\'t set up on this bot yet. The bot owner needs to run `npm run build:esmbot`.'), flags: MessageFlags.Ephemeral });
         }
-        if (!media.availableEffects().includes(effectName)) {
+        if (!(await media.availableEffects()).includes(effectName)) {
             return interaction.reply({ content: fail(`\`${effectName}\` isn't available on this bot (it needs an extra library).`), flags: MessageFlags.Ephemeral });
         }
 

@@ -602,6 +602,7 @@ async function shutdown(signal) {
     const forceExit = setTimeout(() => process.exit(1), 10 * 1000);
     try {
         await flushXp();
+        require('./esmbotMedia').shutdownWorker();
     } catch (error) {
         console.error('Failed to save XP during shutdown:', error);
     }

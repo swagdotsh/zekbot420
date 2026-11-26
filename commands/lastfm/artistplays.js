@@ -2,6 +2,7 @@ const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
 const { sql } = require('../../db');
+const { getArtistImage } = require('../../spotify');
 
 function parseQuotedArtistAndUsername(args) {
     const raw = (args || []).join(' ').trim();
@@ -59,7 +60,9 @@ async function getArtistInfo({ apiKey, username, artist }) {
     const pick = (size) => images.find((img) => img?.size === size)?.['#text'] || null;
 
     // "Side image" = embed thumbnail (prefer medium/small rather than huge)
-    const thumbnailUrl = pick('medium') || pick('small') || pick('large') || null;
+    const lastFmImage = pick('medium') || pick('small') || pick('large') || null;
+    const spotifyImage = await getArtistImage(a?.name || artist).catch(() => null);
+    const thumbnailUrl = spotifyImage || (lastFmImage && !lastFmImage.includes('2a96cbd8b46e442fc41c2b86b821562f') ? lastFmImage : null);
 
     return {
         url: a?.url || null,
@@ -107,7 +110,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                `Provide a Last.fm username or link yours first. Example: \`${currentPrefix()}ap "Red Hot Chili Peppers" someUser\``
+                `Provide a last.fm username or link yours first. Example: \`${currentPrefix()}ap "Red Hot Chili Peppers" someUser\``
             );
         }
 

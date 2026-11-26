@@ -84,7 +84,7 @@ async function getTrackPlaysFromTopTracks({ apiKey, username, artist, track, per
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('trackplays')
-        .setDescription('Show your play count for a track on Last.fm')
+        .setDescription('Show your play count for a track on last.fm')
         .addStringOption((opt) =>
             opt
                 .setName('track')
@@ -100,7 +100,7 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('username')
-                .setDescription('Last.fm username, optional if linked')
+                .setDescription('last.fm username, optional if linked')
                 .setRequired(false)
         )
         .setIntegrationTypes(0, 1)
@@ -120,7 +120,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link yours with `/fm connect`.');
+            return interaction.editReply('Provide a last.fm username or link yours with `/fm connect`.');
         }
 
         let track = interaction.options.getString('track');
@@ -153,7 +153,7 @@ module.exports = {
                     ? `${allTimePlays.toLocaleString()} play${allTimePlays === 1 ? '' : 's'}`
                     : '— plays';
 
-            const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
+            const footerLabel = userLoved ? '❤️ Loved track' : 'last.fm';
 
             const embed = {
                 color: 0xd51007,

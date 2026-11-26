@@ -53,7 +53,7 @@ module.exports = {
         const existingConfig = await getConfig(interaction.guild.id);
         if (existingConfig) {
             return interaction.reply({
-                content: `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`/level role\`, \`/level channel\`, \`/rank\` or \`/leaderboard\` to manage it. <:smirk2:1498272372539785286>`,
+                content: `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`/level role\`, \`/level channel\`, \`/level rank\` or \`/level leaderboard\` to manage it. <:smirk2:1498272372539785286>`,
                 flags: MessageFlags.Ephemeral
             });
         }

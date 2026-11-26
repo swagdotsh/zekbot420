@@ -6,11 +6,11 @@ const { sql } = require('../../db');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('cover')
-        .setDescription('Show the album cover for your last played track (Last.fm)')
+        .setDescription('Show the album cover for your last played track (last.fm)')
         .addStringOption((opt) =>
             opt
                 .setName('username')
-                .setDescription('Last.fm username (optional if linked)')
+                .setDescription('last.fm username (optional if linked)')
                 .setRequired(false)
         )
         .setIntegrationTypes(0, 1)
@@ -27,7 +27,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link your account with `/fm connect`.');
+            return interaction.editReply('Provide a last.fm username or link your account with `/fm connect`.');
         }
 
         const apiKey = process.env.LASTFM_API_KEY;
@@ -83,7 +83,7 @@ module.exports = {
                 url: albumUrl || undefined,
                 description: song ? `Track: **${song}**` : undefined,
                 image: { url: coverUrl },
-                footer: { text: `Last.fm • ${username}` }
+                footer: { text: `last.fm • ${username}` }
             };
 
             return interaction.editReply({ embeds: [embed] });

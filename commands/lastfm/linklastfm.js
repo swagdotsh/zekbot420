@@ -16,7 +16,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setLabel('Log in with Last.fm')
+            .setLabel('Log in with last.fm')
             .setURL(authUrl)
             .setStyle(ButtonStyle.Link),
         new ButtonBuilder()
@@ -25,6 +25,6 @@ module.exports = {
             .setStyle(ButtonStyle.Link)
     )
 
-    message.reply({ content: '**Connect your Last.fm**\nIf you have a last.fm account, you can link it to zekbot420 and access various music stat tracking related features!', components: [row] })
+    message.reply({ content: '**Connect your last.fm**\nIf you have a last.fm account, you can link it to zekbot420 and access various music stat tracking related features!', components: [row] })
   }
 }

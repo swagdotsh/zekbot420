@@ -4,6 +4,7 @@ const sharp = require('sharp');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
 const { sql } = require('../../db');
+const { getArtistImage } = require('../../spotify');
 const LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/';
 const TILE_SIZE = 300;
 const MAX_GRID_SIDE = 5;
@@ -151,7 +152,7 @@ module.exports = {
         if (!options) {
             return message.reply(
                 `Usage: \`${currentPrefix()}chart albums|artists 3x3 [period] [lastfm username]\`\n` +
-                'Chart sizes can be from `1x1` to `5x5`. Periods include `7d`, `30d`, `3m`, `6m`, `1y`, and `all-time`. Leave off the username to use your linked Last.fm account.'
+                'Chart sizes can be from `1x1` to `5x5`. Periods include `7d`, `30d`, `3m`, `6m`, `1y`, and `all-time`. Leave off the username to use your linked last.fm account.'
             );
         }
 
@@ -165,7 +166,7 @@ module.exports = {
         }
 
         if (!username) {
-            return message.reply(`Link your Last.fm account with \`${currentPrefix()}fm connect\`, or provide a username: \`${currentPrefix()}chart albums 3x3 username\`.`);
+            return message.reply(`Link your last.fm account with \`${currentPrefix()}fm connect\`, or provide a username: \`${currentPrefix()}chart albums 3x3 username\`.`);
         }
 
         const requestedAlbums = options.columns * options.rows;
@@ -187,7 +188,7 @@ module.exports = {
                 timeout: 10_000,
             });
 
-            if (data?.error) throw new Error(data.message || 'Last.fm request failed');
+            if (data?.error) throw new Error(data.message || 'last.fm request failed');
 
             const results = data?.[responseKey]?.[itemKey];
             const entries = Array.isArray(results) ? results : results ? [results] : [];
@@ -198,10 +199,9 @@ module.exports = {
             const withCovers = [];
             for (const entry of candidates) {
                 if (withCovers.length >= requestedAlbums) break;
-                const coverUrl = getCoverUrl(entry) ??
-                    (options.chartType === 'artists'
-                        ? await getArtistFallbackCoverUrl(entry.name, apiKey)
-                        : null);
+                const coverUrl = options.chartType === 'artists'
+                    ? (await getArtistImage(entry.name).catch(() => null)) ?? await getArtistFallbackCoverUrl(entry.name, apiKey)
+                    : getCoverUrl(entry);
                 const cover = coverUrl ? await fetchAlbumCover(coverUrl) : null;
                 if (cover) withCovers.push({ ...entry, cover });
             }
@@ -224,8 +224,8 @@ module.exports = {
                 .setImage(`attachment://${filename}`)
                 .setFooter({
                     text: options.chartType === 'artists'
-                        ? `Last.fm • ${options.period.label} • tiles use each artist's top album cover`
-                        : `Last.fm • ${options.period.label}`,
+                        ? `last.fm • ${options.period.label} • tiles use each artist's top album cover`
+                        : `last.fm • ${options.period.label}`,
                 });
 
             return progressMessage.edit({
@@ -234,8 +234,8 @@ module.exports = {
                 files: [attachment],
             });
         } catch (error) {
-            console.error('Last.fm chart error:', error.response?.data || error.message);
-            return progressMessage.edit('Couldn’t build that Last.fm chart right now. Double-check the username and try again.');
+            console.error('last.fm chart error:', error.response?.data || error.message);
+            return progressMessage.edit('Couldn’t build that last.fm chart right now. Double-check the username and try again.');
         }
     },
 };

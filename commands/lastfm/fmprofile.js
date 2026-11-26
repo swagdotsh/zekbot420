@@ -18,7 +18,7 @@ async function lastFmRequest(method, user, extra = {}) {
         timeout: 12_000,
     });
 
-    if (data?.error) throw new Error(data.message || `Last.fm error ${data.error}`);
+    if (data?.error) throw new Error(data.message || `last.fm error ${data.error}`);
     return data;
 }
 
@@ -106,7 +106,7 @@ module.exports = {
         const username = rows[0]?.lastfm_username;
 
         if (!username) {
-            return message.reply(`Link your Last.fm account first with \`${currentPrefix()}fm connect\`.`);
+            return message.reply(`Link your last.fm account first with \`${currentPrefix()}fm connect\`.`);
         }
 
         try {
@@ -131,7 +131,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(0xd51007)
                 .setAuthor({
-                    name: `${profile.name || username}'s Last.fm profile`,
+                    name: `${profile.name || username}'s last.fm profile`,
                     iconURL: thumbnail,
                     url: profile.url || undefined,
                 })
@@ -146,12 +146,12 @@ module.exports = {
                     { name: '🎵 Top tracks — past 7 days', value: clampField(formatTracks(tracksWeek?.toptracks?.track)), inline: true },
                     { name: '🏷️ Top genres / tags — all-time', value: clampField(formatTags(tagsData?.toptags?.tag)), inline: false },
                 )
-                .setFooter({ text: `Last.fm • ${username}${profile.playcount ? ` • ${Number(profile.playcount).toLocaleString()} total scrobbles` : ''}` });
+                .setFooter({ text: `last.fm • ${username}${profile.playcount ? ` • ${Number(profile.playcount).toLocaleString()} total scrobbles` : ''}` });
 
             return message.reply({ embeds: [embed] });
         } catch (error) {
-            console.error('Last.fm profile error:', error.response?.data || error.message);
-            return message.reply('Couldn’t load that Last.fm profile right now. Please try again in a moment.');
+            console.error('last.fm profile error:', error.response?.data || error.message);
+            return message.reply('Couldn’t load that last.fm profile right now. Please try again in a moment.');
         }
     },
 };

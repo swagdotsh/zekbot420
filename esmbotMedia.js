@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const { fork } = require('child_process');
 const { fetchLimited } = require('./safeFetch');
-
-process.env.VIPS_WARNING ??= '0';
 
 const ESMBOT_DIR = path.join(__dirname, 'esmBot');
 const NATIVE_PATH = path.join(ESMBOT_DIR, 'build', 'Release', 'esmbmedia.node');
@@ -144,31 +143,107 @@ const EFFECTS = {
     woow: { desc: 'Mirrors the top onto the bottom', cmd: 'mirror', params: () => ({ vertical: true, first: true }) },
 };
 
-let native = null;
-let loadError = null;
+const JOB_TIMEOUT_MS = 90 * 1000;
+const IDLE_SHUTDOWN_MS = 10 * 60 * 1000;
+const WORKER_PATH = path.join(__dirname, 'esmbotWorker.js');
 
-function load() {
-    if (native || loadError) return native;
-    try {
-        native = require(NATIVE_PATH);
-        native.init?.();
-    } catch (error) {
-        loadError = error;
-        native = null;
-        if (fs.existsSync(NATIVE_PATH)) console.error('[esmbot] failed to load the image natives:', error.message);
+let worker = null;
+let ready = null;
+let knownFuncs = null;
+let idleTimer = null;
+let nextJobId = 1;
+const pending = new Map();
+
+function failPending(message) {
+    for (const { reject, timer } of pending.values()) {
+        clearTimeout(timer);
+        reject(new Error(message));
     }
-    return native;
+    pending.clear();
+}
+
+function startWorker() {
+    if (ready) return ready;
+    ready = new Promise((resolve, reject) => {
+        const child = fork(WORKER_PATH, [], { serialization: 'advanced', stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
+        worker = child;
+
+        child.on('message', (message) => {
+            if (message.type === 'ready') {
+                knownFuncs = message.funcs;
+                resolve(child);
+                return;
+            }
+            if (message.type === 'failed') {
+                console.error('[esmbot] failed to load the image natives:', message.message);
+                reject(new Error(message.message));
+                return;
+            }
+            const job = pending.get(message.id);
+            if (!job) return;
+            pending.delete(message.id);
+            clearTimeout(job.timer);
+            if (message.ok) job.resolve({ data: message.data, type: message.type });
+            else job.reject(new Error(message.message));
+        });
+
+        child.on('exit', (code, signal) => {
+            if (worker === child) {
+                worker = null;
+                ready = null;
+            }
+            reject(new Error('The image worker stopped before it was ready.'));
+            if (pending.size) {
+                console.error(`[esmbot] image worker exited (${signal ?? code}) with jobs running`);
+                failPending('The image worker crashed while editing this image.');
+            }
+        });
+    });
+    ready.catch(() => {});
+    return ready;
+}
+
+function scheduleIdleShutdown() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+        if (worker && !pending.size) worker.disconnect();
+    }, IDLE_SHUTDOWN_MS);
+    idleTimer.unref?.();
+}
+
+async function runInWorker(cmd, params, input) {
+    const child = await startWorker();
+    const id = nextJobId++;
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            pending.delete(id);
+            reject(Object.assign(new Error('That image took too long to edit. Try a smaller one.'), { userFacing: true }));
+            child.kill('SIGKILL');
+        }, JOB_TIMEOUT_MS);
+        pending.set(id, {
+            resolve: (value) => { scheduleIdleShutdown(); resolve(value); },
+            reject: (error) => { scheduleIdleShutdown(); reject(error); },
+            timer,
+        });
+        child.send({ id, cmd, params, input });
+    });
 }
 
 function isAvailable() {
-    return Boolean(load());
+    return fs.existsSync(NATIVE_PATH);
 }
 
-function availableEffects() {
-    const lib = load();
-    if (!lib) return [];
-    const names = new Set((lib.funcs?.image ?? []).map((f) => f.name));
+async function availableEffects() {
+    if (!isAvailable()) return [];
+    if (!knownFuncs) await startWorker().catch(() => {});
+    if (!knownFuncs) return [];
+    const names = new Set(knownFuncs);
     return Object.keys(EFFECTS).filter((key) => names.has(EFFECTS[key].cmd));
+}
+
+function shutdownWorker() {
+    clearTimeout(idleTimer);
+    if (worker) worker.kill();
 }
 
 const MIME_TO_EXT = { 'image/gif': 'gif', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/avif': 'avif', 'image/heif': 'avif' };
@@ -191,8 +266,7 @@ async function download(url) {
 }
 
 async function applyEffect(effectName, options, input) {
-    const lib = load();
-    if (!lib) throw Object.assign(new Error('Image editing isn\'t set up on this bot yet.'), { userFacing: true });
+    if (!isAvailable()) throw Object.assign(new Error('Image editing isn\'t set up on this bot yet.'), { userFacing: true });
     const effect = EFFECTS[effectName];
     if (!effect) throw Object.assign(new Error('That effect doesn\'t exist.'), { userFacing: true });
 
@@ -211,8 +285,8 @@ async function applyEffect(effectName, options, input) {
         };
     }
 
-    const { data, type } = await lib.process('image', effect.cmd, params, inputObj);
+    const { data, type } = await runInWorker(effect.cmd, params, inputObj);
     return { buffer: Buffer.from(data), ext: MIME_TO_EXT[type] ?? type ?? 'png' };
 }
 
-module.exports = { EFFECTS, FONTS, isAvailable, availableEffects, applyEffect, NATIVE_PATH };
+module.exports = { EFFECTS, FONTS, isAvailable, availableEffects, applyEffect, shutdownWorker, NATIVE_PATH };

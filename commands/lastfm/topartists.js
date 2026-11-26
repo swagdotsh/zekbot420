@@ -44,7 +44,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                `Provide a Last.fm username or link yours first. e.g. \`${currentPrefix()}topartists username week\` or \`${currentPrefix()}tar month\``
+                `Provide a last.fm username or link yours first. e.g. \`${currentPrefix()}topartists username week\` or \`${currentPrefix()}tar month\``
             );
         }
 
@@ -87,7 +87,7 @@ module.exports = {
                 author: { name: '👤 Top Artists' },
                 title: `${username} • ${prettyPeriod}`,
                 description: lines.join('\n'),
-                footer: { text: 'Last.fm' }
+                footer: { text: 'last.fm' }
             };
 
             return message.reply({ embeds: [embed] });

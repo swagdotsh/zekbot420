@@ -59,7 +59,7 @@ async function playRound(interaction, message, game) {
 
     collector.on('collect', async (i) => {
         const player = humans.find((p) => p.id === i.user.id);
-        if (!player) return i.reply({ content: fail('This isn\'t your game. Start your own with `/rps`.'), flags: MessageFlags.Ephemeral });
+        if (!player) return i.reply({ content: fail('This isn\'t your game. Start your own with `/game rps`.'), flags: MessageFlags.Ephemeral });
         if (picks[player.id]) return i.reply({ content: `You already picked ${label(picks[player.id])}.`, flags: MessageFlags.Ephemeral });
 
         picks[player.id] = i.customId.split(':')[2];

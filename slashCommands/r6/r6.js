@@ -181,7 +181,7 @@ module.exports = {
                         inline: true
                     }
                 )
-                .setFooter({ text: 'Powered by r6data.eu' })
+                .setFooter({ text: 'Powered by r6.arenyze.com' })
                 .setTimestamp();
 
             if (account.profilePicture) {

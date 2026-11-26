@@ -16,14 +16,26 @@ function permissionNames(bits) {
     return `${names.join(' and ')} permission${names.length === 1 ? '' : 's'}`;
 }
 
-function defineGroup({ name, description, children, defaultMemberPermissions, contexts = [0], integrationTypes = [0] }) {
+const CONTEXT_NAMES = { 0: 'servers', 1: 'DMs with the bot', 2: 'group DMs and DMs with others' };
+
+function defineGroup({ name, description, children, defaultMemberPermissions, contexts, integrationTypes }) {
     const entries = new Map();
     const options = [];
     let shared = null;
+    const contextUnion = new Set();
+    const integrationUnion = new Set();
 
     for (const child of children) {
-        const json = childJson(child);
+        let json = childJson(child);
+        if (child.flatten) {
+            const [only] = json.options ?? [];
+            json = { ...json, description: only.description, options: only.options ?? [] };
+        }
         const childOptions = json.options ?? [];
+        const childContexts = json.contexts ?? null;
+        const childIntegrations = json.integration_types ?? null;
+        (childContexts ?? [0]).forEach((c) => contextUnion.add(c));
+        (childIntegrations ?? [0]).forEach((t) => integrationUnion.add(t));
         const isGroup = childOptions.some(option => option.type === SUBCOMMAND);
         const perms = json.default_member_permissions != null ? BigInt(json.default_member_permissions) : 0n;
 
@@ -40,6 +52,8 @@ function defineGroup({ name, description, children, defaultMemberPermissions, co
             autocomplete: child.autocomplete ?? child.module?.autocomplete?.bind(child.module),
             cooldown: child.cooldown ?? child.module?.cooldown,
             perms,
+            contexts: childContexts,
+            integrations: childIntegrations,
         });
         for (const absorbed of [child.module, ...(child.absorbs ?? [])]) if (absorbed) absorbed.grouped = true;
     }
@@ -49,8 +63,8 @@ function defineGroup({ name, description, children, defaultMemberPermissions, co
         description,
         type: 1,
         options,
-        contexts,
-        integration_types: integrationTypes,
+        contexts: contexts ?? [...contextUnion].sort(),
+        integration_types: integrationTypes ?? [...integrationUnion].sort(),
         default_member_permissions: defaultMemberPermissions != null
             ? BigInt(defaultMemberPermissions).toString()
             : (shared ? shared.toString() : null),
@@ -74,6 +88,15 @@ function defineGroup({ name, description, children, defaultMemberPermissions, co
         async execute(interaction) {
             const entry = entryFor(interaction);
             if (!entry) return;
+
+            if (entry.contexts && interaction.context != null && !entry.contexts.includes(interaction.context)) {
+                const where = entry.contexts.map((c) => CONTEXT_NAMES[c]).filter(Boolean).join(' and ');
+                return interaction.reply({ content: fail(`That only works in ${where}.`), flags: MessageFlags.Ephemeral });
+            }
+            const guildInstalled = interaction.authorizingIntegrationOwners?.['0'] !== undefined;
+            if (!(entry.integrations ?? [0]).includes(1) && interaction.inGuild() && !guildInstalled) {
+                return interaction.reply({ content: fail('That only works in servers I\'ve been added to.'), flags: MessageFlags.Ephemeral });
+            }
 
             if (entry.perms && !interaction.memberPermissions?.has(entry.perms)) {
                 return interaction.reply({

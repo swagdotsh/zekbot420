@@ -165,4 +165,26 @@ async function searchTrack(query) {
     return item ? toTrack(item) : null;
 }
 
-module.exports = { MAX_COLLECTION_TRACKS, isConfigured, canReadPlaylists, isSpotifyUrl, parseSpotifyUrl, getFromUrl, searchTrack, searchTracks };
+const ARTIST_IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const artistImageCache = new Map();
+
+const simplifyName = (name) => String(name ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+async function getArtistImage(name) {
+    if (!isConfigured() || !name) return null;
+    const key = simplifyName(name);
+    const cached = artistImageCache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.url;
+
+    const data = await api(`/search?type=artist&limit=5&q=${encodeURIComponent(name)}`);
+    const artists = data.artists?.items ?? [];
+    const match = artists.find((a) => simplifyName(a.name) === key && a.images?.length)
+        ?? (artists[0] && simplifyName(artists[0].name) === key ? artists[0] : null);
+    const url = match?.images?.[0]?.url ?? null;
+
+    artistImageCache.set(key, { url, expires: Date.now() + ARTIST_IMAGE_TTL_MS });
+    if (artistImageCache.size > 2000) artistImageCache.delete(artistImageCache.keys().next().value);
+    return url;
+}
+
+module.exports = { MAX_COLLECTION_TRACKS, isConfigured, canReadPlaylists, isSpotifyUrl, parseSpotifyUrl, getFromUrl, searchTrack, searchTracks, getArtistImage };

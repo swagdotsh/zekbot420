@@ -14,7 +14,7 @@ module.exports = {
             username = rows[0]?.lastfm_username
         }
 
-        if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${currentPrefix()}fm connect\`!`);
+        if (!username) return message.reply(`Provide a last.fm username or link your account with \`${currentPrefix()}fm connect\`!`);
 
         const apiKey = process.env.LASTFM_API_KEY;
         if (!apiKey) return message.reply('Missing `LASTFM_API_KEY` in the bot environment.');
@@ -75,7 +75,7 @@ module.exports = {
                 url: albumUrl || undefined,
                 description: song ? `Track: **${song}**` : undefined,
                 image: { url: coverUrl },
-                footer: { text: `Last.fm • ${username}` }
+                footer: { text: `last.fm • ${username}` }
             };
 
             return message.reply({ embeds: [embed] });

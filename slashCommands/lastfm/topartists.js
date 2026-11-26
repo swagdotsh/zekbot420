@@ -12,11 +12,11 @@ const PERIOD_MAP = {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('topartists')
-        .setDescription('Show a Last.fm user’s top artists')
+        .setDescription('Show a last.fm user’s top artists')
         .addStringOption((opt) =>
             opt
                 .setName('username')
-                .setDescription('Last.fm username, optional if linked')
+                .setDescription('last.fm username, optional if linked')
                 .setRequired(false)
         )
         .addStringOption((opt) =>
@@ -50,7 +50,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link yours first.');
+            return interaction.editReply('Provide a last.fm username or link yours first.');
         }
 
         const period = PERIOD_MAP[periodKey] || PERIOD_MAP.week;
@@ -92,7 +92,7 @@ module.exports = {
                 author: { name: '👤 Top Artists' },
                 title: `${username} • ${prettyPeriod}`,
                 description: lines.join('\n'),
-                footer: { text: 'Last.fm' }
+                footer: { text: 'last.fm' }
             };
 
             return interaction.editReply({ embeds: [embed] });

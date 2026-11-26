@@ -24,7 +24,7 @@ module.exports = {
 
         if (existingConfig) {
             return interaction.editReply(
-                'Jail is already configured. Use `/jail` and `/unjail`, or `/disable jail` to remove it. <:smirk2:1498272372539785286>'
+                'Jail is already configured. Use `/jail` and `/jail remove`, or `/disable jail` to remove it. <:smirk2:1498272372539785286>'
             );
         }
 

@@ -136,39 +136,53 @@ async function recognizeUrl(url, { maxBytes = MAX_BYTES } = {}) {
     });
 }
 
+const DEFAULT_COLOR = 0x0088ff;
+
+async function coverColor(url) {
+    if (!url) return DEFAULT_COLOR;
+    try {
+        const sharp = require('sharp');
+        const { fetchLimited } = require('./safeFetch');
+        const image = await fetchLimited(url, { maxBytes: 5 * 1024 * 1024, timeoutMs: 8000 });
+        const { data } = await sharp(image).resize(1, 1, { fit: 'fill' }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+        return (data[0] << 16) | (data[1] << 8) | data[2];
+    } catch {
+        return DEFAULT_COLOR;
+    }
+}
+
 async function buildReply(result) {
-    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+    const { EmbedBuilder } = require('discord.js');
     const { findOnSpotify, findOnAppleMusic } = require('./musicLinks');
+    const { EMOJI, emojiUrl } = require('./ui');
 
     const want = { track: result.title, artist: result.artist, album: result.album };
-    const [spotify, apple] = await Promise.all([
+    const [spotify, apple, color] = await Promise.all([
         findOnSpotify(want).catch(() => null),
         result.appleMusicUrl ? { url: result.appleMusicUrl } : findOnAppleMusic(want).catch(() => null),
+        coverColor(result.coverArt),
     ]);
-    const details = [result.album, result.released, result.genre].filter(Boolean).join(' · ');
-    const heard = result.heardAt ? `Heard at ${formatTime(result.heardAt)} in the file` : null;
+
+    const escape = (text) => String(text).replace(/([\\*_`~|[\]])/g, '\\$1');
 
     const embed = new EmbedBuilder()
-        .setColor(0x0088ff)
-        .setAuthor({ name: 'Shazam' })
-        .setTitle(`${result.title}${result.explicit ? ' 🅴' : ''}`)
-        .setDescription(`by **${result.artist}**${details ? `\n${details}` : ''}`)
-        .setFooter({ text: [result.label, heard].filter(Boolean).join(' · ') || 'Shazam' });
+        .setColor(color)
+        .setAuthor({ name: 'Song identified', iconURL: emojiUrl(EMOJI.shazam) })
+        .setTitle(String(result.title).replace(/\s*[🅴🄴Ⓔ]\s*/gu, ' ').trim().slice(0, 256))
+        .setDescription(`by **${escape(result.artist)}**${result.album ? ` on **${escape(result.album)}**` : ''}`);
     if (result.shazamUrl) embed.setURL(result.shazamUrl);
     if (result.coverArt) embed.setThumbnail(result.coverArt);
+    if (result.label) embed.setFooter({ text: result.label });
 
     const links = [];
-    links.push(apple?.url ? `🍎 **Apple Music:** <${apple.url}>` : '🍎 **Apple Music:** not found');
+    links.push(apple?.url ? `${EMOJI.appleMusic} **Apple Music:** <${apple.url}>` : `${EMOJI.appleMusic} **Apple Music:** not found`);
     if (spotify?.url) {
         links.push(spotify.exact
-            ? `🟢 **Spotify:** <${spotify.url}>`
-            : `🟢 **Spotify:** <${spotify.url}>\n-# Exact Spotify links need Spotify API keys on the bot, so this one opens a Spotify search.`);
+            ? `${EMOJI.spotify} **Spotify:** <${spotify.url}>`
+            : `${EMOJI.spotify} **Spotify:** <${spotify.url}>\n-# Exact Spotify links need Spotify API keys on the bot, so this one opens a Spotify search.`);
     }
 
-    const buttons = new ActionRowBuilder();
-    if (result.shazamUrl) buttons.addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Open in Shazam').setURL(result.shazamUrl));
-
-    return { content: links.join('\n'), embeds: [embed], components: buttons.components.length ? [buttons] : [] };
+    return { content: links.join('\n'), embeds: [embed], components: [] };
 }
 
 function errorMessage(error) {

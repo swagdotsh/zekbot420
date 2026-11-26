@@ -104,7 +104,7 @@ module.exports = {
             await new Promise((resolve) => {
                 collector.on('collect', async (i) => {
                     if (i.user.id !== user.id) {
-                        return i.reply({ content: fail('This isn\'t your game. Start your own with `/akinator`.'), flags: MessageFlags.Ephemeral });
+                        return i.reply({ content: fail('This isn\'t your game. Start your own with `/game akinator`.'), flags: MessageFlags.Ephemeral });
                     }
                     const action = i.customId.split(':')[2];
 
@@ -134,7 +134,7 @@ module.exports = {
                     } catch (error) {
                         console.error('[akinator] request failed:', error.message);
                         collector.stop('error');
-                        return interaction.editReply({ content: fail('Akinator stopped answering. Start a new game with `/akinator`.'), components: [] }).catch(() => {});
+                        return interaction.editReply({ content: fail('Akinator stopped answering. Start a new game with `/game akinator`.'), components: [] }).catch(() => {});
                     }
 
                     if (api.isWin) {

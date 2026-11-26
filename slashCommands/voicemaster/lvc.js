@@ -51,8 +51,8 @@ module.exports = {
 
         return interaction.reply(
             currentlyLocked
-                ? 'VC unlocked.\n-# Tip: To lock, run `/lvc` again.'
-                : 'VC locked.\n-# Tip: To unlock, run `/lvc` again.'
+                ? 'VC unlocked.\n-# Tip: To lock, run `/vc lock` again.'
+                : 'VC locked.\n-# Tip: To unlock, run `/vc lock` again.'
         );
     }
 };

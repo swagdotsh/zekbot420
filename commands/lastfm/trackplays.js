@@ -115,7 +115,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                `Provide a Last.fm username or link yours first. Example: \`${currentPrefix()}tp "No Surprises" "Radiohead" someUser\``
+                `Provide a last.fm username or link yours first. Example: \`${currentPrefix()}tp "No Surprises" "Radiohead" someUser\``
             );
         }
 
@@ -152,7 +152,7 @@ module.exports = {
                     ? `${allTimePlays.toLocaleString()} play${allTimePlays === 1 ? '' : 's'}`
                     : '— plays';
 
-            const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
+            const footerLabel = userLoved ? '❤️ Loved track' : 'last.fm';
 
             const embed = {
                 color: 0xd51007,

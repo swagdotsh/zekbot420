@@ -35,6 +35,13 @@ async function main() {
     );
 
     await rest.put(route, {body: commands});
+
+    if (!useGuild && process.env.GUILD_ID) {
+        await rest.put(Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.GUILD_ID), {body: []});
+        console.log(`Removed the copies registered to guild ${process.env.GUILD_ID}, so commands don't show up twice there.`);
+    } else if (useGuild) {
+        console.log('If this bot also has global commands, they show up twice in this server. Run with --global to use global commands only.');
+    }
     console.log('Done.');
 }
 

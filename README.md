@@ -65,26 +65,26 @@ Your favorite Discord bot's open-source alternative.
 ### Community
 - Boost messages: a thank-you message when someone boosts (`/setup boost`), customized like welcome messages with `/boost edit|style|test`, plus `{boostcount}` and `{boostlevel}` placeholders
 - Booster perks (`/boostperks`): roles boosters get while they boost (taken back when the boost ends) and channels only boosters can see
-- Message streaks: members keep a streak by sending at least one message a day, and the bot posts "🔥 X day streak" in a channel moderators pick (`/setup streaks`). Days follow each member's `/settimezone`. `/streak view` and `/streak leaderboard`
+- Message streaks: members keep a streak by sending at least one message a day, and the bot posts "🔥 X day streak" in a channel moderators pick (`/setup streaks`). Days follow each member's `/time timezone`. `/streak view` and `/streak leaderboard`
 - Anonymous confessions (`/confess`, or the Confess button) posted as numbered confessions, with anonymous replies in a thread. Moderators can stop someone from confessing with `/confession ban <number>` without seeing who it was
 - Bump reminders: after a successful DISBOARD `/bump`, the bot thanks the bumper and pings a role when the 2 hour cooldown is up. Other listing bots can be added with `/bumpreminder addbot` and their own cooldown
-- VC bans (`/vcban add|remove|list`): banned members are disconnected whenever they join a voice channel, optionally for a set time
+- VC bans (`/vc ban add|remove|list`): banned members are disconnected whenever they join a voice channel, optionally for a set time
 
 ### Games
-- Guess the flag (`/flags play`), with four answer buttons per round and a server leaderboard
-- Tic-tac-toe with buttons (`/tictactoe`) against another member or the bot (easy or unbeatable), with rematches
-- Rock paper scissors (`/rps`) against the bot or another member, picked in secret, with a running score and rematches
-- Akinator (`/akinator`): think of a character and answer questions until it guesses. Uses [@aqul/akinator-api](https://github.com/zennn08/akinator-api), an unofficial client, so it can stop working if Akinator changes its site or blocks the bot's network
+- Guess the flag (`/game flags play`), with four answer buttons per round and a server leaderboard
+- Tic-tac-toe with buttons (`/game tictactoe`) against another member or the bot (easy or unbeatable), with rematches
+- Rock paper scissors (`/game rps`) against the bot or another member, picked in secret, with a running score and rematches
+- Akinator (`/game akinator`): think of a character and answer questions until it guesses. Uses [@aqul/akinator-api](https://github.com/zennn08/akinator-api), an unofficial client, so it can stop working if Akinator changes its site or blocks the bot's network
 
 ### Lookups & tools
 - Movies and TV shows (`/movie`, `/show`, or `,movie` / `,show`): search as you type, then see the plot, rating, cast, runtime or seasons, age rating, where to stream and the trailer. Data from [TMDB](https://www.themoviedb.org) (needs `TMDB_READ_ACCESS_TOKEN`)
-- Social profiles (`/social`): `github profile` and `github repository`, `twitter`, `instagram` and `roblox` (the full Roblox avatar, groups and online status). Instagram profiles come from Instagram's public embed page, so they show the name, followers, posts and latest posts but not the bio
+- Social profiles (`/social`): `github profile` and `github repository`, `twitter`, `instagram`, `roblox` (the full Roblox avatar, groups and online status) and `sandbox profile` / `sandbox post` for [sandbox](https://sandbox.swagrelated.com) profiles and posts. Instagram profiles come from Instagram's public embed page, so they show the name, followers, posts and latest posts but not the bio
 - Image effects (`/image <effect>`): about 65 effects like caption, meme, motivate, deepfry, magik, speed and spin, on an attached image, a link, or the latest image in the channel. Powered by [esmBot](https://github.com/esmBot/esmBot) (see [Credits](#credits))
 - Audio metadata (`/metadata view|edit`): read and change tags and cover art on MP3, M4A, AAC, FLAC, OGG, Opus and WAV files, including the iTunes explicit/clean advisory (`ITUNESADVISORY`, the `rtng` atom on M4A)
 
 ### Shazam
 - Find the song in a video or audio file: `,shazam` with an attachment or as a reply to a message with one, `/shazam` with a file or link, or right-click a message > **Apps > Shazam**
-- Shows the title, artist, album, cover art and Apple Music/Spotify/Shazam links. Long videos are sampled at a few points, so the song doesn't need to start at the beginning
+- Replies with "Song identified: *song* by *artist* on *album*" (the song name links to Shazam), the cover art, the record label and Apple Music/Spotify links. Long videos are sampled at a few points, so the song doesn't need to start at the beginning
 - Uses [node-shazam](https://github.com/scaranaraa/Node-Shazam), an unofficial Shazam client, so it can stop working if Shazam changes its API
 
 ### Social embeds (opt-in)
@@ -93,8 +93,8 @@ Your favorite Discord bot's open-source alternative.
 - X posts come from the public [FxTwitter API](https://github.com/FixTweet/FxTwitter). Instagram has no public API, so only the caption and cover image are available; videos and extra carousel photos link back to the post
 
 ### Integrations
-- Last.fm login and commands (optional; requires API key). `/fm np` shows what you're playing, `/fm connect` and `/fm disconnect` link your account; with the prefix it's just `,fm`, `,fm connect` and `,fm disconnect`
-- `,am` / `,spotify`: link to the song you're playing on Last.fm on Apple Music or Spotify (also `,am @user` or `,am <last.fm name>`). Apple Music needs no key; exact Spotify links need `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET`, otherwise a Spotify search link is sent. Playing from Spotify in VC is `,sp`
+- last.fm login and commands (optional; requires API key). `/fm np` shows what you're playing, `/fm connect` and `/fm disconnect` link your account, and `/fm profile|cover|chart|topartists|topalbums|toptracks|albumplays|trackplays` show your stats. Artist charts and artist pictures use Spotify artist photos when `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` are set. With the prefix it's just `,fm`, `,fm connect` and `,fm disconnect`
+- `,am` / `,spotify`: link to the song you're playing on last.fm on Apple Music or Spotify (also `,am @user` or `,am <last.fm name>`). Apple Music needs no key; exact Spotify links need `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET`, otherwise a Spotify search link is sent. Playing from Spotify in VC is `,sp`
 - Fortnite item shop and player stats (optional; requires [fnbr.co](https://fnbr.co/api/docs) and [fortnite-api](https://fortnite-api.com) API keys, respectively)
 - Rainbow Six Siege stats (optional; requires an [r6.arenyze.com](https://r6.arenyze.com/) API key, the new home of r6data)
 
@@ -131,7 +131,7 @@ Your favorite Discord bot's open-source alternative.
 ### Setting things up
 Each server can pick its own prefix for message commands with `/prefix set` (default `,`, or `PREFIX` in `.env`). Mentioning the bot shows the current prefix.
 
-Features are turned on with `/setup <feature>` and off with `/disable <feature>`: `birthdays`, `boost`, `bumpreminder`, `colorroles`, `confessions`, `goodbye`, `jail`, `leveling`, `modlog`, `reactionmute`, `socialembeds`, `starboard`, `streaks`, `voicemaster` and `welcome`. Related commands share one name too: `/birthday set|remove|list`, `/giveaway start|end|delete`, `/level channel|role`, `/starboard threshold|emoji|selfstar`, `/stickyroles mode|add|remove|user` and `/welcome`.
+Features are turned on with `/setup <feature>` and off with `/disable <feature>`: `birthdays`, `boost`, `bumpreminder`, `colorroles`, `confessions`, `goodbye`, `jail`, `leveling`, `modlog`, `reactionmute`, `socialembeds`, `starboard`, `streaks`, `voicemaster` and `welcome`. Related commands share one name too: `/fm`, `/level rank|leaderboard|channel|role`, `/warn add|remove|list`, `/timeout add|remove`, `/jail add|remove`, `/ban add|remove`, `/reactionmute add|remove`, `/snipe message|reaction|clear`, `/react add|remove|clear`, `/emoji add|fetch`, `/user avatar|banner|serveravatar|serverbanner`, `/bot info|ping|status|uptime`, `/vc lock|limit|rename|kick|delete|ban`, `/time convert|timezone|zones|remind|timer`, `/translate text|bad`, `/fortnite stats|shop`, `/game rps|tictactoe|akinator|flags`, `/birthday set|remove|list`, `/giveaway start|end|delete`, `/starboard threshold|emoji|selfstar`, `/stickyroles mode|add|remove|user`, `/welcome`, `/goodbye` and `/boost`.
 
 ### Downloading
 - Download and share videos from pretty much any video service. [_If yt-dlp supports it, we got it!_](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) (optional; requires yt-dlp and ffmpeg)
@@ -149,7 +149,7 @@ Features are turned on with `/setup <feature>` and off with `/disable <feature>`
 ### Optional (depending on your use case)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (required for online music extraction and optional video downloads)
 - FFmpeg (a static binary installs with the dependencies) and `ffprobe` on your PATH for music metadata
-- [Last.fm API key](https://www.last.fm/api) (for Last.fm integration features)
+- [last.fm API key](https://www.last.fm/api) (for last.fm integration features)
 - [TMDB API read access token](https://www.themoviedb.org/settings/api) (for `/movie` and `/show`)
 - For `/image`: [libvips](https://www.libvips.org/) with its C++ headers, fontconfig, pkg-config, CMake and a C++ compiler, then `npm run build:esmbot` once (and again after updating esmBot/). On macOS: `brew install vips pkg-config cmake`, and build with `PKG_CONFIG_PATH="$(brew --prefix libarchive)/lib/pkgconfig" npm run build:esmbot` (Homebrew keeps libarchive, which vips needs, out of pkg-config's default path). On Debian/Ubuntu: `apt install libvips-dev libfontconfig-dev pkg-config cmake g++`. Add liblqr (`brew install liblqr` / `apt install liblqr-1-0-dev`) before building to get the `magik` effect
 ---
@@ -186,6 +186,8 @@ TMDB_READ_ACCESS_TOKEN=
 TMDB_API_KEY=
 # Optional: the country for age ratings and where-to-watch (default US)
 TMDB_REGION=US
+# Optional: a sandbox app token for /social sandbox (raises the limit from 120 to 600 lookups a minute)
+SANDBOX_API_TOKEN=
 # Optional: a GitHub token for /social github (raises the limit from 60 to 5000 lookups an hour)
 GITHUB_TOKEN=
 ```
@@ -224,7 +226,7 @@ Without `--global`, the script uses `GUILD_ID` when configured. Browse the [comm
 ---
 ## Data & Persistence
 
-Some features store data locally (for example: warnings/modlog/Last.fm configuration/audio files) and others on a PostgreSQL-database. For the local data, you’ll see data files under the `data/` directory.
+Some features store data locally (for example: warnings/modlog/last.fm configuration/audio files) and others on a PostgreSQL-database. For the local data, you’ll see data files under the `data/` directory.
 > [!CAUTION]
 > Keep this folder on `.gitignore` to avoid accidentally committing sensitive data. `data/confessions.json` stores who wrote each confession (so `/confession ban` works), so treat it as private.
 
@@ -261,8 +263,8 @@ Some features store data locally (for example: warnings/modlog/Last.fm configura
 - `reactionRoles.js` / `colorRoles.js` — reaction roles and the color role panel (`data/reactionRoles.json`, `data/colorRoles.json`)
 - `streaks.js` — daily message streaks (`data/streaks.json`)
 - `tmdb.js` — movie and TV lookups
-- `social/` — `/social` lookups, one file per platform
-- `esmbotMedia.js` / `esmBot/` — `/image` effects and the vendored esmBot image natives
+- `social/` — `/social` lookups, one file per platform (GitHub, X, Instagram, Roblox, sandbox)
+- `esmbotMedia.js` / `esmbotWorker.js` / `esmBot/` — `/image` effects, the background process that runs them (so a crash there can't take the bot down), and the vendored esmBot image natives
 - `storesnipe.js` / `snipe.js` — message snipe support
 - `deploy-commands.js` — registers slash commands with Discord
 - `geninv.js` — prints an invite link with only the permissions the bot uses (`--admin` for Administrator)

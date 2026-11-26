@@ -105,7 +105,7 @@ async function runGame(message, game, botUser, edit) {
         const action = interaction.customId.split(':')[2];
         const seat = game.players.findIndex((p) => p.id === interaction.user.id);
         if (seat === -1) {
-            return interaction.reply({ content: fail('You\'re not in this game. Start your own with `/tictactoe`.'), flags: MessageFlags.Ephemeral }).catch(() => {});
+            return interaction.reply({ content: fail('You\'re not in this game. Start your own with `/game tictactoe`.'), flags: MessageFlags.Ephemeral }).catch(() => {});
         }
 
         if (action === 'forfeit') {

@@ -3,7 +3,7 @@
 **Last updated**: May 7, 2026  
   
 ## 1. Overview  
-zekbot420 is an open-source Discord bot that provides music playback, video downloads, utility commands, and optional integrations such as Last.fm. 
+zekbot420 is an open-source Discord bot that provides music playback, video downloads, utility commands, and optional integrations such as last.fm. 
 
 This Privacy Policy document explains what data is collected, how it is used, and your choices.  
   
@@ -20,12 +20,12 @@ When you use zekbot420, the bot may access:
   
 This data is used strictly to operate commands and provide functionality. Your data is never sold or shared with third parties.  
   
-### b) Last.fm Integration  
-If you choose to link your Last.fm account, zekbot420 may store:  
-- Your Last.fm username  
+### b) last.fm Integration  
+If you choose to link your last.fm account, zekbot420 may store:  
+- Your last.fm username  
 - Associated Discord user ID  
   
-zekbot420 does not store your Last.fm password or sensitive login credentials. The connection is done securely over at zekbot420.swagrelated.com using the Last.fm API.
+zekbot420 does not store your last.fm password or sensitive login credentials. The connection is done securely over at zekbot420.swagrelated.com using the last.fm API.
 
 ### c) Translation features
 If you use any translation related commands, the text you want translated is sent over to translate.cutie.dating, a community instance of LibreTranslate.
@@ -36,30 +36,30 @@ zekbot420 does not store or collect any data or text used for it's translation f
 Collected data is used to:  
 - Execute bot commands  
 - Provide music and utility features  
-- Link your Discord account with Last.fm
+- Link your Discord account with last.fm
 - Improve bot performance and reliability  
   
 ## 4. Data Storage  
 - Data may be stored temporarily in memory or in a database  
-- Last.fm usernames may be stored persistently to maintain account linking  
+- last.fm usernames may be stored persistently to maintain account linking  
 - Data is not sold or shared with third parties  
   
 ## 5. Data Retention  
 - Temporary data is cleared automatically  
-- Persistent data (like Last.fm usernames) is stored until you request removal  
+- Persistent data (like last.fm usernames) is stored until you request removal  
   
 ## 6. Your Rights  
 You may:  
 - Request removal of your stored data  
 - Stop using the bot at any time  
-- Unlink your Last.fm account  
+- Unlink your last.fm account  
   
 To request data deletion, contact zekkie at zekkiewashere[at]icloud[dot]com.  
   
 ## 7. Third-Party Services  
 zekbot420 uses the following third-party services:  
 - Discord (for bot functionality)  
-- Last.fm (for music stat tracking features)  
+- last.fm (for music stat tracking features)  
 - fnbr.co (Fortnite Item Shop)
 - yt-dlp (Downloading + music playing features)
 - Fortnite-API.com (Fortnite player stats)

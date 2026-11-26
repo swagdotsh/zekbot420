@@ -5,7 +5,7 @@ const { sql } = require('../../db');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('connectfm')
-        .setDescription('Link your Discord account to Last.fm')
+        .setDescription('Link your Discord account to last.fm')
         .setIntegrationTypes(0, 1)
         .setContexts(0, 1, 2),
 
@@ -23,7 +23,7 @@ module.exports = {
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('Log in with Last.fm')
+                .setLabel('Log in with last.fm')
                 .setURL(authUrl)
                 .setStyle(ButtonStyle.Link),
             new ButtonBuilder()
@@ -33,7 +33,7 @@ module.exports = {
         )
 
         return interaction.reply({
-            content: '**Connect your Last.fm**\nIf you have a last.fm account, you can link it to zekbot420 and access various music stat tracking related features!',
+            content: '**Connect your last.fm**\nIf you have a last.fm account, you can link it to zekbot420 and access various music stat tracking related features!',
             components: [row],
             flags: MessageFlags.Ephemeral
         });

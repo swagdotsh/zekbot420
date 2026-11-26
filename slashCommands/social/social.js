@@ -3,6 +3,7 @@ const github = require('../../social/github');
 const twitter = require('../../social/twitter');
 const instagram = require('../../social/instagram');
 const roblox = require('../../social/roblox');
+const sandbox = require('../../social/sandbox');
 const { fail } = require('../../ui');
 
 const HANDLERS = {
@@ -11,9 +12,11 @@ const HANDLERS = {
     twitter: (o) => twitter.profile(o.getString('user', true)),
     instagram: (o) => instagram.profile(o.getString('user', true)),
     roblox: (o) => roblox.lookup(o.getString('user', true)),
+    'sandbox profile': (o) => sandbox.profile(o.getString('user', true)),
+    'sandbox post': (o) => sandbox.post(o.getString('post', true)),
 };
 
-const PLATFORM_NAMES = { github: 'GitHub', twitter: 'X', instagram: 'Instagram', roblox: 'Roblox' };
+const PLATFORM_NAMES = { github: 'GitHub', twitter: 'X', instagram: 'Instagram', roblox: 'Roblox', sandbox: 'sandbox' };
 
 const userOption = (description) => (opt) => opt.setName('user').setDescription(description).setRequired(true).setMaxLength(100);
 
@@ -21,7 +24,7 @@ module.exports = {
     cooldown: 4,
     data: new SlashCommandBuilder()
         .setName('social')
-        .setDescription('Look up profiles on GitHub, X, Instagram, Roblox and more')
+        .setDescription('Look up profiles on GitHub, X, Instagram, Roblox, sandbox and more')
         .setIntegrationTypes(0, 1)
         .setContexts(0, 1, 2)
         .addSubcommandGroup((group) =>
@@ -35,7 +38,13 @@ module.exports = {
         .addSubcommand((sub) => sub.setName('instagram').setDescription('An Instagram profile')
             .addStringOption(userOption('Instagram username or profile link')))
         .addSubcommand((sub) => sub.setName('roblox').setDescription('A Roblox profile and avatar')
-            .addStringOption(userOption('Roblox username, user ID or profile link'))),
+            .addStringOption(userOption('Roblox username, user ID or profile link')))
+        .addSubcommandGroup((group) =>
+            group.setName('sandbox').setDescription('sandbox profiles and posts')
+                .addSubcommand((sub) => sub.setName('profile').setDescription('A sandbox profile')
+                    .addStringOption(userOption('sandbox username or profile link')))
+                .addSubcommand((sub) => sub.setName('post').setDescription('A sandbox post')
+                    .addStringOption((opt) => opt.setName('post').setDescription('Post link or number').setRequired(true).setMaxLength(200)))),
 
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false);
@@ -50,7 +59,7 @@ module.exports = {
             if (result.error) return interaction.editReply(fail(result.error));
             return interaction.editReply({ content: '', ...result });
         } catch (error) {
-            if (error instanceof github.LookupError) return interaction.editReply(fail(error.message));
+            if (error instanceof github.LookupError || error instanceof sandbox.SandboxError) return interaction.editReply(fail(error.message));
             console.error(`[social] /social ${key} failed:`, error);
             return interaction.editReply(fail(`Couldn't reach ${PLATFORM_NAMES[group ?? sub]} right now. Try again in a moment.`));
         }
