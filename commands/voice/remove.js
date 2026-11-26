@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { voiceChannelBlocker, releaseTrack } = require('../../musicPlayer');
 
 function getTrackName(track) {
@@ -17,7 +18,7 @@ module.exports = {
 
         const pos = Number(args[0]);
         if (!Number.isInteger(pos) || pos < 1) {
-            return message.reply(`Usage: \`${process.env.PREFIX}remove <position>\` (position starts at 1 for next-up queue).`);
+            return message.reply(`Usage: \`${currentPrefix()}remove <position>\` (position starts at 1 for next-up queue).`);
         }
 
         if (!session.queue || session.queue.length === 0) {

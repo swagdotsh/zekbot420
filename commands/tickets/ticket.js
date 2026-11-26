@@ -1,9 +1,10 @@
+const { currentPrefix } = require('../../prefix');
 const { getOpenTicketByChannel, getTicketConfig, isStaff, claimTicket, closeTicket, setTicketAccess } = require('../../ticketHandler');
 
 const SMIRK = '<:smirk2:1498272372539785286>';
 
 function usage() {
-    const p = process.env.PREFIX;
+    const p = currentPrefix();
     return `Usage (inside a ticket): \`${p}ticket add @user\` • \`${p}ticket remove @user\` • \`${p}ticket rename <name>\` • \`${p}ticket claim\` • \`${p}ticket close [reason]\``;
 }
 

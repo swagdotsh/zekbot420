@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { voiceChannelBlocker } = require('../../musicPlayer');
 
 module.exports = {
@@ -12,7 +13,7 @@ module.exports = {
         const input = (args[0] || '').toLowerCase();
 
         if (!input) {
-            return message.reply("Loop mode is currently `" + (session.loopMode || 'off') + `\`.\nUsage: \`${process.env.PREFIX}loop off|track|queue\``);
+            return message.reply("Loop mode is currently `" + (session.loopMode || 'off') + `\`.\nUsage: \`${currentPrefix()}loop off|track|queue\``);
         }
 
         const valid = ['off', 'track', 'queue'];

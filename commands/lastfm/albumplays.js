@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
 const { sql } = require('../../db');
@@ -112,7 +113,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                `Provide a Last.fm username or link yours first. Example: \`${process.env.PREFIX}alp "The Dark Side of the Moon" "Pink Floyd" someUser\``
+                `Provide a Last.fm username or link yours first. Example: \`${currentPrefix()}alp "The Dark Side of the Moon" "Pink Floyd" someUser\``
             );
         }
 
@@ -123,8 +124,8 @@ module.exports = {
             if (!artist || !album) {
                 if ((args || []).length) {
                     return message.reply(
-                        `For album plays, please use: \`${process.env.PREFIX}alp "Album Name" "Artist Name" [username]\` (quotes required when there are spaces). ` +
-                        `Or run \`${process.env.PREFIX}alp\` with no args to use your currently playing album.`
+                        `For album plays, please use: \`${currentPrefix()}alp "Album Name" "Artist Name" [username]\` (quotes required when there are spaces). ` +
+                        `Or run \`${currentPrefix()}alp\` with no args to use your currently playing album.`
                     );
                 }
 

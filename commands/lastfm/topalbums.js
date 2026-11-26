@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
 const { sql } = require('../../db');
@@ -43,7 +44,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                `Provide a Last.fm username or link yours first. e.g. \`${process.env.PREFIX}topalbums username week\` or \`${process.env.PREFIX}ta month\``
+                `Provide a Last.fm username or link yours first. e.g. \`${currentPrefix()}topalbums username week\` or \`${currentPrefix()}ta month\``
             );
         }
 

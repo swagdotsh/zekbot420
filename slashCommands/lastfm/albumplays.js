@@ -116,7 +116,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link yours with `/linklastfm`.');
+            return interaction.editReply('Provide a Last.fm username or link yours with `/fm connect`.');
         }
 
         let album = interaction.options.getString('album');

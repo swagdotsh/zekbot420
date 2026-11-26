@@ -12,7 +12,7 @@ const {
 
 require('dotenv').config();
 
-const missingRuntimeConfig = ['TOKEN', 'PREFIX', 'NEON_DATABASE_URL']
+const missingRuntimeConfig = ['TOKEN', 'NEON_DATABASE_URL']
     .filter((name) => !process.env[name]);
 
 if (missingRuntimeConfig.length) {
@@ -62,8 +62,17 @@ const {isConnectionAlive} = require('./voiceConnection');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
 const {loadSlashCommands} = require('./slashLoader');
+const {initPrefixes, getPrefix, runWithPrefix} = require('./prefix');
 const {handleSocialEmbed} = require('./socialEmbeds');
 const {gatewayPlatformOptions} = require('./platformIcon');
+const {handleConfessionInteraction} = require('./confessions');
+const {handleBumpMessage, startBumpReminderLoop} = require('./bumpReminders');
+const {handleVcBanVoiceState, startVcBanLoop} = require('./vcBans');
+const {registerBoostEvents, handleBoostSystemMessage, syncPerks} = require('./boosts');
+const {registerReactionRoleEvents} = require('./reactionRoles');
+const {registerColorRoleEvents} = require('./colorRoles');
+const {handleStreakMessage} = require('./streaks');
+const {showLoadingOnDefer} = require('./ui');
 
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled promise rejection:', error);
@@ -285,6 +294,9 @@ for (const slashCommand of loadSlashCommands()) {
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
     client.user.setActivity('the national football league', {type: 3}); // watching [...]
+    startBumpReminderLoop(client);
+    startVcBanLoop();
+    syncPerks(client).catch((error) => console.error('Failed to sync booster perks:', error));
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
@@ -315,6 +327,7 @@ client.on('interactionCreate', async (interaction) => {
         if (await handleVoiceMasterInteraction(interaction)) return;
         if (await handleMusicButton(interaction)) return;
         if (await handleTicketInteraction(interaction)) return;
+        if (await handleConfessionInteraction(interaction)) return;
 
         if (interaction.isAutocomplete()) {
             const cmd = client.slashCommands.get(interaction.commandName);
@@ -343,7 +356,8 @@ client.on('interactionCreate', async (interaction) => {
             return;
         }
 
-        await cmd.execute(interaction);
+        showLoadingOnDefer(interaction);
+        await runWithPrefix(getPrefix(interaction.guildId), () => cmd.execute(interaction));
     } catch (error) {
         console.error(error);
 
@@ -359,17 +373,30 @@ client.on('interactionCreate', async (interaction) => {
 
 // Prefix commands
 client.on('messageCreate', async (message) => {
+    if (message.author.bot && message.guild) handleBumpMessage(message).catch(console.error);
+    if (message.system && message.guild) handleBoostSystemMessage(message).catch(console.error);
+
     if (!message.author.bot && message.guild) {
         await handleMessageXP(message).catch(console.error);
         await handleAfkMessage(message).catch(console.error);
         await handleTrapMessage(message).catch(console.error);
         await handleTtsMessage(message).catch(console.error);
+        handleStreakMessage(message).catch(console.error);
         handleSocialEmbed(message).catch(console.error);
     }
 
-    if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
+    if (message.author.bot) return;
 
-    const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
+    const prefix = getPrefix(message.guild?.id);
+
+    if (message.guild && new RegExp(`^<@!?${client.user.id}>$`).test(message.content.trim())) {
+        await message.reply(`My prefix here is \`${prefix}\`, like \`${prefix}help\`. Slash commands work too.`).catch(() => {});
+        return;
+    }
+
+    if (!message.content.startsWith(prefix)) return;
+
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
 
     const command = client.commands.find(
@@ -388,7 +415,8 @@ client.on('messageCreate', async (message) => {
     }
 
     try {
-        await command.execute(message, args);
+        message.prefix = prefix;
+        await runWithPrefix(prefix, () => command.execute(message, args));
     } catch (error) {
         console.error(error);
         await message.reply('Something went wrong running that command. Try again in a moment.').catch(() => {});
@@ -401,6 +429,10 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
             newMessage = await newMessage.fetch().catch(() => null);
         }
 
+        if (newMessage?.guild && newMessage.author?.bot) {
+            await handleBumpMessage(newMessage).catch(console.error);
+            return;
+        }
         if (!newMessage?.guild || newMessage.author?.bot) return;
 
         if (oldMessage.partial) {
@@ -557,7 +589,9 @@ client.on('error', (error) => {
     console.error('Discord client error:', error);
 });
 
-client.login(process.env.TOKEN);
+initPrefixes()
+    .catch((error) => console.error('Failed to load server prefixes, using the default:', error))
+    .finally(() => client.login(process.env.TOKEN));
 
 let shuttingDown = false;
 async function shutdown(signal) {
@@ -589,6 +623,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
+    await handleVcBanVoiceState(oldState, newState).catch(console.error);
     await handleVoiceXPStateUpdate(oldState, newState).catch(console.error);
 
     const leftChannel = oldState.channel;
@@ -605,6 +640,10 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         clearEmptyVoiceSessionCleanup(client, newState.guild.id);
     }
 });
+
+registerBoostEvents(client);
+registerReactionRoleEvents(client);
+registerColorRoleEvents(client);
 
 require('./storesnipe')(client);
 require('./starboardHandler')(client);

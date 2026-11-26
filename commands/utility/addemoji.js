@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs/promises');
 const os = require('os');
 const path = require('path');
@@ -123,7 +124,7 @@ module.exports = {
         const attachment = message.attachments.first();
 
         if (!emojiName) {
-            return message.reply(`Usage: \`${process.env.PREFIX}addemoji [emoji name] [link to file]\` or attach an image/gif.`);
+            return message.reply(`Usage: \`${currentPrefix()}addemoji [emoji name] [link to file]\` or attach an image/gif.`);
         }
 
         if (!isValidEmojiName(emojiName)) {

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
@@ -63,7 +64,7 @@ module.exports = {
     aliases: ['d'],
     async execute(message, args) {
         const url = parseDownloadUrl(args[0]);
-        if (!url) return message.reply(`Provide a valid http(s) link. Usage: \`${process.env.PREFIX}download <url>\``);
+        if (!url) return message.reply(`Provide a valid http(s) link. Usage: \`${currentPrefix()}download <url>\``);
 
         const statusMsg = await message.reply(`<a:spinbot420:1498959085427490937> Downloading, give me *oneeeee* second...`);
 

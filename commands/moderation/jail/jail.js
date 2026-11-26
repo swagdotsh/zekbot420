@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const { getJailConfig, jailUser, getJailedUser } = require('../../../jailHandler');
 const { logJail } = require('../../../log');
 
@@ -31,7 +32,7 @@ module.exports = {
 
         const guild = message.guild;
         const config = await getJailConfig(guild.id);
-        if (!config) return message.reply(`Jail system is not set up. Run \`${process.env.PREFIX}setupjail\` first.`);
+        if (!config) return message.reply(`Jail system is not set up. Run \`${currentPrefix()}setupjail\` first.`);
 
         const mentionedMember = message.mentions.members.first();
         const target = mentionedMember || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
@@ -48,7 +49,7 @@ module.exports = {
 
         const jailRole = guild.roles.cache.get(config.jail_role_id);
         const jailChannel = guild.channels.cache.get(config.jail_channel_id);
-        if (!jailRole || !jailChannel) return message.reply(`Jail role or channel is missing. Re-run \`${process.env.PREFIX}setupjail\`.`);
+        if (!jailRole || !jailChannel) return message.reply(`Jail role or channel is missing. Re-run \`${currentPrefix()}setupjail\`.`);
 
         const savedRoles = target.roles.cache
             .filter(r => r.id !== guild.roles.everyone.id && !r.managed)

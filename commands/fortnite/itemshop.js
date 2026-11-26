@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
@@ -59,7 +60,7 @@ module.exports = {
     async execute(message, args) {
         const section = args[0]?.toLowerCase();
         if (section && !['featured', 'daily'].includes(section)) {
-            return message.reply(`Usage: \`${process.env.PREFIX}itemshop\` • \`${process.env.PREFIX}itemshop featured\` • \`${process.env.PREFIX}itemshop daily\``);
+            return message.reply(`Usage: \`${currentPrefix()}itemshop\` • \`${currentPrefix()}itemshop featured\` • \`${currentPrefix()}itemshop daily\``);
         }
 
         try {

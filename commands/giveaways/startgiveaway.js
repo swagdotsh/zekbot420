@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
 
 const { sql } = require('../../db');
@@ -20,7 +21,7 @@ module.exports = {
             return message.reply('You need mod permissions to start a giveaway. <:smirk2:1498272372539785286>')
         }
 
-        const usage = `Usage: \`${process.env.PREFIX}startgiveaway <duration> <dm:yes/no> <#channel> <title...>\`\nExample: \`${process.env.PREFIX}startgiveaway 1h dm:yes #giveaways Free Nitro\``
+        const usage = `Usage: \`${currentPrefix()}startgiveaway <duration> <dm:yes/no> <#channel> <title...>\`\nExample: \`${currentPrefix()}startgiveaway 1h dm:yes #giveaways Free Nitro\``
 
         if (args.length < 4) return message.reply(usage)
 

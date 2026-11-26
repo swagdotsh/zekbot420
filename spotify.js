@@ -154,10 +154,15 @@ async function getFromUrl(input) {
     return { name: playlist.name, tracks, total };
 }
 
+async function searchTracks(query, limit = 10) {
+    const data = await api(`/search?type=track&limit=${limit}&q=${encodeURIComponent(query)}`);
+    return (data.tracks?.items ?? []).map((item) => ({ ...toTrack(item), album: item.album?.name ?? null }));
+}
+
 async function searchTrack(query) {
     const data = await api(`/search?type=track&limit=1&q=${encodeURIComponent(query)}`);
     const item = data.tracks?.items?.[0];
     return item ? toTrack(item) : null;
 }
 
-module.exports = { MAX_COLLECTION_TRACKS, isConfigured, canReadPlaylists, isSpotifyUrl, parseSpotifyUrl, getFromUrl, searchTrack };
+module.exports = { MAX_COLLECTION_TRACKS, isConfigured, canReadPlaylists, isSpotifyUrl, parseSpotifyUrl, getFromUrl, searchTrack, searchTracks };

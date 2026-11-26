@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits } = require('discord.js');
@@ -60,7 +61,7 @@ module.exports = {
                     `Role: **${config.roleName}** (ID: ${config.roleId})\n` +
                     `Set up by: **${setupByTag}**\n` +
                     `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>\n` +
-                    `Use \`${process.env.PREFIX}reactionmute @user\` or \`${process.env.PREFIX}unreactionmute @user\` to manage it. <:smirk2:1498272372539785286>`
+                    `Use \`${currentPrefix()}reactionmute @user\` or \`${currentPrefix()}unreactionmute @user\` to manage it. <:smirk2:1498272372539785286>`
             });
         }
 

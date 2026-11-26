@@ -1,3 +1,5 @@
+const { getPrefix } = require('../prefix');
+
 const { sql } = require('../db');
 
 const afkUsers = new Map();
@@ -71,7 +73,7 @@ function formatAfkDuration(startedAt) {
 async function handleAfkMessage(message) {
     if (!message.guild || message.author.bot) return;
 
-    const prefix = process.env.PREFIX || ',';
+    const prefix = getPrefix(message.guild.id);
     const isAfkCommand = message.content
         .trim()
         .toLowerCase()

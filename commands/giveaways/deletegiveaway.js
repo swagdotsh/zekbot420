@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
 
 const { sql } = require('../../db');
@@ -11,7 +12,7 @@ module.exports = {
         }
 
         const id = parseInt(args[0])
-        if (!id) return message.reply(`Usage: \`${process.env.PREFIX}deletegiveaway <giveaway ID>\``)
+        if (!id) return message.reply(`Usage: \`${currentPrefix()}deletegiveaway <giveaway ID>\``)
 
         const [giveaway] = await sql`
       SELECT * FROM giveaways WHERE id = ${id} AND guild_id = ${message.guild.id}

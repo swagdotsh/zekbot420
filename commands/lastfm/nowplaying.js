@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 const sharp = require('sharp');
 
@@ -55,6 +56,10 @@ module.exports = {
   name: 'nowplaying',
   aliases: ['np', 'fm', 'lastplayed'],
   async execute(message, args) {
+    const sub = args[0]?.toLowerCase();
+    if (sub === 'connect' || sub === 'login' || sub === 'link') return require('./linklastfm').execute(message, args.slice(1));
+    if (sub === 'disconnect' || sub === 'logout' || sub === 'unlink') return require('./disconnectfm').execute(message, args.slice(1));
+
     let username = args[0]
 
     if (!username) {
@@ -62,7 +67,7 @@ module.exports = {
       username = rows[0]?.lastfm_username
     }
 
-    if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${process.env.PREFIX}linklastfm\`!`)
+    if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${currentPrefix()}fm connect\`!`)
 
     const url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${username}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=200`;
 

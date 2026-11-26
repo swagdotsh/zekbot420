@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 const { EmbedBuilder } = require('discord.js');
 
@@ -105,7 +106,7 @@ module.exports = {
         const username = rows[0]?.lastfm_username;
 
         if (!username) {
-            return message.reply(`Link your Last.fm account first with \`${process.env.PREFIX}linklastfm\`.`);
+            return message.reply(`Link your Last.fm account first with \`${currentPrefix()}fm connect\`.`);
         }
 
         try {

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { writeJsonAtomic } = require('../jsonStore');
@@ -105,11 +106,11 @@ module.exports = (client) => {
                     {
                         name: 'quick setup commands',
                         value: [
-                            `\`${process.env.PREFIX}help\` — view help and command links`,
-                            `\`${process.env.PREFIX}welcomesetup\` — setup welcome messages`,
-                            `\`${process.env.PREFIX}setupjail\` — setup the jail system`,
-                            `\`${process.env.PREFIX}voicemaster\` — set up temporary voice channels (VoiceMaster chanels)`,
-                            `\`${process.env.PREFIX}modlog\` — setup & configure moderation logging`,
+                            `\`${currentPrefix()}help\` — view help and command links`,
+                            `\`${currentPrefix()}welcomesetup\` — setup welcome messages`,
+                            `\`${currentPrefix()}setupjail\` — setup the jail system`,
+                            `\`${currentPrefix()}voicemaster\` — set up temporary voice channels (VoiceMaster chanels)`,
+                            `\`${currentPrefix()}modlog\` — setup & configure moderation logging`,
                         ].join('\n'),
                     }
                 )

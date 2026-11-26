@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
 const FN_API_KEY = process.env.FORTNITE_API_KEY;
@@ -9,7 +10,7 @@ module.exports = {
     cooldown: 5,
     aliases: ['fortnite', 'fnstat', 'fort'],
     async execute(message, args) {
-        if (!args.length) return message.reply(`Usage: \`${process.env.PREFIX}fnstats <username> [epic/psn/xbl] [season/lifetime]\``);
+        if (!args.length) return message.reply(`Usage: \`${currentPrefix()}fnstats <username> [epic/psn/xbl] [season/lifetime]\``);
 
         let accountType = 'epic';
         let timeWindow = 'lifetime';

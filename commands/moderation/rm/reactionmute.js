@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
@@ -39,7 +40,7 @@ module.exports = {
 
         const target = message.mentions.members.first();
         if (!target) {
-            return message.reply(`Mention a user to reaction mute. Example: \`${process.env.PREFIX}reactionmute @user spamming reactions\``);
+            return message.reply(`Mention a user to reaction mute. Example: \`${currentPrefix()}reactionmute @user spamming reactions\``);
         }
 
         if (target.id === message.author.id) {
@@ -61,12 +62,12 @@ module.exports = {
 
         const config = await readReactionMuteConfig(message.guild.id);
         if (!config?.roleId) {
-            return message.reply(`Reaction mute has not been set up yet. Run \`${process.env.PREFIX}rmsetup\` first.`);
+            return message.reply(`Reaction mute has not been set up yet. Run \`${currentPrefix()}rmsetup\` first.`);
         }
 
         const role = message.guild.roles.cache.get(config.roleId);
         if (!role) {
-            return message.reply(`The reaction mute role could not be found. Run \`${process.env.PREFIX}rmsetup\` again.`);
+            return message.reply(`The reaction mute role could not be found. Run \`${currentPrefix()}rmsetup\` again.`);
         }
 
         if (target.roles.cache.has(role.id)) {

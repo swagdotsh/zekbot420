@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { writeJsonAtomic } = require('../../../jsonStore');
@@ -117,16 +118,16 @@ module.exports = {
     async execute(message, args) {
         if (!args.length) {
             return message.reply(
-                `Usage: \`${process.env.PREFIX}setbirthday MM/DD/YYYY GMT-5\` or \`${process.env.PREFIX}setbirthday MM/DD GMT+1\`\n` +
-                `The year is optional. Run \`${process.env.PREFIX}helptz\` for a list of GMT timezones and example cities.`
+                `Usage: \`${currentPrefix()}setbirthday MM/DD/YYYY GMT-5\` or \`${currentPrefix()}setbirthday MM/DD GMT+1\`\n` +
+                `The year is optional. Run \`${currentPrefix()}helptz\` for a list of GMT timezones and example cities.`
             );
         }
 
         if (args.length < 2) {
             return message.reply(
                 'Please include your timezone too.\n' +
-                `Example: \`${process.env.PREFIX}setbirthday 04/20 GMT-5\`\n` +
-                `Run \`${process.env.PREFIX}helptz\` for a list of GMT timezones and example cities.`
+                `Example: \`${currentPrefix()}setbirthday 04/20 GMT-5\`\n` +
+                `Run \`${currentPrefix()}helptz\` for a list of GMT timezones and example cities.`
             );
         }
 
@@ -139,7 +140,7 @@ module.exports = {
         if (!timezone) {
             return message.reply(
                 'Invalid timezone. Use a GMT offset like `GMT-5`, `GMT+1`, `-8`, or `+05:30`.\n' +
-                `Run \`${process.env.PREFIX}helptz\` for a list of GMT timezones and example cities.`
+                `Run \`${currentPrefix()}helptz\` for a list of GMT timezones and example cities.`
             );
         }
 

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { setLevelRole, removeLevelRole, getLevelRoles } = require('../../leveling');
 
 module.exports = {
@@ -18,7 +19,7 @@ module.exports = {
 
         if (args[0] === 'remove') {
             const level = parseInt(args[1]);
-            if (isNaN(level) || level < 1) return message.reply(`Usage: \`${process.env.PREFIX}lvlrole remove <level>\``);
+            if (isNaN(level) || level < 1) return message.reply(`Usage: \`${currentPrefix()}lvlrole remove <level>\``);
 
             const roleId = await removeLevelRole(message.guild.id, level);
             return message.reply(roleId

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionsBitField } = require('discord.js');
 const { getOrCreateSession, playNext, cleanupTrack } = require('../../musicPlayer');
 const spotify = require('../../spotify');
@@ -17,7 +18,7 @@ const {
 const SMIRK = '<:smirk2:1498272372539785286>';
 
 function usage() {
-    const p = process.env.PREFIX;
+    const p = currentPrefix();
     return `Usage:\n\`${p}play <search or link>\` • \`${p}play source=sc|yt|sp <search or link>\` • \`${p}play\` with an audio file attached\n-# Plain searches use Spotify, then YouTube if Spotify has nothing. Links from YouTube, SoundCloud and Spotify are detected automatically.`;
 }
 
@@ -137,7 +138,7 @@ module.exports = {
 
         const activeSession = message.client.voiceSessions?.get(message.guild.id);
         if (activeSession?.mode === 'tts') {
-            return message.reply(`I'm in TTS mode right now. Use \`${process.env.PREFIX}leave\` first. ${SMIRK}`);
+            return message.reply(`I'm in TTS mode right now. Use \`${currentPrefix()}leave\` first. ${SMIRK}`);
         }
 
         const activeChannelId = activeSession?.connection?.joinConfig?.channelId;
@@ -164,7 +165,7 @@ module.exports = {
             const session = await getOrCreateSession(message, voiceChannel);
             if (session.mode === 'tts') {
                 found.tracks.forEach(cleanupTrack);
-                return status.edit(`I'm in TTS mode right now. Use \`${process.env.PREFIX}leave\` first. ${SMIRK}`);
+                return status.edit(`I'm in TTS mode right now. Use \`${currentPrefix()}leave\` first. ${SMIRK}`);
             }
 
             const requestedBy = message.member?.displayName || message.author.username;

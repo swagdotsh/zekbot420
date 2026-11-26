@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const {PermissionFlagsBits, ChannelType} = require('discord.js');
 
 const BOT_DEVELOPERS = [
@@ -15,7 +16,7 @@ module.exports = {
         }
 
         if (!args.length) {
-            return message.reply(`Usage: \`${process.env.PREFIX || ','}echo [text] [channel]\``);
+            return message.reply(`Usage: \`${currentPrefix() || ','}echo [text] [channel]\``);
         }
 
         let targetChannel = message.channel;

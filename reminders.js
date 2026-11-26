@@ -124,4 +124,4 @@ function startReminderLoop(client) {
     }).start();
 }
 
-module.exports = { initRemindersDB, parseWhen, createReminder, formatDue, startReminderLoop };
+module.exports = { initRemindersDB, parseWhen, parseDuration, createReminder, formatDue, startReminderLoop };

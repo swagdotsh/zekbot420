@@ -27,7 +27,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link your account with `/linklastfm`.');
+            return interaction.editReply('Provide a Last.fm username or link your account with `/fm connect`.');
         }
 
         const apiKey = process.env.LASTFM_API_KEY;

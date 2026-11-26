@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs');
 const { ManagedChannelMap, loadManagedChannels } = require('../../voicemasterStore');
 const path = require('path');
@@ -391,7 +392,7 @@ async function createJoinChannel(client, guild, category, actorTag) {
         const existingChannel = guild.channels.cache.get(existingConfig.joinChannelId)
             ?? await guild.channels.fetch(existingConfig.joinChannelId).catch(() => null);
         if (existingChannel) {
-            return { error: `VoiceMaster is already set up: ${existingChannel}. Remove it first (\`/disable voicemaster\` or \`${process.env.PREFIX}unsetupvm\`) to move it. ${SMIRK}` };
+            return { error: `VoiceMaster is already set up: ${existingChannel}. Remove it first (\`/disable voicemaster\` or \`${currentPrefix()}unsetupvm\`) to move it. ${SMIRK}` };
         }
     }
 
@@ -444,7 +445,7 @@ async function setupVoiceMaster(message) {
 
     const existingConfig = await getConfig(message.client, message.guild.id);
     if (existingConfig.joinChannelId && message.guild.channels.cache.has(existingConfig.joinChannelId)) {
-        const P = process.env.PREFIX;
+        const P = currentPrefix();
         return message.reply(
             `VoiceMaster is already set up: <#${existingConfig.joinChannelId}>. Use \`${P}lvc\`, \`${P}dvc\`, \`${P}kvc\`, \`${P}rmvc\`, or \`${P}unsetupvm\` to manage it. ${SMIRK}`
         );
@@ -534,7 +535,7 @@ async function createManagedChannelForMember(oldState, newState) {
         createdAt: Date.now(),
     });
 
-    const P = process.env.PREFIX;
+    const P = currentPrefix();
 
     try {
         await member.voice.setChannel(channel, '✅ VoiceMaster temporary VC created');

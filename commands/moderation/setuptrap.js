@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionsBitField } = require('discord.js');
 const { createTrapChannel, readGuildConfig, writeGuildConfig } = require('../../events/trapHelper');
 
@@ -41,7 +42,7 @@ module.exports = {
 
         if (config.trapChannelId && message.guild.channels.cache.has(config.trapChannelId)) {
             return message.reply(
-                `A trap channel is already configured: <#${config.trapChannelId}>. Use \`${process.env.PREFIX}trapstats\` to review it or \`${process.env.PREFIX}removetrap\` to disable it. <:smirk2:1498272372539785286>`
+                `A trap channel is already configured: <#${config.trapChannelId}>. Use \`${currentPrefix()}trapstats\` to review it or \`${currentPrefix()}removetrap\` to disable it. <:smirk2:1498272372539785286>`
             );
         }
 

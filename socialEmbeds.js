@@ -3,7 +3,7 @@ const { AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const { readJson, updateJson } = require('./jsonStore');
 const { DATA_DIR } = require('./paths');
 const { fetchLimited } = require('./safeFetch');
-const { loading, fail } = require('./ui');
+const { EMOJI, loading, fail } = require('./ui');
 
 const DEFAULTS = { enabled: false, x: true, instagram: true, hideOriginalEmbed: false };
 const MAX_LINKS_PER_MESSAGE = 3;
@@ -212,7 +212,7 @@ async function downloadMedia(post, guild) {
 }
 
 function buildContent(post, skipped) {
-    const icon = post.platform === 'X' ? '𝕏' : '📸';
+    const icon = post.platform === 'X' ? EMOJI.x : EMOJI.instagram;
     const who = post.handle && post.author !== post.handle ? `**${post.author}** (@${post.handle})` : `**@${post.handle ?? 'unknown'}**`;
     const header = `${icon} ${who} · [${post.platform}](<${post.url}>)`;
 
@@ -324,4 +324,5 @@ module.exports = {
     fetchInstagramPost,
     buildContent,
     downloadMedia,
+    uploadLimit,
 };

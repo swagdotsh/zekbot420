@@ -7,7 +7,7 @@ const {
     MessageFlags
 } = require('discord.js');
 
-const LIBRE_URL = 'https://translate.cutie.dating';
+const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
 const API_KEY = process.env.LIBRETRANSLATE_KEY;
 const REQUEST_TIMEOUT = 8000; // 8 second timeout
 

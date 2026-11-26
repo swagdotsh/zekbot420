@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { voiceChannelBlocker } = require('../../musicPlayer');
 
 module.exports = {
@@ -17,6 +18,6 @@ module.exports = {
 
     const paused = session.player.pause();
     if (!paused) return message.reply('Could not pause playback. <:smirk2:1498272372539785286>');
-    return message.reply('⏸ Paused. \n\-# Tip: To unpause, run `' + process.env.PREFIX + 'pause` again.');
+    return message.reply('⏸ Paused. \n\-# Tip: To unpause, run `' + currentPrefix() + 'pause` again.');
   }
 };

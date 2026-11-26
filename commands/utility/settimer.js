@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { parseWhen, createReminder, formatDue } = require('../../reminders');
 
 module.exports = {
@@ -6,7 +7,7 @@ module.exports = {
 
     async execute(message, args) {
         if (!args.length) {
-            return message.reply(`Usage: \`${process.env.PREFIX}settimer <10m | 2h | 3d> [reason]\``);
+            return message.reply(`Usage: \`${currentPrefix()}settimer <10m | 2h | 3d> [reason]\``);
         }
 
         const when = parseWhen(args[0]);

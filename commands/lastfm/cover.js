@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
 const { sql } = require('../../db');
@@ -13,7 +14,7 @@ module.exports = {
             username = rows[0]?.lastfm_username
         }
 
-        if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${process.env.PREFIX}linklastfm\`!`);
+        if (!username) return message.reply(`Provide a Last.fm username or link your account with \`${currentPrefix()}fm connect\`!`);
 
         const apiKey = process.env.LASTFM_API_KEY;
         if (!apiKey) return message.reply('Missing `LASTFM_API_KEY` in the bot environment.');

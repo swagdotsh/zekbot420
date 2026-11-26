@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { updateWelcomeConfig } = require('../../welcomeStore');
 const { ok, fail } = require('../../ui');
 
@@ -8,7 +9,7 @@ module.exports = {
     if (!message.member.permissions.has('ManageGuild')) return message.reply(fail('You need the `Manage Server` permission to use this.'));
 
     const channel = message.mentions.channels.find(c => c.guildId === message.guild.id);
-    if (!channel) return message.reply(`Usage: \`${process.env.PREFIX}welcomesetup #channel\``);
+    if (!channel) return message.reply(`Usage: \`${currentPrefix()}welcomesetup #channel\``);
 
     try {
       await updateWelcomeConfig(message.guild.id, (config) => {

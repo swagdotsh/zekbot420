@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionsBitField } = require('discord.js');
 const { removeTrapChannelConfig } = require('../../events/trapHelper');
 
@@ -25,7 +26,7 @@ module.exports = {
         if (!shouldDelete) {
             return message.reply(
                 `Trap system disabled. The old channel was <#${oldChannelId}>.\n` +
-                `If you also want to delete the channel, run \`${process.env.PREFIX}removetrap delete\`.`
+                `If you also want to delete the channel, run \`${currentPrefix()}removetrap delete\`.`
             );
         }
 

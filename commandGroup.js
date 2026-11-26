@@ -16,7 +16,7 @@ function permissionNames(bits) {
     return `${names.join(' and ')} permission${names.length === 1 ? '' : 's'}`;
 }
 
-function defineGroup({ name, description, children, defaultMemberPermissions }) {
+function defineGroup({ name, description, children, defaultMemberPermissions, contexts = [0], integrationTypes = [0] }) {
     const entries = new Map();
     const options = [];
     let shared = null;
@@ -49,8 +49,8 @@ function defineGroup({ name, description, children, defaultMemberPermissions }) 
         description,
         type: 1,
         options,
-        contexts: [0],
-        integration_types: [0],
+        contexts,
+        integration_types: integrationTypes,
         default_member_permissions: defaultMemberPermissions != null
             ? BigInt(defaultMemberPermissions).toString()
             : (shared ? shared.toString() : null),

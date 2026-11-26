@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { getConfig, setConfig } = require('../../leveling');
 
 module.exports = {
@@ -11,7 +12,7 @@ module.exports = {
         const existingConfig = await getConfig(message.guild.id);
         if (existingConfig) {
             return message.reply(
-                `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`${process.env.PREFIX}rank\`, \`${process.env.PREFIX}leaderboard\`, or \`${process.env.PREFIX}lvlrole <level> @role\` to manage it. <:smirk2:1498272372539785286>`
+                `Leveling is already configured for <#${existingConfig.level_channel}>. Use \`${currentPrefix()}rank\`, \`${currentPrefix()}leaderboard\`, or \`${currentPrefix()}lvlrole <level> @role\` to manage it. <:smirk2:1498272372539785286>`
             );
         }
 
@@ -29,7 +30,7 @@ module.exports = {
 
         if (!channelMention || !xpRange || !lbFlag) {
             return message.reply(
-                `Usage: \`${process.env.PREFIX}levelsetup --channel #channel --xp 10-30 --lb yes/no\`\n` +
+                `Usage: \`${currentPrefix()}levelsetup --channel #channel --xp 10-30 --lb yes/no\`\n` +
                 'XP range must be between 5 and 45 (e.g. `10-30`, `5-20`)'
             );
         }

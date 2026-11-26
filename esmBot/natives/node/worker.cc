@@ -1,0 +1,69 @@
+#include "worker.h"
+#include "../image/common.h"
+
+using namespace std;
+
+MediaAsyncWorker::MediaAsyncWorker(Napi::Env &env, Promise::Deferred deferred, string command, esmb::ArgumentMap inArgs,
+                                   string type, const char *bufData, size_t bufSize)
+    : AsyncWorker(env), deferred(deferred), command(command), inArgs(inArgs), type(type), bufData(bufData),
+      bufSize(bufSize) {}
+
+void MediaAsyncWorker::Execute() {
+  outType = GetArgumentWithFallback<bool>(inArgs, "togif", false) ? "gif" : type;
+  shouldKill = false;
+
+  try {
+    if (bufSize != 0) {
+      if (type == "avif" && bufSize >= 20) {
+        uint32_t size = readUint32BE(reinterpret_cast<const unsigned char *>(bufData));
+        if (size > bufSize) {
+          SetError("Invalid file");
+          return;
+        }
+
+        int curSize = size - 16;
+        while (curSize >= 4) {
+          if (memcmp(bufData + size - curSize, "avis", 4) == 0) {
+            outType = "avis";
+            outData = {nullptr, 0};
+            return;
+          }
+          curSize -= 4;
+        }
+      }
+
+      CheckPixelLimit(bufData, bufSize);
+
+      outData = esmb::Image::FunctionMap.at(command)(type, outType, bufData, bufSize, inArgs, &shouldKill);
+    } else {
+      outData = esmb::Image::NoInputFunctionMap.at(command)(type, outType, inArgs, &shouldKill);
+    }
+  } catch (std::exception &e) {
+    SetError(e.what());
+  }
+
+  EndCleanup();
+}
+
+void MediaAsyncWorker::EndCleanup() {
+  vips_error_clear();
+  vips_thread_shutdown();
+}
+
+void MediaAsyncWorker::OnError(const Error &e) {
+  if (shouldKill) {
+    deferred.Reject(Napi::Error::New(Env(), "media_job_killed").Value());
+  } else {
+    deferred.Reject(e.Value());
+  }
+}
+
+void MediaAsyncWorker::OnOK() {
+  Buffer nodeBuf = Buffer<char>::New(Env(), outData.buf, outData.length,
+                                     []([[maybe_unused]] Napi::Env env, char *data) { free(data); });
+
+  Napi::Object returned = Napi::Object::New(Env());
+  returned.Set("data", nodeBuf);
+  returned.Set("type", Napi::String::New(Env(), outType));
+  deferred.Resolve(returned);
+}

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { ChannelType, PermissionFlagsBits } = require('discord.js');
 const { setupTickets, deleteTicketConfig } = require('../../ticketHandler');
 
@@ -11,7 +12,7 @@ module.exports = {
             return message.reply(`You need the **Manage Server** permission to set up tickets. ${SMIRK}`);
         }
 
-        const p = process.env.PREFIX;
+        const p = currentPrefix();
 
         if (['off', 'disable', 'remove'].includes(args[0]?.toLowerCase())) {
             const removed = await deleteTicketConfig(message.guild.id);

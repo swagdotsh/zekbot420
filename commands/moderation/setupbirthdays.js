@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { writeJsonAtomic } = require('../../jsonStore');
@@ -71,7 +72,7 @@ module.exports = {
 
         if (existingGuildConfig.roleId || existingGuildConfig.channelId) {
             return message.reply(
-                `Birthday system is already configured. Use \`${process.env.PREFIX}setbirthday\`, \`${process.env.PREFIX}birthday\`, or \`${process.env.PREFIX}removebirthday\` to manage it. <:smirk2:1498272372539785286>`
+                `Birthday system is already configured. Use \`${currentPrefix()}setbirthday\`, \`${currentPrefix()}birthday\`, or \`${currentPrefix()}removebirthday\` to manage it. <:smirk2:1498272372539785286>`
             );
         }
 

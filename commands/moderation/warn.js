@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
@@ -32,7 +33,7 @@ module.exports = {
         }
 
         const target = message.mentions.members.first();
-        if (!target) return message.reply(`Mention a user to warn. Example: \`${process.env.PREFIX}warn @user spamming\``);
+        if (!target) return message.reply(`Mention a user to warn. Example: \`${currentPrefix()}warn @user spamming\``);
 
         if (target.id === message.author.id) {
             return message.reply("You can't warn yourself.");

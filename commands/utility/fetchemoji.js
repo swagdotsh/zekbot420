@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { AttachmentBuilder } = require('discord.js');
 
 module.exports = {
@@ -7,7 +8,7 @@ module.exports = {
     const input = args[0];
 
     if (!input) {
-      return message.reply(`Usage: \`${process.env.PREFIX}fetchemoji [emoji]\``);
+      return message.reply(`Usage: \`${currentPrefix()}fetchemoji [emoji]\``);
     }
 
     const match = input.match(/^<a?:\w+:(\d+)>$/);

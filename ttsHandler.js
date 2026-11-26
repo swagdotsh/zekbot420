@@ -1,3 +1,4 @@
+const { currentPrefix, getPrefix } = require('./prefix');
 const { sql } = require('./db');
 const { Readable } = require('stream');
 const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
@@ -234,13 +235,13 @@ async function startTts(ctx, member) {
 
     const session = ctx.client.voiceSessions.get(ctx.guild.id);
     if (session) {
-        if (session.mode === 'tts') return 'TTS is already running. Use `' + process.env.PREFIX + 'leave` or `/tts leave` to stop it.';
-        return "I'm playing music right now. Stop it with `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>";
+        if (session.mode === 'tts') return 'TTS is already running. Use `' + currentPrefix() + 'leave` or `/tts leave` to stop it.';
+        return "I'm playing music right now. Stop it with `" + currentPrefix() + "leave` first. <:smirk2:1498272372539785286>";
     }
 
     const created = await createSessionOnce(ctx.client, ctx.guild.id, () => createTtsSession(ctx, voiceChannel));
     if (created.mode !== 'tts') {
-        return "I'm playing music right now. Stop it with `" + process.env.PREFIX + "leave` first. <:smirk2:1498272372539785286>";
+        return "I'm playing music right now. Stop it with `" + currentPrefix() + "leave` first. <:smirk2:1498272372539785286>";
     }
 
     const config = await getTtsConfig(ctx.guild.id);
@@ -265,7 +266,7 @@ function leaveTts(client, guildId) {
 
 async function handleTtsMessage(message) {
     if (message.author.bot || !message.guild) return;
-    if (message.content.startsWith(process.env.PREFIX)) return;
+    if (message.content.startsWith(getPrefix(message.guild.id))) return;
 
     const session = message.client.voiceSessions?.get(message.guild.id);
     if (!session || session.mode !== 'tts') return;

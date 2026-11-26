@@ -1,0 +1,11 @@
+{
+  "name": "esmbot-media",
+  "version": "2026.10.0",
+  "private": true,
+  "description": "esmBot image processing natives vendored into zekbot420 (MIT). Upstream commit cde2dd9ced04cf01b0ed1e73a6e36fe0d4b70a7f.",
+  "binary": {
+    "napi_versions": [
+      7
+    ]
+  }
+}
