@@ -1,5 +1,8 @@
+const { currentPrefix } = require('../prefix');
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../paths');
 const {
     EmbedBuilder,
     ActionRowBuilder,
@@ -9,7 +12,7 @@ const {
     PermissionsBitField,
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 const LINKS = {
     repo: 'https://github.com/swagdotsh/zekbot420',
@@ -43,17 +46,13 @@ async function hasIntroAlreadyBeenSent(guildId) {
 async function markIntroAsSent(guild, channel) {
     await ensureGuildDirExists(guild.id);
 
-    await fs.writeFile(
-        introConfigPath(guild.id),
-        JSON.stringify({
+    await writeJsonAtomic(introConfigPath(guild.id), {
             guildId: guild.id,
             guildName: guild.name,
             channelId: channel.id,
             channelName: channel.name,
             sentAt: Date.now(),
-        }, null, 2),
-        'utf8'
-    );
+        });
 }
 
 function canSendIn(channel, me) {
@@ -107,11 +106,11 @@ module.exports = (client) => {
                     {
                         name: 'quick setup commands',
                         value: [
-                            '`,help` — view help and command links',
-                            '`,welcomesetup` — setup welcome messages',
-                            '`,setupjail` — setup the jail system',
-                            '`,voicemaster` — set up temporary voice channels (VoiceMaster chanels)',
-                            '`,modlog` — setup & configure moderation logging',
+                            `\`${currentPrefix()}help\` — view help and command links`,
+                            `\`${currentPrefix()}welcomesetup\` — setup welcome messages`,
+                            `\`${currentPrefix()}setupjail\` — setup the jail system`,
+                            `\`${currentPrefix()}voicemaster\` — set up temporary voice channels (VoiceMaster chanels)`,
+                            `\`${currentPrefix()}modlog\` — setup & configure moderation logging`,
                         ].join('\n'),
                     }
                 )

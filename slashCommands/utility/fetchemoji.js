@@ -1,4 +1,4 @@
-const { AttachmentBuilder, SlashCommandBuilder } = require('discord.js');
+const { AttachmentBuilder, SlashCommandBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,7 +21,7 @@ module.exports = {
                 content:
                     'Please provide a custom Discord emoji, like `<:name:id>` or `<a:name:id>`.\n' +
                     'Default Unicode emojis like 😭 or 🔥 will not work here, but you can get them from <https://emojipedia.org/>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 

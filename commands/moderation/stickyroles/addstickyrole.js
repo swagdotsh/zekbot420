@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { getStickyRolesEnabled, addStickyRole } = require('../../../stickyrolesDbHndlr');
 const { roleAssignBlocker } = require('../../../hierarchy');
@@ -12,7 +13,7 @@ module.exports = {
 
     const roleArg = args[0];
     if (!roleArg) {
-      return message.reply('Please specify a role. Usage: `,addstickyrole @role` or `,addstickyrole role_id`');
+      return message.reply(`Please specify a role. Usage: \`${currentPrefix()}addstickyrole @role\` or \`${currentPrefix()}addstickyrole role_id\``);
     }
 
     let role;
@@ -31,7 +32,7 @@ module.exports = {
     }
 
     if (!role) {
-      return message.reply('Role not found. Usage: `,addstickyrole @role` or `,addstickyrole role_id`');
+      return message.reply(`Role not found. Usage: \`${currentPrefix()}addstickyrole @role\` or \`${currentPrefix()}addstickyrole role_id\``);
     }
 
     const blocker = roleAssignBlocker(message.member, role);
@@ -43,7 +44,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor('#00ff88')
         .setTitle('✅ Sticky Role Added')
-        .setDescription(`${role} is now a sticky role.\n\n**Note:** Sticky roles must be enabled using \`,stickyroles on\` to take effect.`);
+        .setDescription(`${role} is now a sticky role.\n\n**Note:** Sticky roles must be enabled using \`${currentPrefix()}stickyroles on\` to take effect.`);
 
       message.reply({ embeds: [embed] });
     } catch (err) {

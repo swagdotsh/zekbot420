@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const {
     ActionRowBuilder,
     ButtonBuilder,
@@ -54,13 +55,13 @@ module.exports = {
         const existingConfig = await readConfig(message.guild.id);
         if (existingConfig.channelId) {
             return message.reply(
-                `Starboard is already configured in <#${existingConfig.channelId}>. Use \`,starboardthreshold <number>\`, \`,starboardself <yes:no>\`, or \`,staremoji <emoji>\` to manage it. Use \`,starboard off\` to remove it. <:smirk2:1498272372539785286>`
+                `Starboard is already configured in <#${existingConfig.channelId}>. Use \`${currentPrefix()}starboardthreshold <number>\`, \`${currentPrefix()}starboardself <yes:no>\`, or \`${currentPrefix()}staremoji <emoji>\` to manage it. Use \`${currentPrefix()}starboard off\` to remove it. <:smirk2:1498272372539785286>`
             );
         }
 
         const channel = message.mentions.channels.find(c => c.guildId === message.guild.id);
         if (!channel || !channel.isTextBased?.() || channel.isDMBased?.()) {
-            return message.reply("Mention a server text channel. Example: `,starboard #starboard`.\nAfter that, use `,starboardthreshold <number>` to set the starboard minimum amount before a message gets featured, and `,starboardself <yes:no>` to allow self-starring.\n-# To disable starboard, run `,starboard off`. Keep in mind that this **will delete your server's starboard config.");
+            return message.reply(`Mention a server text channel. Example: \`${currentPrefix()}starboard #starboard\`.\nAfter that, use \`${currentPrefix()}starboardthreshold <number>\` to set the starboard minimum amount before a message gets featured, and \`${currentPrefix()}starboardself <yes:no>\` to allow self-starring.\n-# To disable starboard, run \`${currentPrefix()}starboard off\`. Keep in mind that this **will delete your server's starboard config.`);
         }
 
         await updateConfig(message.guild.id, (config) => {

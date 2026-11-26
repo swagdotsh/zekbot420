@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { getLeaderboard, getConfig } = require('../../leveling');
 
@@ -18,7 +19,7 @@ module.exports = {
         if (!config?.lb_enabled) {
             return interaction.reply({
                 content: 'The leaderboard is disabled in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -27,7 +28,7 @@ module.exports = {
         if (!rows.length) {
             return interaction.reply({
                 content: 'No one has earned XP yet.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

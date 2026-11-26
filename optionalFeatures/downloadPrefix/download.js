@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
@@ -12,10 +13,20 @@ const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 const TARGET_SIZE_MB = 7;
 const TEMP_DIR = path.join(__dirname, '..', '..', 'data', 'downloads');
 
+function parseDownloadUrl(input) {
+    try {
+        const url = new URL(String(input ?? '').trim());
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
+}
+
 async function getDuration(url) {
     const { stdout } = await execFileAsync(YTDLP_BIN, [
         '--no-playlist',
         '--print', '%(duration)s',
+        '--',
         url
     ]);
     return parseFloat(stdout.trim());
@@ -27,6 +38,7 @@ async function download(url, outputPath) {
         '--format', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         '--merge-output-format', 'mp4',
         '--output', outputPath,
+        '--',
         url
     ]);
 }
@@ -48,10 +60,11 @@ async function compress(inputPath, outputPath, durationSec) {
 
 module.exports = {
     name: 'download',
+    cooldown: 15,
     aliases: ['d'],
     async execute(message, args) {
-        const url = args[0];
-        if (!url) return message.reply('Provide a URL. Usage: `,download <url>`');
+        const url = parseDownloadUrl(args[0]);
+        if (!url) return message.reply(`Provide a valid http(s) link. Usage: \`${currentPrefix()}download <url>\``);
 
         const statusMsg = await message.reply(`<a:spinbot420:1498959085427490937> Downloading, give me *oneeeee* second...`);
 
@@ -71,7 +84,7 @@ module.exports = {
         try {
             const duration = await getDuration(url);
 
-            if (isNaN(duration)) {
+            if (!Number.isFinite(duration) || duration <= 0) {
                 await statusMsg.edit('Couldn\'t read that URL. <:smirk2:1498272372539785286>');
                 return;
             }

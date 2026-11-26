@@ -1,11 +1,14 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     SlashCommandBuilder,
     InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const BIRTHDAYS_PATH = path.join(DATA_DIR, 'birthdays.json');
 
 const DATE_REGEX = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/;
@@ -17,7 +20,7 @@ async function ensureBirthdayFile() {
     try {
         await fs.access(BIRTHDAYS_PATH);
     } catch {
-        await fs.writeFile(BIRTHDAYS_PATH, JSON.stringify({}, null, 2), 'utf8');
+        await writeJsonAtomic(BIRTHDAYS_PATH, {});
     }
 }
 
@@ -34,7 +37,7 @@ async function loadBirthdays() {
 
 async function saveBirthdays(birthdays) {
     await ensureBirthdayFile();
-    await fs.writeFile(BIRTHDAYS_PATH, JSON.stringify(birthdays, null, 2), 'utf8');
+    await writeJsonAtomic(BIRTHDAYS_PATH, birthdays);
 }
 
 function isValidDate(month, day, year = 2000) {
@@ -145,7 +148,7 @@ module.exports = {
         if (!birthday) {
             return interaction.reply({
                 content: 'Invalid birthday format. Use `MM/DD/YYYY` or `MM/DD`.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -155,7 +158,7 @@ module.exports = {
             return interaction.reply({
                 content:
                     'Invalid timezone. Use a GMT offset like `GMT-5`, `GMT+1`, `-8`, or `+05:30`.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -182,7 +185,7 @@ module.exports = {
 
         return interaction.reply({
             content: `✅ Birthday saved as **${formatBirthdayLong(birthday)}** with timezone **${timezone.display}**.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     },
 };

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { setNotifyChannel, getNotifyChannel } = require('../../nflHandler');
 
 module.exports = {
@@ -6,7 +7,7 @@ module.exports = {
     async execute(message, args) {
         if (!message.guild) return message.reply('This only works in a server.');
 
-        const prefix = process.env.PREFIX;
+        const prefix = currentPrefix();
 
         if (!args.length) {
             const channelId = await getNotifyChannel(message.guild.id);

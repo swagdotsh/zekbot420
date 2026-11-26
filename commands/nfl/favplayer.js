@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const espn = require('../../espn');
 const { addFavPlayer, removeFavPlayer, getFavPlayers, setHomeGuild, MAX_FAV_PLAYERS } = require('../../nflHandler');
 
@@ -59,7 +60,7 @@ module.exports = {
     name: 'favplayer',
     aliases: ['favp', 'nflplayer'],
     async execute(message, args, forcedLeague) {
-        const prefix = process.env.PREFIX;
+        const prefix = currentPrefix();
         const { league, rest, defaulted } = splitLeague(args, forcedLeague);
         const info = LEAGUES[league];
         const command = forcedLeague === 'nba' ? `${prefix}nbaplayer` : `${prefix}favplayer${defaulted ? '' : ` ${league}`}`;

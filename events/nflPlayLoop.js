@@ -90,7 +90,7 @@ function buildPlayEmbed(play, big, game, players) {
         .setTitle(titles[big.kind])
         .setDescription(play.text ?? play.shortText ?? 'Big play!')
         .setThumbnail(featured?.headshot ?? null)
-        .setFooter({ text: `${game.away.abbreviation} ${play.awayScore} – ${play.homeScore} ${game.home.abbreviation} · ${quarterLabel(play.period?.number)} ${play.clock?.displayValue ?? ''}` })
+        .setFooter({ text: `${game.away.abbreviation} ${play.awayScore} – ${play.homeScore} ${game.home.abbreviation} - ${quarterLabel(play.period?.number)} ${play.clock?.displayValue ?? ''}` })
         .setTimestamp(play.wallclock ? new Date(play.wallclock) : new Date());
 }
 
@@ -141,7 +141,7 @@ function buildSummaryEmbed(summary, game, period) {
     if (period != null) {
         const scoring = summary.scoringPlays
             .filter(p => p.period === period)
-            .map(p => `**${p.teamAbbr} ${p.type}** · ${p.text}`);
+            .map(p => `**${p.teamAbbr} ${p.type}** - ${p.text}`);
         embed.addFields({ name: `Scoring in ${quarterLabel(period)}`, value: (scoring.join('\n') || 'No scoring').slice(0, 1024) });
     }
 
@@ -178,7 +178,7 @@ async function sendToFollowers(client, followers, embed, dmIntro) {
 
     for (const [channelId, users] of channelGroups) {
         const channel = client.channels.cache.get(channelId);
-        const content = users.map(u => `<@${u.user_id}> · ${reason(u)}`).join('\n');
+        const content = users.map(u => `<@${u.user_id}> - ${reason(u)}`).join('\n');
         const sent = await channel?.send({ content, embeds: [embed], allowedMentions: { users: users.map(u => u.user_id) } }).catch(() => null);
         // Channel deleted or missing perms, fall back to DMs
         if (!sent) dmUsers.push(...users);

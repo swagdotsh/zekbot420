@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { setTtsChannel } = require('../../ttsHandler');
 
 module.exports = {
@@ -23,7 +24,7 @@ module.exports = {
             }
 
             await setTtsChannel(message.guild.id, channel.id);
-            return message.reply(`TTS channel set to <#${channel.id}>. VC chats still work too.\n-# \`${process.env.PREFIX}ttschannel off\` to remove it.`);
+            return message.reply(`TTS channel set to <#${channel.id}>. VC chats still work too.\n-# \`${currentPrefix()}ttschannel off\` to remove it.`);
         } catch (err) {
             console.error('ttschannel command failed:', err);
             return message.reply("Couldn't update the TTS channel. <:smirk2:1498272372539785286>");

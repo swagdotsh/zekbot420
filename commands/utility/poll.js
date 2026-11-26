@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 module.exports = {
     name: 'poll',
     aliases: ['vote', 'p'],
@@ -5,7 +6,7 @@ module.exports = {
         const pollQuestion = args.join(' ').trim();
         if (!pollQuestion) {
             return message.reply({
-                content: 'Usage: `,poll <question>`\nExample: `,poll should i go for a walk today`'
+                content: `Usage: \`${currentPrefix()}poll <question>\`\nExample: \`${currentPrefix()}poll should i go for a walk today\``
             });
         }
 

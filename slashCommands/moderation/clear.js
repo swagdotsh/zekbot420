@@ -1,11 +1,13 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    PermissionFlagsBits
+    PermissionFlagsBits,
+    MessageFlags
 } = require('discord.js');
 const { logClearMessages } = require('../../log');
 
 module.exports = {
+    cooldown: 3,
     data: new SlashCommandBuilder()
         .setName('clear')
         .setDescription('Clear messages')
@@ -54,7 +56,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'Failed to clear messages.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

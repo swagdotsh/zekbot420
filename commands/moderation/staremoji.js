@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionFlagsBits } = require('discord.js');
 const { parseReactionEmoji, updateConfig } = require('../../starboardHandler');
 
@@ -11,7 +12,7 @@ module.exports = {
 
         const emoji = parseReactionEmoji(args.join(' '));
         if (!emoji) {
-            return message.reply('Provide one standard or custom emoji. Example: `,staremoji ⭐` or `,staremoji <:star:123456789012345678>`');
+            return message.reply(`Provide one standard or custom emoji. Example: \`${currentPrefix()}staremoji ⭐\` or \`${currentPrefix()}staremoji <:star:123456789012345678>\``);
         }
 
         await updateConfig(message.guild.id, (config) => {

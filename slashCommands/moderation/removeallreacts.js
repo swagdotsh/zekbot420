@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -22,14 +23,14 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
             return interaction.reply({
                 content: 'You need the `Manage Messages` permission to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {
             return interaction.reply({
                 content: 'I need the `Manage Messages` permission to remove all reactions. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -42,7 +43,7 @@ module.exports = {
         } catch {
             return interaction.reply({
                 content: 'I could not find a message with that ID in this channel. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -51,14 +52,14 @@ module.exports = {
 
             return interaction.reply({
                 content: '✅ Removed all reactions from that message.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         } catch (err) {
             console.error(err);
 
             return interaction.reply({
                 content: 'Failed to remove all reactions from that message. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

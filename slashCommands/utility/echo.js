@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
 
 const BOT_DEVELOPERS = [
@@ -48,14 +49,14 @@ module.exports = {
             if (!canManageServer && !isBotDeveloper) {
                 return interaction.reply({
                     content: 'You need **Manage Server** to use this command.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
             if (!channel?.isTextBased?.() || channel.isDMBased?.()) {
                 return interaction.reply({
                     content: 'Please choose a server text channel.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -63,7 +64,7 @@ module.exports = {
             if (!perms.has(PermissionFlagsBits.SendMessages)) {
                 return interaction.reply({
                     content: `You can't send messages in ${channel}.`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -73,7 +74,7 @@ module.exports = {
 
             return interaction.reply({
                 content: `Sent your echo in ${channel}.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

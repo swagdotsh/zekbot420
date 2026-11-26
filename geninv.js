@@ -1,21 +1,33 @@
-// Generates an invite link for the bot with administrator permissions. Make sure to set the DISCORD_CLIENT_ID environment variable before running this script.
-
-// It's recommended that you use the official Discord Permissions Calculator for this instead of using this script. This file is hardcoded to use Administrator permissions.
-// https://discordapi.com/permissions.html
-
 require('dotenv').config();
+const { PermissionsBitField, PermissionFlagsBits: P } = require('discord.js');
 
 const clientId = process.env.DISCORD_CLIENT_ID;
-const permissions = 8;
-const scopes = ['bot'];
+if (!clientId) {
+    console.error('Set DISCORD_CLIENT_ID in your .env first.');
+    process.exit(1);
+}
 
-const inviteLink = "https://discord.com/oauth2/authorize?client_id="+clientId+"&permissions="+permissions+"&scope="+scopes.join('%20');
+const FEATURE_PERMISSIONS = [
+    P.ViewChannel, P.SendMessages, P.SendMessagesInThreads, P.EmbedLinks, P.AttachFiles,
+    P.ReadMessageHistory, P.AddReactions, P.UseExternalEmojis,
+    P.BanMembers, P.KickMembers, P.ModerateMembers, P.ManageMessages, P.ManageNicknames,
+    P.ManageRoles, P.ViewAuditLog,
+    P.ManageGuild, P.ManageChannels, P.ManageGuildExpressions,
+    P.Connect, P.Speak, P.MoveMembers,
+];
+
+const useAdmin = process.argv.includes('--admin');
+const permissions = useAdmin
+    ? PermissionsBitField.Flags.Administrator.toString()
+    : new PermissionsBitField(FEATURE_PERMISSIONS).bitfield.toString();
+
+const params = new URLSearchParams({ client_id: clientId, permissions, scope: 'bot applications.commands' });
+const inviteLink = `https://discord.com/oauth2/authorize?${params}`;
 
 console.log('Your bot invite link:');
 console.log(inviteLink);
-console.log('Permissions set: Administrator')
+console.log(`Permissions set: ${useAdmin ? 'Administrator' : 'only what the bot uses (pass --admin for Administrator)'}`);
 
-// Pass --copy to also put the link on your clipboard.
 if (process.argv.includes('--copy')) {
     const { execSync } = require('child_process');
     const clipboardCmd = { win32: 'clip', darwin: 'pbcopy' }[process.platform]

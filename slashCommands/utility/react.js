@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
+    MessageFlags
 } = require('discord.js');
 
 const CUSTOM_EMOJI_REGEX = /^<a?:\w+:(\d+)>$/;
@@ -31,14 +32,14 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
             return interaction.reply({
                 content: 'You need the `Manage Messages` permission to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.AddReactions)) {
             return interaction.reply({
                 content: 'I need the `Add Reactions` permission to do that. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -54,13 +55,13 @@ module.exports = {
             if (!emoji) {
                 return interaction.reply({
                     content: `I can't add that emoji because it's not in ${interaction.guild.name}. <:smirk2:1498272372539785286>`,
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
         } else if (!UNICODE_EMOJI_REGEX.test(emojiInput)) {
             return interaction.reply({
                 content: 'That does not look like a valid emoji. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -71,7 +72,7 @@ module.exports = {
         } catch {
             return interaction.reply({
                 content: 'I could not find a message with that ID in this channel. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -80,14 +81,14 @@ module.exports = {
 
             return interaction.reply({
                 content: '✅ Reaction added.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         } catch (err) {
             console.error(err);
 
             return interaction.reply({
                 content: `I can't add that emoji because it's not in ${interaction.guild.name}. <:smirk2:1498272372539785286>`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

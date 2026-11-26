@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { getUserVoice, setUserVoice, findVoice, formatVoiceList } = require('../../ttsHandler');
 
 module.exports = {
@@ -7,7 +8,7 @@ module.exports = {
         try {
             if (!args[0]) {
                 const voice = await getUserVoice(message.author.id);
-                return message.reply(`Your TTS voice: **${voice}**\n-# \`${process.env.PREFIX}ttsvoice list [locale]\` to see voices, \`${process.env.PREFIX}ttsvoice <name>\` to change yours.`);
+                return message.reply(`Your TTS voice: **${voice}**\n-# \`${currentPrefix()}ttsvoice list [locale]\` to see voices, \`${currentPrefix()}ttsvoice <name>\` to change yours.`);
             }
 
             if (args[0].toLowerCase() === 'list') {
@@ -15,7 +16,7 @@ module.exports = {
             }
 
             const voice = await findVoice(args[0]);
-            if (!voice) return message.reply(`No voice called **${args[0]}**. Use \`${process.env.PREFIX}ttsvoice list\` to see them.`);
+            if (!voice) return message.reply(`No voice called **${args[0]}**. Use \`${currentPrefix()}ttsvoice list\` to see them.`);
 
             await setUserVoice(message.author.id, voice);
             return message.reply(`Your TTS voice is now **${voice}**.`);

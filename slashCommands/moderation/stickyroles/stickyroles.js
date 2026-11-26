@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, InteractionContextType, MessageFlags } = require('discord.js');
+const { ok, fail } = require('../../../ui');
 const { setStickyRolesEnabled, getStickyRolesEnabled, getStickyRoles } = require('../../../stickyrolesDbHndlr');
 
 module.exports = {
@@ -37,7 +38,7 @@ module.exports = {
                         { name: 'Sticky Roles', value: roles, inline: false }
                     );
 
-                return interaction.reply({ embeds: [embed], ephemeral: true });
+                return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
             }
 
             const enabling = action === 'on';
@@ -51,12 +52,12 @@ module.exports = {
                     : 'Sticky roles are now disabled.'
                 );
 
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         } catch (err) {
             console.error(err);
             return interaction.reply({
-                content: 'Something went wrong updating the configuration.',
-                ephemeral: true
+                content: fail('Something went wrong updating sticky roles. Try again in a moment.'),
+                flags: MessageFlags.Ephemeral
             });
         }
     }

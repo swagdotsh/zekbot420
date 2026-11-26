@@ -1,11 +1,13 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     SlashCommandBuilder,
     InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const TIMEZONES_PATH = path.join(DATA_DIR, 'userTimezones.json');
 
 const TIME_REGEX = /^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)\s+([A-Z]{2,5}|(?:GMT|UTC)?[+-]\d{1,2}(?::?[0-5]\d)?)$/i;
@@ -179,8 +181,8 @@ module.exports = {
 
         if (!savedTimezone) {
             return interaction.reply({
-                content: 'You do not have a timezone saved yet. Set one with `/set timezone` first.',
-                ephemeral: true,
+                content: 'You do not have a timezone saved yet. Set one with `/time timezone` first.',
+                flags: MessageFlags.Ephemeral,
             });
         }
 

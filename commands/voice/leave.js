@@ -1,5 +1,5 @@
 const { getVoiceConnection } = require('@discordjs/voice');
-const { stopSession } = require('../../musicPlayer');
+const { stopSession, voiceChannelBlocker } = require('../../musicPlayer');
 
 module.exports = {
     name: 'leave',
@@ -8,8 +8,10 @@ module.exports = {
         const session = message.client.voiceSessions?.get(message.guild.id);
 
         if (!session && !getVoiceConnection(message.guild.id)) {
-            return message.reply("I'm currently not in a voice channel. <:smirk:1498272372539785286>");
+            return message.reply("I'm currently not in a voice channel. <:smirk2:1498272372539785286>");
         }
+        const blocked = voiceChannelBlocker(message.member, session);
+        if (blocked) return message.reply(blocked);
 
         try {
             if (session) stopSession(message.client, message.guild.id);
@@ -19,7 +21,7 @@ module.exports = {
             return message.reply('👋 Left the voice channel and cleared queue.');
         } catch (err) {
             console.error('leave command error:', err);
-            return message.reply('Failed to leave the voice channel. <:smirk:1498272372539785286>');
+            return message.reply('Failed to leave the voice channel. <:smirk2:1498272372539785286>');
         }
     }
 };

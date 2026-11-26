@@ -2,8 +2,10 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { setLevelRole, removeLevelRole, getLevelRoles } = require('../../leveling');
 
 module.exports = {
@@ -57,8 +59,8 @@ module.exports = {
 
             if (!roles.length) {
                 return interaction.reply({
-                    content: 'No level roles set up yet.',
-                    ephemeral: true
+                    content: fail('No level roles yet. Add one with `/level role set`.'),
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -73,7 +75,7 @@ module.exports = {
 
             return interaction.reply({
                 embeds: [embed],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -85,7 +87,7 @@ module.exports = {
                 content: roleId
                     ? `<@&${roleId}> will no longer be given at level **${level}**.`
                     : `There's no level role set for level **${level}**.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -95,15 +97,15 @@ module.exports = {
 
             if (!level || level < 1) {
                 return interaction.reply({
-                    content: 'Please provide a valid level number.',
-                    ephemeral: true
+                    content: fail('Please provide a valid level number.'),
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
             if (!role) {
                 return interaction.reply({
-                    content: 'Please provide a valid role.',
-                    ephemeral: true
+                    content: fail('Please provide a valid role.'),
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -111,15 +113,15 @@ module.exports = {
                 await setLevelRole(interaction.guild.id, level, role.id);
 
                 return interaction.reply({
-                    content: `${role} will now be assigned when a user reaches level **${level}**.`,
-                    ephemeral: true
+                    content: ok(`${role} will now be given when a member reaches level **${level}**.`),
+                    flags: MessageFlags.Ephemeral
                 });
             } catch (err) {
                 console.error(err);
 
                 return interaction.reply({
-                    content: 'Something went wrong saving the role.',
-                    ephemeral: true
+                    content: fail('Something went wrong saving the role. Try again in a moment.'),
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }

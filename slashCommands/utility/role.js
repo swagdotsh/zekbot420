@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -28,14 +29,14 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
                 content: 'You need the `Manage Roles` permission to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
                 content: 'I need the `Manage Roles` permission to do that. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -45,28 +46,28 @@ module.exports = {
         if (!targetMember) {
             return interaction.reply({
                 content: 'I could not find that member. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!role) {
             return interaction.reply({
                 content: 'I could not find that role. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (role.managed) {
             return interaction.reply({
                 content: 'I cannot manage that role because it is managed by an integration or bot. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (role.position >= interaction.guild.members.me.roles.highest.position) {
             return interaction.reply({
                 content: 'I cannot manage that role because it is higher than or equal to my highest role. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -76,7 +77,7 @@ module.exports = {
         ) {
             return interaction.reply({
                 content: 'You cannot manage that role because it is higher than or equal to your highest role. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 

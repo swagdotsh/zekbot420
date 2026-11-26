@@ -1,43 +1,28 @@
+const { currentPrefix } = require('../../prefix');
+const { parseWhen, createReminder, formatDue } = require('../../reminders');
+
 module.exports = {
     name: 'remindme',
     aliases: ['remind'],
 
     async execute(message, args) {
         if (!args.length) {
-            return message.reply('Usage: ,remindme MM-DD-YYYY [reason]');
+            return message.reply(`Usage: \`${currentPrefix()}remindme <10m | 2h30m | 3d | MM-DD-YYYY> [reason]\``);
         }
 
-        const dateArg = args[0];
-        const reason = args.slice(1).join(' ') || 'No reason provided';
+        const when = parseWhen(args[0]);
+        if (when.error) return message.reply(when.error);
 
-        const [month, day, year] = dateArg.split('-').map(Number);
+        const result = await createReminder({
+            userId: message.author.id,
+            guildId: message.guild?.id,
+            channelId: message.channel.id,
+            kind: 'reminder',
+            reason: args.slice(1).join(' '),
+            dueAt: when.dueAt,
+        });
+        if (result.error) return message.reply(result.error);
 
-        if (!month || !day || !year) {
-            return message.reply('Invalid date format. Use MM-DD-YYYY');
-        }
-
-        const targetDate = new Date(year, month - 1, day);
-
-        if (isNaN(targetDate.getTime())) {
-            return message.reply('Invalid date.');
-        }
-
-        const now = new Date();
-
-        if (targetDate <= now) {
-            return message.reply('That date is in the past.');
-        }
-
-        const delay = targetDate.getTime() - now.getTime();
-
-        if (delay > 2147483647) {
-            return message.reply('That reminder is too far in the future.');
-        }
-
-        message.reply(`Reminder set for ${dateArg}`);
-
-        setTimeout(() => {
-            message.author.send(`⏰ Reminder: ${reason}`).catch(() => {});
-        }, delay);
+        return message.reply(`⏰ I'll remind you ${formatDue(result.dueAt)}.`);
     }
 };

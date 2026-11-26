@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { getStickyRolesEnabled, addUserStickyRole, removeUserStickyRole, getUserStickyRoles } = require('../../../stickyrolesDbHndlr');
 const { roleAssignBlocker } = require('../../../hierarchy');
@@ -15,7 +16,7 @@ module.exports = {
     const roleArg = args[2];
 
     if (!action || !userArg || !roleArg) {
-      return message.reply('Usage: `,userstickyroles add <@user> <@role>` or `,userstickyroles remove <@user> <@role>`');
+      return message.reply(`Usage: \`${currentPrefix()}userstickyroles add <@user> <@role>\` or \`${currentPrefix()}userstickyroles remove <@user> <@role>\``);
     }
 
     // Parse user

@@ -2,7 +2,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 
 const execFileAsync = promisify(execFile);
 
@@ -13,10 +13,20 @@ const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 const TARGET_SIZE_MB = 7;
 const TEMP_DIR = path.join(__dirname, '..', '..', 'data', 'downloads');
 
+function parseDownloadUrl(input) {
+    try {
+        const url = new URL(String(input ?? '').trim());
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
+}
+
 async function getDuration(url) {
     const { stdout } = await execFileAsync(YTDLP_BIN, [
         '--no-playlist',
         '--print', '%(duration)s',
+        '--',
         url
     ]);
 
@@ -29,6 +39,7 @@ async function download(url, outputPath) {
         '--format', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         '--merge-output-format', 'mp4',
         '--output', outputPath,
+        '--',
         url
     ]);
 }
@@ -49,6 +60,7 @@ async function compress(inputPath, outputPath, durationSec) {
 }
 
 module.exports = {
+    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('download')
         .setDescription('Download a video from a URL')
@@ -62,9 +74,12 @@ module.exports = {
         .setContexts(0, 1, 2),
 
     async execute(interaction) {
-        await interaction.deferReply();
+        const url = parseDownloadUrl(interaction.options.getString('url', true));
+        if (!url) {
+            return interaction.reply({ content: 'Provide a valid http(s) link. <:smirk2:1498272372539785286>', flags: MessageFlags.Ephemeral });
+        }
 
-        const url = interaction.options.getString('url', true);
+        await interaction.deferReply();
 
         fs.mkdirSync(TEMP_DIR, { recursive: true });
 
@@ -82,7 +97,7 @@ module.exports = {
         try {
             const duration = await getDuration(url);
 
-            if (isNaN(duration)) {
+            if (!Number.isFinite(duration) || duration <= 0) {
                 cleanup();
                 return interaction.editReply('Couldn\'t read that URL. <:smirk2:1498272372539785286>');
             }

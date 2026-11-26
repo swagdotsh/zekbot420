@@ -10,6 +10,7 @@ const ACCOUNT_TYPES = ['epic', 'psn', 'xbl'];
 const TIME_WINDOWS = ['season', 'lifetime'];
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('fnstats')
         .setDescription('Fetch Fortnite BR stats for a player')

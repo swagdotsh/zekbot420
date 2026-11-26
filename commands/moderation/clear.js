@@ -5,6 +5,7 @@ const { logClearMessages } = require('../../log');
 
 module.exports = {
   name: 'clear',
+  cooldown: 3,
   aliases: ['purge'],
   async execute(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {

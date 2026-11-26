@@ -1,7 +1,9 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const BIRTHDAYS_PATH = path.join(DATA_DIR, 'birthdays.json');
 const CONFIG_PATH = path.join(DATA_DIR, 'birthdayConfig.json');
 
@@ -18,7 +20,7 @@ async function readJson(filePath) {
 
 async function writeJson(filePath, data) {
     await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+    await writeJsonAtomic(filePath, data);
 }
 
 function getOrdinalSuffix(number) {

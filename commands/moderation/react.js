@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionFlagsBits } = require('discord.js');
 
 const CUSTOM_EMOJI_REGEX = /^<a?:\w+:(\d+)>$/;
@@ -21,7 +22,7 @@ module.exports = {
         const emojiInput = args[0];
 
         if (!emojiInput) {
-            return message.reply(`Usage: \`${process.env.PREFIX || ','}react [emoji] [message ID]\` or reply to a message with \`${process.env.PREFIX || ','}react [emoji]\`.`);
+            return message.reply(`Usage: \`${currentPrefix() || ','}react [emoji] [message ID]\` or reply to a message with \`${currentPrefix() || ','}react [emoji]\`.`);
         }
 
         const customEmojiMatch = emojiInput.match(CUSTOM_EMOJI_REGEX);
@@ -49,7 +50,7 @@ module.exports = {
             const messageId = args[1];
 
             if (!messageId) {
-                return message.reply(`Usage: \`${process.env.PREFIX || ','}react [emoji] [message ID]\` or reply to a message with \`${process.env.PREFIX || ','}react [emoji]\`.`);
+                return message.reply(`Usage: \`${currentPrefix() || ','}react [emoji] [message ID]\` or reply to a message with \`${currentPrefix() || ','}react [emoji]\`.`);
             }
 
             try {

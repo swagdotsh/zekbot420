@@ -1,8 +1,7 @@
 const axios = require('axios');
 const { SlashCommandBuilder } = require('discord.js');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 async function getRecentAlbum({ apiKey, username }) {
     const recentUrl =
@@ -81,7 +80,7 @@ async function getAlbumPlaysFromTopAlbums({ apiKey, username, artist, album, per
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('albumplays')
-        .setDescription('Show your play count for an album on Last.fm')
+        .setDescription('Show your play count for an album on last.fm')
         .addStringOption((opt) =>
             opt
                 .setName('album')
@@ -97,7 +96,7 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('username')
-                .setDescription('Last.fm username, optional if linked')
+                .setDescription('last.fm username, optional if linked')
                 .setRequired(false)
         )
         .setIntegrationTypes(0, 1)
@@ -117,7 +116,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link yours with `/linklastfm`.');
+            return interaction.editReply('Provide a last.fm username or link yours with `/fm connect`.');
         }
 
         let album = interaction.options.getString('album');

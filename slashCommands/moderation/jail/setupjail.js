@@ -3,7 +3,8 @@ const {
     PermissionFlagsBits,
     InteractionContextType,
     ChannelType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { getJailConfig, setJailConfig } = require('../../../jailHandler');
 
@@ -16,14 +17,14 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const guild = interaction.guild;
         const existingConfig = await getJailConfig(guild.id);
 
         if (existingConfig) {
             return interaction.editReply(
-                'Jail is already configured. Use `/jail`, `/unjail`, or `/unsetupjail` to manage it. <:smirk2:1498272372539785286>'
+                'Jail is already configured. Use `/jail` and `/jail remove`, or `/disable jail` to remove it. <:smirk2:1498272372539785286>'
             );
         }
 

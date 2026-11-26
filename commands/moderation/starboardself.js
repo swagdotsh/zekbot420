@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionFlagsBits } = require('discord.js');
 const { updateConfig } = require('../../starboardHandler');
 
@@ -12,7 +13,7 @@ module.exports = {
 
         const value = args[0]?.toLowerCase();
         if (!['yes', 'no'].includes(value)) {
-            return message.reply('Choose `yes` or `no`. Example: `,starboardself yes`');
+            return message.reply(`Choose \`yes\` or \`no\`. Example: \`${currentPrefix()}starboardself yes\``);
         }
 
         const allowSelf = value === 'yes';

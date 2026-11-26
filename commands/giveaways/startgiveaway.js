@@ -1,7 +1,8 @@
-const { neon } = require('@neondatabase/serverless')
+const { currentPrefix } = require('../../prefix');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
+const { notifyDue } = require('../../dueScheduler');
 
 function parseDuration(str) {
     const match = str.match(/^(\d+)(s|m|h|d)$/)
@@ -20,7 +21,7 @@ module.exports = {
             return message.reply('You need mod permissions to start a giveaway. <:smirk2:1498272372539785286>')
         }
 
-        const usage = 'Usage: `,startgiveaway <duration> <dm:yes/no> <#channel> <title...>`\nExample: `,startgiveaway 1h dm:yes #giveaways Free Nitro`'
+        const usage = `Usage: \`${currentPrefix()}startgiveaway <duration> <dm:yes/no> <#channel> <title...>\`\nExample: \`${currentPrefix()}startgiveaway 1h dm:yes #giveaways Free Nitro\``
 
         if (args.length < 4) return message.reply(usage)
 
@@ -42,6 +43,7 @@ module.exports = {
       VALUES (${message.guild.id}, ${channel.id}, ${title}, ${endsAt}, ${dmWinner}, ${message.author.id})
       RETURNING id
     `
+        notifyDue('giveaways', endsAt);
 
         const button = new ActionRowBuilder().addComponents(
             new ButtonBuilder()

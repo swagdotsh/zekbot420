@@ -1,5 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     ActionRowBuilder,
     ButtonBuilder,
@@ -7,9 +9,10 @@ const {
     EmbedBuilder,
     SlashCommandBuilder,
     InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const BIRTHDAYS_PATH = path.join(DATA_DIR, 'birthdays.json');
 
 const PAGE_SIZE = 10;
@@ -20,7 +23,7 @@ async function ensureBirthdayFile() {
     try {
         await fs.access(BIRTHDAYS_PATH);
     } catch {
-        await fs.writeFile(BIRTHDAYS_PATH, JSON.stringify({}, null, 2), 'utf8');
+        await writeJsonAtomic(BIRTHDAYS_PATH, {});
     }
 }
 
@@ -220,7 +223,7 @@ module.exports = {
             if (!birthday) {
                 return interaction.reply({
                     content: `${targetUser} does not have a birthday set up in this server.`,
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 
@@ -252,7 +255,7 @@ module.exports = {
             if (buttonInteraction.user.id !== interaction.user.id) {
                 return buttonInteraction.reply({
                     content: 'Only the person who ran this command can use these buttons.',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 

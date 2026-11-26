@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionsBitField } = require('discord.js');
 const {
     getManagedChannel,
@@ -31,6 +32,6 @@ module.exports = {
             Connect: currentlyLocked ? null : false,
         });
 
-        return message.reply(currentlyLocked ? 'VC unlocked.\n-# Tip: To lock, run ,lvc` again.' : 'VC locked.\n-# Tip: To unlock, run `,lvc` again.');
+        return message.reply(currentlyLocked ? `VC unlocked.\n-# Tip: To lock, run \`${currentPrefix()}lvc\` again.` : `VC locked.\n-# Tip: To unlock, run \`${currentPrefix()}lvc\` again.`);
     },
 };

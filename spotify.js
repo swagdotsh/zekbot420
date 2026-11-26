@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const { writeJsonAtomic } = require('./jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('./paths');
 
 const API = 'https://api.spotify.com/v1';
 const MAX_COLLECTION_TRACKS = 50;
-const REFRESH_TOKEN_FILE = path.resolve(process.cwd(), 'data', 'spotify_refresh_token.json');
+const REFRESH_TOKEN_FILE = path.join(PROJECT_DATA_DIR, 'spotify_refresh_token.json');
 
 const tokens = {
     app: { value: null, expiresAt: 0 },
@@ -56,7 +58,7 @@ async function getToken(kind) {
         data = await requestToken({ grant_type: 'refresh_token', refresh_token: getRefreshToken() });
         if (data.refresh_token) {
             await fs.promises.mkdir(path.dirname(REFRESH_TOKEN_FILE), { recursive: true });
-            await fs.promises.writeFile(REFRESH_TOKEN_FILE, JSON.stringify({ refreshToken: data.refresh_token }), 'utf8');
+            await writeJsonAtomic(REFRESH_TOKEN_FILE, { refreshToken: data.refresh_token });
         }
     } else {
         data = await requestToken({ grant_type: 'client_credentials' });
@@ -152,10 +154,37 @@ async function getFromUrl(input) {
     return { name: playlist.name, tracks, total };
 }
 
+async function searchTracks(query, limit = 10) {
+    const data = await api(`/search?type=track&limit=${limit}&q=${encodeURIComponent(query)}`);
+    return (data.tracks?.items ?? []).map((item) => ({ ...toTrack(item), album: item.album?.name ?? null }));
+}
+
 async function searchTrack(query) {
     const data = await api(`/search?type=track&limit=1&q=${encodeURIComponent(query)}`);
     const item = data.tracks?.items?.[0];
     return item ? toTrack(item) : null;
 }
 
-module.exports = { MAX_COLLECTION_TRACKS, isConfigured, canReadPlaylists, isSpotifyUrl, parseSpotifyUrl, getFromUrl, searchTrack };
+const ARTIST_IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const artistImageCache = new Map();
+
+const simplifyName = (name) => String(name ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+async function getArtistImage(name) {
+    if (!isConfigured() || !name) return null;
+    const key = simplifyName(name);
+    const cached = artistImageCache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.url;
+
+    const data = await api(`/search?type=artist&limit=5&q=${encodeURIComponent(name)}`);
+    const artists = data.artists?.items ?? [];
+    const match = artists.find((a) => simplifyName(a.name) === key && a.images?.length)
+        ?? (artists[0] && simplifyName(artists[0].name) === key ? artists[0] : null);
+    const url = match?.images?.[0]?.url ?? null;
+
+    artistImageCache.set(key, { url, expires: Date.now() + ARTIST_IMAGE_TTL_MS });
+    if (artistImageCache.size > 2000) artistImageCache.delete(artistImageCache.keys().next().value);
+    return url;
+}
+
+module.exports = { MAX_COLLECTION_TRACKS, isConfigured, canReadPlaylists, isSpotifyUrl, parseSpotifyUrl, getFromUrl, searchTrack, searchTracks, getArtistImage };

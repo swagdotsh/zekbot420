@@ -1,11 +1,14 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     SlashCommandBuilder,
     InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const TIMEZONES_PATH = path.join(DATA_DIR, 'userTimezones.json');
 
 const TZ_REGEX = /^(?:GMT|UTC)?([+-])?(\d{1,2})(?::?([0-5]\d))?$/i;
@@ -16,7 +19,7 @@ async function ensureTimezoneFile() {
     try {
         await fs.access(TIMEZONES_PATH);
     } catch {
-        await fs.writeFile(TIMEZONES_PATH, JSON.stringify({}, null, 2), 'utf8');
+        await writeJsonAtomic(TIMEZONES_PATH, {});
     }
 }
 
@@ -33,7 +36,7 @@ async function loadTimezones() {
 
 async function saveTimezones(timezones) {
     await ensureTimezoneFile();
-    await fs.writeFile(TIMEZONES_PATH, JSON.stringify(timezones, null, 2), 'utf8');
+    await writeJsonAtomic(TIMEZONES_PATH, timezones);
 }
 
 function parseTimezone(input) {
@@ -86,7 +89,7 @@ module.exports = {
             return interaction.reply({
                 content:
                     'Invalid timezone. Use a GMT offset like `GMT-5`, `GMT+1`, `-8`, or `+05:30`.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -105,7 +108,7 @@ module.exports = {
 
         return interaction.reply({
             content: `✅ Your timezone has been saved as **${timezone.display}**.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     },
 };

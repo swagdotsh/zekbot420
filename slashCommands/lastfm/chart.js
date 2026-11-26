@@ -19,9 +19,10 @@ function interactionMessage(interaction) {
 }
 
 module.exports = {
+    cooldown: 10,
     data: new SlashCommandBuilder()
         .setName('chart')
-        .setDescription('Build a Last.fm album or artist collage')
+        .setDescription('Build a last.fm album or artist collage')
         .setContexts(
             InteractionContextType.Guild,
             InteractionContextType.BotDM,
@@ -62,7 +63,7 @@ module.exports = {
         .addStringOption((option) =>
             option
                 .setName('username')
-                .setDescription('Last.fm username, optional if linked')
+                .setDescription('last.fm username, optional if linked')
                 .setRequired(false)
         ),
 

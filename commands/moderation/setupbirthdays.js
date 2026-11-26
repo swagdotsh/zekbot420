@@ -1,11 +1,14 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     ChannelType,
     PermissionFlagsBits,
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const CONFIG_PATH = path.join(DATA_DIR, 'birthdayConfig.json');
 
 async function ensureConfigFile() {
@@ -14,7 +17,7 @@ async function ensureConfigFile() {
     try {
         await fs.access(CONFIG_PATH);
     } catch {
-        await fs.writeFile(CONFIG_PATH, JSON.stringify({}, null, 2), 'utf8');
+        await writeJsonAtomic(CONFIG_PATH, {});
     }
 }
 
@@ -31,7 +34,7 @@ async function loadConfig() {
 
 async function saveConfig(config) {
     await ensureConfigFile();
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
+    await writeJsonAtomic(CONFIG_PATH, config);
 }
 
 module.exports = {
@@ -69,7 +72,7 @@ module.exports = {
 
         if (existingGuildConfig.roleId || existingGuildConfig.channelId) {
             return message.reply(
-                `Birthday system is already configured. Use \`,setbirthday\`, \`,birthday\`, or \`,removebirthday\` to manage it. <:smirk2:1498272372539785286>`
+                `Birthday system is already configured. Use \`${currentPrefix()}setbirthday\`, \`${currentPrefix()}birthday\`, or \`${currentPrefix()}removebirthday\` to manage it. <:smirk2:1498272372539785286>`
             );
         }
 

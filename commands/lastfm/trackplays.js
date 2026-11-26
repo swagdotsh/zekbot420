@@ -1,7 +1,7 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 function parseQuotedTrackArtistUsername(args) {
     const raw = (args || []).join(' ').trim();
@@ -115,7 +115,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                'Provide a Last.fm username or link yours first. Example: `,tp "No Surprises" "Radiohead" someUser`'
+                `Provide a last.fm username or link yours first. Example: \`${currentPrefix()}tp "No Surprises" "Radiohead" someUser\``
             );
         }
 
@@ -126,8 +126,8 @@ module.exports = {
             if (!track || !artist) {
                 if ((args || []).length) {
                     return message.reply(
-                        'For track plays, please use: `,tp "Track Name" "Artist Name" [username]` (quotes required when there are spaces). ' +
-                        'Or run `,tp` with no args to use your currently playing track.'
+                        `For track plays, please use: \`${currentPrefix()}tp "Track Name" "Artist Name" [username]\` (quotes required when there are spaces). ` +
+                        `Or run \`${currentPrefix()}tp\` with no args to use your currently playing track.`
                     );
                 }
 
@@ -152,7 +152,7 @@ module.exports = {
                     ? `${allTimePlays.toLocaleString()} play${allTimePlays === 1 ? '' : 's'}`
                     : '— plays';
 
-            const footerLabel = userLoved ? '❤️ Loved track' : 'Last.fm';
+            const footerLabel = userLoved ? '❤️ Loved track' : 'last.fm';
 
             const embed = {
                 color: 0xd51007,

@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { R6Client } = require('r6-data.js');
 const { EmbedBuilder } = require('discord.js');
 
@@ -59,11 +60,12 @@ const RANK_EMOJIS = [
 
 module.exports = {
     name: 'r6stats',
+    cooldown: 5,
     aliases: ['r6', 'r6s'],
     description: 'Fetch Rainbow Six Siege stats for a player',
     async execute(message, args) {
         if (!args.length) {
-            return message.reply('Usage: `,r6stats <username> [pc|psn|xbox]`');
+            return message.reply(`Usage: \`${currentPrefix()}r6stats <username> [pc|psn|xbox]\``);
         }
 
         const platformArg = VALID_PLATFORMS.includes(args[args.length - 1].toLowerCase())
@@ -80,15 +82,13 @@ module.exports = {
 
         const platformType = platformMap[platformArg] ?? 'uplay';
         const displayPlatform = platformArg ?? 'pc';
-        const platform_families = platformType === 'uplay' ? 'pc' : 'console';
 
         const loading = await message.reply('Fetching stats...');
 
         try {
-            const [account, statsData] = await Promise.all([
-                r6.players.getAccountInfo({ nameOnPlatform: username, platformType }),
-                r6.players.getPlayerStats({ nameOnPlatform: username, platformType, platform_families })
-            ]);
+            const profile = await r6.players.getProfile({ nameOnPlatform: username, platformType });
+            const account = profile?.account ?? {};
+            const statsData = profile?.stats;
 
             const boardProfiles = statsData?.platform_families_full_profiles?.[0]?.board_ids_full_profiles ?? [];
 
@@ -126,7 +126,7 @@ module.exports = {
                     { name: 'K/D', value: kd, inline: true },
                     { name: 'Win Rate', value: winRate, inline: true },
                 )
-                .setFooter({ text: 'Powered by r6data.eu' })
+                .setFooter({ text: 'Powered by r6.arenyze.com' })
                 .setTimestamp();
 
             if (account.profilePicture) embed.setThumbnail(account.profilePicture);

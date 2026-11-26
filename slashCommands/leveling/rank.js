@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { getUser } = require('../../leveling');
 
@@ -31,7 +32,7 @@ module.exports = {
                 content: target.id === interaction.user.id
                     ? "You haven't earned any XP yet. Start chatting!"
                     : "That user hasn't earned any XP yet.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

@@ -1,5 +1,4 @@
-const postgres = require('postgres');
-const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require' });
+const { sql } = require('./db');
 
 async function initStickyRoleDB() {
     await sql`
@@ -25,7 +24,23 @@ async function initStickyRoleDB() {
     `;
 }
 
+const configCache = new Map();
+
+function cachedGuild(guildId) {
+    if (!configCache.has(guildId)) configCache.set(guildId, {});
+    return configCache.get(guildId);
+}
+
+function remember(entry, field, loader) {
+    if (!entry[field]) {
+        entry[field] = loader();
+        entry[field].catch(() => { delete entry[field]; });
+    }
+    return entry[field];
+}
+
 async function setStickyRolesEnabled(guildId, enabled) {
+    configCache.delete(guildId);
     await sql`
         INSERT INTO sticky_roles_config (guild_id, enabled)
         VALUES (${guildId}, ${enabled})
@@ -33,12 +48,15 @@ async function setStickyRolesEnabled(guildId, enabled) {
     `;
 }
 
-async function getStickyRolesEnabled(guildId) {
-    const rows = await sql`SELECT enabled FROM sticky_roles_config WHERE guild_id = ${guildId}`;
-    return rows[0]?.enabled || false;
+function getStickyRolesEnabled(guildId) {
+    return remember(cachedGuild(guildId), 'enabled', async () => {
+        const rows = await sql`SELECT enabled FROM sticky_roles_config WHERE guild_id = ${guildId}`;
+        return rows[0]?.enabled || false;
+    });
 }
 
 async function addStickyRole(guildId, roleId) {
+    configCache.delete(guildId);
     await sql`
         INSERT INTO sticky_roles (guild_id, role_id)
         VALUES (${guildId}, ${roleId})
@@ -47,11 +65,12 @@ async function addStickyRole(guildId, roleId) {
 }
 
 async function removeStickyRole(guildId, roleId) {
+    configCache.delete(guildId);
     await sql`DELETE FROM sticky_roles WHERE guild_id = ${guildId} AND role_id = ${roleId}`;
 }
 
-async function getStickyRoles(guildId) {
-    return await sql`SELECT role_id FROM sticky_roles WHERE guild_id = ${guildId}`;
+function getStickyRoles(guildId) {
+    return remember(cachedGuild(guildId), 'roles', () => sql`SELECT role_id FROM sticky_roles WHERE guild_id = ${guildId}`);
 }
 
 async function addUserStickyRole(guildId, userId, roleId) {

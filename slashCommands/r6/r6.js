@@ -60,6 +60,7 @@ const RANK_EMOJIS = [
 ]; // sigh
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('r6stats')
         .setDescription('Fetch Rainbow Six Siege stats for a player')
@@ -97,20 +98,11 @@ module.exports = {
 
         const platformType = platformMap[platformArg];
         const displayPlatform = platformArg;
-        const platform_families = platformType === 'uplay' ? 'pc' : 'console';
 
         try {
-            const [account, statsData] = await Promise.all([
-                r6.players.getAccountInfo({
-                    nameOnPlatform: username,
-                    platformType
-                }),
-                r6.players.getPlayerStats({
-                    nameOnPlatform: username,
-                    platformType,
-                    platform_families
-                })
-            ]);
+            const profile = await r6.players.getProfile({ nameOnPlatform: username, platformType });
+            const account = profile?.account ?? {};
+            const statsData = profile?.stats;
 
             const boardProfiles = statsData?.platform_families_full_profiles?.[0]?.board_ids_full_profiles ?? [];
 
@@ -189,7 +181,7 @@ module.exports = {
                         inline: true
                     }
                 )
-                .setFooter({ text: 'Powered by r6data.eu' })
+                .setFooter({ text: 'Powered by r6.arenyze.com' })
                 .setTimestamp();
 
             if (account.profilePicture) {

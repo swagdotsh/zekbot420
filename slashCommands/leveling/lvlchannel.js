@@ -2,8 +2,10 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 const { setLevelChannel } = require('../../leveling');
 
 module.exports = {
@@ -29,8 +31,8 @@ module.exports = {
 
         if (!channel) {
             return interaction.reply({
-                content: 'Please provide a valid channel.',
-                ephemeral: true
+                content: fail('Please choose a server text channel.'),
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -38,15 +40,15 @@ module.exports = {
             await setLevelChannel(interaction.guild.id, channel.id);
 
             return interaction.reply({
-                content: `Level-up announcements will now be sent to ${channel}.`,
-                ephemeral: true
+                content: ok(`Level-up announcements will now be sent to ${channel}.`),
+                flags: MessageFlags.Ephemeral
             });
         } catch (err) {
             console.error(err);
 
             return interaction.reply({
-                content: 'Something went wrong updating the channel.',
-                ephemeral: true
+                content: fail('Something went wrong updating the channel. Try again in a moment.'),
+                flags: MessageFlags.Ephemeral
             });
         }
     }

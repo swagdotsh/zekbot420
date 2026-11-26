@@ -1,12 +1,16 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../../paths');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../../ui');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const ROLE_NAME = 'Reaction Muted';
 
 function guildDir(guildId) {
@@ -24,11 +28,7 @@ async function ensureGuildDirExists(guildId) {
 async function writeReactionMuteConfig(guildId, data) {
     await ensureGuildDirExists(guildId);
 
-    await fs.writeFile(
-        reactionMuteConfigPath(guildId),
-        JSON.stringify(data, null, 2),
-        'utf8'
-    );
+    await writeJsonAtomic(reactionMuteConfigPath(guildId), data);
 }
 
 async function reactMuteConfigExists(guildId) {
@@ -74,7 +74,7 @@ module.exports = {
                     `Set up by: **${setupByTag}**\n` +
                     `Set up at: <t:${Math.floor(config.setupAt / 1000)}:R>\n` +
                     `Use \`/reactionmute\` or \`/unreactionmute\` to manage it. <:smirk2:1498272372539785286>`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -83,21 +83,21 @@ module.exports = {
         if (!me) {
             return interaction.reply({
                 content: 'I could not verify my own permissions. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
                 content: 'I need the **Manage Roles** permission to create the reaction mute role. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: 'I need the **Manage Channels** permission to apply reaction restrictions to channels. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -139,14 +139,14 @@ module.exports = {
                     `Role: **${role.name}**\n` +
                     `Updated channels: **${updatedChannels}**\n` +
                     `Reaction mutes are now ready to use.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         } catch (error) {
             console.error('rmsetup error:', error);
 
             return interaction.reply({
-                content: 'There was an error setting up reaction muting. Make sure my role is high enough to manage the new role and channel overwrites.',
-                ephemeral: true
+                content: fail('Something went wrong setting up reaction mute. Make sure my role is high enough to manage the new role and channel overwrites.'),
+                flags: MessageFlags.Ephemeral
             });
         }
     }

@@ -7,7 +7,7 @@ const fmProfileCommand = require('../../commands/lastfm/fmprofile');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('fmprofile')
-        .setDescription('Show a summary of your linked Last.fm profile')
+        .setDescription('Show a summary of your linked last.fm profile')
         .setContexts(
             InteractionContextType.Guild,
             InteractionContextType.BotDM,

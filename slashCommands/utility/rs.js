@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -17,7 +18,7 @@ module.exports = {
         if (!snipe) {
             return interaction.reply({
                 content: 'No reactions to snipe.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

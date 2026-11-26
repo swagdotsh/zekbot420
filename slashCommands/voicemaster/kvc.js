@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 const {
     getManagedChannel,
@@ -26,7 +27,7 @@ module.exports = {
         if (!voiceChannel) {
             return interaction.reply({
                 content: 'You need to be in a VoiceMaster VC to use this command.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -35,14 +36,14 @@ module.exports = {
         if (!managed) {
             return interaction.reply({
                 content: 'This is not a VoiceMaster VC.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!isVoiceMasterOrStaff(interaction.member, managed)) {
             return interaction.reply({
                 content: 'Only the voicemaster or staff with **Manage Channels** can use this command.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -51,21 +52,21 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'That user is not in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === interaction.user.id) {
             return interaction.reply({
                 content: 'You cannot kick yourself from the VC with this command.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.voice?.channelId !== voiceChannel.id) {
             return interaction.reply({
                 content: 'That user is not in your VoiceMaster VC.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

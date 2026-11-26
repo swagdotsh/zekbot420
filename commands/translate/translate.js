@@ -1,6 +1,7 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
-const LIBRE_URL = 'https://translate.cutie.dating'; // public mirror of libretranslate since they don't offer free api keys anymore #fairs
+const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
 const API_KEY = process.env.LIBRETRANSLATE_KEY;
 
 async function detectLanguage(text) {
@@ -23,6 +24,7 @@ async function translate(text, source, target) {
 
 module.exports = {
     name: 'translate',
+    cooldown: 4,
     aliases: ['tr'],
     async execute(message, args) {
         const reply = message.reference
@@ -49,7 +51,7 @@ module.exports = {
                 text = args.slice(1).join(' ');
             }
         } else {
-            return message.reply('Usage: `,translate` (reply) • `,translate [lang]` (reply) • `,translate [lang] [text]` • `,translate [source] [dest] [text]`');
+            return message.reply(`Usage: \`${currentPrefix()}translate\` (reply) • \`${currentPrefix()}translate [lang]\` (reply) • \`${currentPrefix()}translate [lang] [text]\` • \`${currentPrefix()}translate [source] [dest] [text]\``);
         }
 
         if (!text) return message.reply('No text to translate.');

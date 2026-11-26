@@ -1,7 +1,9 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const BIRTHDAYS_PATH = path.join(DATA_DIR, 'birthdays.json');
 
 async function ensureBirthdayFile() {
@@ -10,7 +12,7 @@ async function ensureBirthdayFile() {
     try {
         await fs.access(BIRTHDAYS_PATH);
     } catch {
-        await fs.writeFile(BIRTHDAYS_PATH, JSON.stringify({}, null, 2), 'utf8');
+        await writeJsonAtomic(BIRTHDAYS_PATH, {});
     }
 }
 
@@ -27,7 +29,7 @@ async function loadBirthdays() {
 
 async function saveBirthdays(birthdays) {
     await ensureBirthdayFile();
-    await fs.writeFile(BIRTHDAYS_PATH, JSON.stringify(birthdays, null, 2), 'utf8');
+    await writeJsonAtomic(BIRTHDAYS_PATH, birthdays);
 }
 
 module.exports = {

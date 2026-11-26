@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    PermissionFlagsBits
+    PermissionFlagsBits,
+    MessageFlags
 } = require('discord.js');
 const { logSnipeClear } = require('../../log');
 
@@ -20,7 +21,7 @@ module.exports = {
         if (!snipeData) {
             return interaction.reply({
                 content: 'No snipe data to clear in this channel.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

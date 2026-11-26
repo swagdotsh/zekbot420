@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const { writeJsonAtomic } = require('./jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('./paths');
 
-const FILE = path.resolve(process.cwd(), 'data', 'voicemaster_channels.json');
+const FILE = path.join(PROJECT_DATA_DIR, 'voicemaster_channels.json');
 
 class ManagedChannelMap extends Map {
     set(key, value) {
@@ -20,7 +22,7 @@ class ManagedChannelMap extends Map {
         this.pendingSave = (this.pendingSave ?? Promise.resolve())
             .then(async () => {
                 await fs.promises.mkdir(path.dirname(FILE), { recursive: true });
-                await fs.promises.writeFile(FILE, JSON.stringify([...this.values()], null, 2), 'utf8');
+                await writeJsonAtomic(FILE, [...this.values()]);
             })
             .catch((error) => console.error('Failed to save VoiceMaster channels:', error));
     }

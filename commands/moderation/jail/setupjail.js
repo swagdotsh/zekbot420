@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const { setJailConfig, getJailConfig } = require('../../../jailHandler');
 
 module.exports = {
@@ -12,7 +13,7 @@ module.exports = {
 
         if (existingConfig) {
             return message.reply(
-                'Jail is already configured. Use `,jail @user <duration>`, `,unjail @user`, or `,unsetupjail` to manage it. <:smirk2:1498272372539785286>'
+                `Jail is already configured. Use \`${currentPrefix()}jail @user <duration>\`, \`${currentPrefix()}unjail @user\`, or \`${currentPrefix()}unsetupjail\` to manage it. <:smirk2:1498272372539785286>`
             );
         }
 

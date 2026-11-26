@@ -7,11 +7,12 @@ const {
     GatewayIntentBits,
     Collection,
     Partials,
+    MessageFlags
 } = require('discord.js');
 
 require('dotenv').config();
 
-const missingRuntimeConfig = ['TOKEN', 'PREFIX', 'NEON_DATABASE_URL']
+const missingRuntimeConfig = ['TOKEN', 'NEON_DATABASE_URL']
     .filter((name) => !process.env[name]);
 
 if (missingRuntimeConfig.length) {
@@ -39,13 +40,15 @@ const {
     handleVoiceMasterInteraction,
     restoreManagedChannels,
 } = require('./commands/voicemaster/vmManager');
-const {initDB} = require('./leveling');
+const {initDB, flushXp} = require('./leveling');
+const {sql} = require('./db');
 const {initJailDB} = require('./jailHandler');
 const {initStickyRoleDB} = require('./stickyrolesDbHndlr');
 const {handleMessageXP} = require('./events/xpHandler');
 const {handleVoiceXPStateUpdate, startVcXPLoop} = require('./events/VCxpHandler');
 const {startJailExpiryLoop} = require('./events/jailExpiryLoop');
-const {handleAfkMessage} = require('./events/afkStore');
+const {handleAfkMessage, initAfkDB} = require('./events/afkStore');
+const {initRemindersDB, startReminderLoop} = require('./reminders');
 const {handleTrapMessage} = require('./events/trapHelper');
 const {startBirthdayLoop} = require('./events/birthdayManager');
 const {initNflDB} = require('./nflHandler');
@@ -54,9 +57,22 @@ const {startNbaGameLoop} = require('./events/nbaGameLoop');
 const {initTtsDB, handleTtsMessage} = require('./ttsHandler');
 const {handleMusicButton} = require('./musicControls');
 const {initTicketDB, handleTicketInteraction, markDeletedTicket, noteOpenerLeft} = require('./ticketHandler');
-const {cleanupSessionFiles} = require('./musicPlayer');
+const {teardownSession} = require('./musicPlayer');
+const {isConnectionAlive} = require('./voiceConnection');
 
 const {handle: handleStickyRoles} = require('./stickyrolesHandler');
+const {loadSlashCommands} = require('./slashLoader');
+const {initPrefixes, getPrefix, runWithPrefix} = require('./prefix');
+const {handleSocialEmbed} = require('./socialEmbeds');
+const {gatewayPlatformOptions} = require('./platformIcon');
+const {handleConfessionInteraction} = require('./confessions');
+const {handleBumpMessage, startBumpReminderLoop} = require('./bumpReminders');
+const {handleVcBanVoiceState, startVcBanLoop} = require('./vcBans');
+const {registerBoostEvents, handleBoostSystemMessage, syncPerks} = require('./boosts');
+const {registerReactionRoleEvents} = require('./reactionRoles');
+const {registerColorRoleEvents} = require('./colorRoles');
+const {handleStreakMessage} = require('./streaks');
+const {showLoadingOnDefer} = require('./ui');
 
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled promise rejection:', error);
@@ -72,8 +88,11 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.AutoModerationExecution
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+    ws: gatewayPlatformOptions(),
 });
+
+let dashboardServer = null;
 
 client.commands = new Collection();
 client.slashCommands = new Collection();
@@ -97,24 +116,21 @@ async function cleanupEmptyVoiceSession(client, guildId, channelId) {
     const channel = await client.channels.fetch(channelId).catch(() => null);
     if (!channel || voiceChannelHasNonBotMembers(channel)) return;
 
-    if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
-    if (session.inactivityTimeout) clearTimeout(session.inactivityTimeout);
-
-    if (session.mode !== 'tts') {
-        cleanupSessionFiles(session);
-        session.nowPlayingMessage?.edit({ components: [] }).catch(() => {});
+    if (session.mode === 'tts') {
+        if (session.emptyVoiceTimeout) clearTimeout(session.emptyVoiceTimeout);
+        client.voiceSessions.delete(guildId);
+        session.player?.stop(true);
+        if (isConnectionAlive(session.connection)) session.connection.destroy();
+    } else {
+        teardownSession(client, guildId, session);
     }
-
-    client.voiceSessions.delete(guildId);
-    session.player?.stop(true);
-    session.connection?.destroy();
 
     const textChannel = session.textChannelId
         ? await client.channels.fetch(session.textChannelId).catch(() => null)
         : null;
 
     if (textChannel?.isTextBased()) {
-        await textChannel.send('Left voice channel because everyone left.');
+        await textChannel.send('Left voice channel because everyone left.').catch(() => {});
     }
 }
 
@@ -227,6 +243,29 @@ async function logTimeoutChange(client, oldMember, newMember) {
     }
 }
 
+const DEFAULT_COOLDOWN_SECONDS = 2;
+const commandCooldowns = new Map();
+
+function checkCooldown(userId, commandName, cooldownSeconds = DEFAULT_COOLDOWN_SECONDS) {
+    const key = `${userId}:${commandName}`;
+    const now = Date.now();
+    const entry = commandCooldowns.get(key);
+
+    if (entry && now < entry.until) {
+        const firstHit = !entry.warned;
+        entry.warned = true;
+        return { remaining: Math.ceil((entry.until - now) / 1000), warn: firstHit };
+    }
+
+    commandCooldowns.set(key, { until: now + cooldownSeconds * 1000, warned: false });
+    return null;
+}
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of commandCooldowns) if (entry.until < now) commandCooldowns.delete(key);
+}, 60 * 1000).unref();
+
 const commandsPath = path.join(__dirname, 'commands');
 
 const loadCommands = (dir) => {
@@ -250,37 +289,33 @@ const loadCommands = (dir) => {
 
 loadCommands(commandsPath);
 
-const slashCommandsPath = path.join(__dirname, 'slashCommands');
-if (fs.existsSync(slashCommandsPath)) {
-    const walk = (dir) => {
-        const entries = fs.readdirSync(dir, {withFileTypes: true});
-        for (const entry of entries) {
-            const full = path.join(dir, entry.name);
-            if (entry.isDirectory()) walk(full);
-            else if (entry.isFile() && entry.name.endsWith('.js')) {
-                const slashCommand = require(full);
-                if (!slashCommand?.data?.name || typeof slashCommand.execute !== 'function') continue;
-                client.slashCommands.set(slashCommand.data.name, slashCommand);
-            }
-        }
-    };
-    walk(slashCommandsPath);
+for (const slashCommand of loadSlashCommands()) {
+    client.slashCommands.set(slashCommand.data.name, slashCommand);
 }
 
 client.once('clientReady', async () => {
     console.log(`Logged in as ${client.user.tag}`);
     client.user.setActivity('the national football league', {type: 3}); // watching [...]
+    startBumpReminderLoop(client);
+    startVcBanLoop();
+    syncPerks(client).catch((error) => console.error('Failed to sync booster perks:', error));
+    require('./settings').setClient(client);
+    if (process.env.DASHBOARD_PORT) dashboardServer = require('./dashboard/server').start(client);
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
     await initNflDB();
     await initTtsDB();
     await initTicketDB();
+    await initRemindersDB();
+    await initAfkDB();
+    await require('./events/giveawayManager').initGiveawayDB();
     startVcXPLoop(client);
     startJailExpiryLoop(client);
     startBirthdayLoop(client);
     startNflPlayLoop(client);
     startNbaGameLoop(client);
+    startReminderLoop(client);
     await restoreManagedChannels(client).catch((error) => console.error('Failed to restore VoiceMaster channels:', error));
     require('./events/welcoming')(client);
     require('./events/onJoin')(client);
@@ -296,6 +331,7 @@ client.on('interactionCreate', async (interaction) => {
         if (await handleVoiceMasterInteraction(interaction)) return;
         if (await handleMusicButton(interaction)) return;
         if (await handleTicketInteraction(interaction)) return;
+        if (await handleConfessionInteraction(interaction)) return;
 
         if (interaction.isAutocomplete()) {
             const cmd = client.slashCommands.get(interaction.commandName);
@@ -308,13 +344,30 @@ client.on('interactionCreate', async (interaction) => {
         const cmd = client.slashCommands.get(interaction.commandName);
         if (!cmd) return;
 
-        await cmd.execute(interaction);
+        const subcommand = interaction.isChatInputCommand()
+            ? [interaction.options.getSubcommandGroup(false), interaction.options.getSubcommand(false)].filter(Boolean).join(' ')
+            : '';
+        const cooldown = checkCooldown(
+            interaction.user.id,
+            `/${interaction.commandName}${subcommand ? ` ${subcommand}` : ''}`,
+            cmd.getCooldown?.(interaction) ?? cmd.cooldown
+        );
+        if (cooldown) {
+            await interaction.reply({
+                content: `Slow down! You can use that again in ${cooldown.remaining}s.`,
+                flags: MessageFlags.Ephemeral,
+            }).catch(() => {});
+            return;
+        }
+
+        showLoadingOnDefer(interaction);
+        await runWithPrefix(getPrefix(interaction.guildId), () => cmd.execute(interaction));
     } catch (error) {
         console.error(error);
 
         const payload = {
-            content: 'There was an error executing that interaction.',
-            ephemeral: true,
+            content: 'Something went wrong running that. Try again in a moment.',
+            flags: MessageFlags.Ephemeral,
         };
 
         if (interaction.deferred || interaction.replied) await interaction.followUp(payload).catch(() => {});
@@ -324,16 +377,30 @@ client.on('interactionCreate', async (interaction) => {
 
 // Prefix commands
 client.on('messageCreate', async (message) => {
+    if (message.author.bot && message.guild) handleBumpMessage(message).catch(console.error);
+    if (message.system && message.guild) handleBoostSystemMessage(message).catch(console.error);
+
     if (!message.author.bot && message.guild) {
         await handleMessageXP(message).catch(console.error);
         await handleAfkMessage(message).catch(console.error);
         await handleTrapMessage(message).catch(console.error);
         await handleTtsMessage(message).catch(console.error);
+        handleStreakMessage(message).catch(console.error);
+        handleSocialEmbed(message).catch(console.error);
     }
 
-    if (message.author.bot || !message.content.startsWith(process.env.PREFIX)) return;
+    if (message.author.bot) return;
 
-    const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
+    const prefix = getPrefix(message.guild?.id);
+
+    if (message.guild && new RegExp(`^<@!?${client.user.id}>$`).test(message.content.trim())) {
+        await message.reply(`My prefix here is \`${prefix}\`, like \`${prefix}help\`. Slash commands work too.`).catch(() => {});
+        return;
+    }
+
+    if (!message.content.startsWith(prefix)) return;
+
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
 
     const command = client.commands.find(
@@ -342,11 +409,21 @@ client.on('messageCreate', async (message) => {
 
     if (!command) return;
 
+    const cooldown = checkCooldown(message.author.id, command.name, command.cooldown);
+    if (cooldown) {
+        if (cooldown.warn) {
+            const notice = await message.reply(`Slow down! You can use that again in ${cooldown.remaining}s.`).catch(() => null);
+            if (notice) setTimeout(() => notice.delete().catch(() => {}), 5000);
+        }
+        return;
+    }
+
     try {
-        await command.execute(message, args);
+        message.prefix = prefix;
+        await runWithPrefix(prefix, () => command.execute(message, args));
     } catch (error) {
         console.error(error);
-        await message.reply('There was an error executing that command.').catch(() => {});
+        await message.reply('Something went wrong running that command. Try again in a moment.').catch(() => {});
     }
 });
 
@@ -356,6 +433,10 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
             newMessage = await newMessage.fetch().catch(() => null);
         }
 
+        if (newMessage?.guild && newMessage.author?.bot) {
+            await handleBumpMessage(newMessage).catch(console.error);
+            return;
+        }
         if (!newMessage?.guild || newMessage.author?.bot) return;
 
         if (oldMessage.partial) {
@@ -512,7 +593,32 @@ client.on('error', (error) => {
     console.error('Discord client error:', error);
 });
 
-client.login(process.env.TOKEN);
+initPrefixes()
+    .catch((error) => console.error('Failed to load server prefixes, using the default:', error))
+    .finally(() => client.login(process.env.TOKEN));
+
+let shuttingDown = false;
+async function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`${signal} received, saving XP and shutting down...`);
+
+    const forceExit = setTimeout(() => process.exit(1), 10 * 1000);
+    try {
+        await flushXp();
+        require('./esmbotMedia').shutdownWorker();
+        dashboardServer?.close();
+    } catch (error) {
+        console.error('Failed to save XP during shutdown:', error);
+    }
+    await client.destroy().catch(() => {});
+    await sql.end({ timeout: 5 }).catch(() => {});
+    clearTimeout(forceExit);
+    process.exit(0);
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
     try {
@@ -523,6 +629,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
+    await handleVcBanVoiceState(oldState, newState).catch(console.error);
     await handleVoiceXPStateUpdate(oldState, newState).catch(console.error);
 
     const leftChannel = oldState.channel;
@@ -539,6 +646,10 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         clearEmptyVoiceSessionCleanup(client, newState.guild.id);
     }
 });
+
+registerBoostEvents(client);
+registerReactionRoleEvents(client);
+registerColorRoleEvents(client);
 
 require('./storesnipe')(client);
 require('./starboardHandler')(client);

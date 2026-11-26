@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const { ChannelType, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { updateJson } = require('../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../paths');
 
-const dataDir = path.resolve(process.cwd(), 'data');
+const dataDir = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(dataDir, String(guildId));
@@ -12,7 +14,7 @@ function guildConfigPath(guildId) {
     return path.join(guildDir(guildId), 'modlog.json');
 }
 
-async function readGuildConfig(guildId) {
+async function readGuildConfigFromDisk(guildId) {
     const cfgPath = guildConfigPath(guildId);
 
     try {
@@ -53,19 +55,36 @@ async function readGuildConfig(guildId) {
     }
 }
 
+const CONFIG_CACHE_MS = 30 * 1000;
+const configCache = new Map();
+
+async function readGuildConfig(guildId) {
+    const key = String(guildId);
+    const cached = configCache.get(key);
+    if (cached && Date.now() - cached.at < CONFIG_CACHE_MS) return structuredClone(cached.config);
+
+    const config = await readGuildConfigFromDisk(guildId);
+    configCache.set(key, { config, at: Date.now() });
+    return structuredClone(config);
+}
+
 async function writeGuildConfig(guildId, config) {
     const dir = guildDir(guildId);
     const cfgPath = guildConfigPath(guildId);
 
     await fs.promises.mkdir(dir, { recursive: true });
-    await fs.promises.writeFile(cfgPath, JSON.stringify(config, null, 2), 'utf8');
+    await updateJson(cfgPath, {}, (current) => ({ ...current, ...config }));
+    configCache.delete(String(guildId));
 }
 
 async function incrementTrapBanCount(guildId) {
-    const config = await readGuildConfig(guildId);
-    config.trapBanCount = (Number.isInteger(config.trapBanCount) ? config.trapBanCount : 0) + 1;
-    await writeGuildConfig(guildId, config);
-    return config.trapBanCount;
+    await fs.promises.mkdir(guildDir(guildId), { recursive: true });
+    const next = await updateJson(guildConfigPath(guildId), {}, (current) => ({
+        ...current,
+        trapBanCount: (Number.isInteger(current.trapBanCount) ? current.trapBanCount : 0) + 1,
+    }));
+    configCache.delete(String(guildId));
+    return next.trapBanCount;
 }
 
 function truncate(value, maxLength = 1024) {

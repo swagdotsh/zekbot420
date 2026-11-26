@@ -59,6 +59,7 @@ function buildRow(page, totalPages) {
 }
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('itemshop')
         .setDescription('View the current Fortnite item shop')

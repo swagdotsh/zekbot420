@@ -1,5 +1,5 @@
-const postgres = require('postgres');
-const sql = postgres(process.env.NEON_DATABASE_URL, { ssl: 'require', onnotice: () => {} });
+const { currentPrefix } = require('./prefix');
+const { sql } = require('./db');
 const {
     ActionRowBuilder,
     AttachmentBuilder,
@@ -150,7 +150,7 @@ async function setupTickets(guild, { categoryId = null, logChannelId = null, sup
     const roles = supportRoleIds
         .map(id => guild.roles.cache.get(id))
         .filter(role => role && role.id !== guild.roles.everyone.id);
-    if (!roles.length) return { error: `Give at least one support role, like \`${process.env.PREFIX}ticketsetup @Support\`. ${SMIRK}` };
+    if (!roles.length) return { error: `Give at least one support role, like \`${currentPrefix()}ticketsetup @Support\`. ${SMIRK}` };
 
     const me = guild.members.me;
     if (!me.permissions.has([PermissionFlagsBits.ManageChannels, PermissionFlagsBits.ManageRoles])) {
@@ -198,7 +198,7 @@ async function setupTickets(guild, { categoryId = null, logChannelId = null, sup
 async function postPanel(channel) {
     if (channel.guildId == null) return { error: `Pick a channel in this server. ${SMIRK}` };
     const config = await getTicketConfig(channel.guildId);
-    if (!config) return { error: `Tickets aren't set up yet. Run \`${process.env.PREFIX}ticketsetup @SupportRole\` first. ${SMIRK}` };
+    if (!config) return { error: `Tickets aren't set up yet. Run \`${currentPrefix()}ticketsetup @SupportRole\` first. ${SMIRK}` };
     if (!channel.isTextBased() || missingBotPerms(channel, [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks])) {
         return { error: `I can't post in ${channel}, I need **Send Messages** and **Embed Links** there. ${SMIRK}` };
     }
@@ -219,7 +219,7 @@ async function openTicket(guild, member, reason) {
     }
 
     const category = guild.channels.cache.get(config.category_id);
-    if (category?.type !== ChannelType.GuildCategory) return { error: `The ticket category is gone, ask staff to run \`${process.env.PREFIX}ticketsetup\` again. ${SMIRK}` };
+    if (category?.type !== ChannelType.GuildCategory) return { error: `The ticket category is gone, ask staff to run \`${currentPrefix()}ticketsetup\` again. ${SMIRK}` };
     if (category.children.cache.size >= MAX_CATEGORY_CHANNELS) return { error: `There are too many open tickets right now, try again later. ${SMIRK}` };
 
     const [{ number }] = await sql`
@@ -297,7 +297,7 @@ async function buildTranscript(channel, number) {
         filename,
         poweredBy: false,
         hydrate: true,
-        footerText: `Ticket ${ticketName(number)} · {number} message{s}`,
+        footerText: `Ticket ${ticketName(number)} - {number} message{s}`,
     };
 
     try {

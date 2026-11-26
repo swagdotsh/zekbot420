@@ -3,10 +3,11 @@ const {
     ContextMenuCommandBuilder,
     ApplicationCommandType,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
-const LIBRE_URL = 'https://translate.cutie.dating';
+const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
 const API_KEY = process.env.LIBRETRANSLATE_KEY;
 const REQUEST_TIMEOUT = 8000; // 8 second timeout
 
@@ -70,7 +71,7 @@ module.exports = {
             if (!text) {
                 return interaction.reply({
                     content: 'That message has no text to translate.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -115,7 +116,7 @@ module.exports = {
             if (!interaction.replied && !interaction.deferred) {
                 return interaction.reply({
                     content: 'An error occurred while processing your request.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }

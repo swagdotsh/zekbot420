@@ -1,12 +1,14 @@
 const {
     SlashCommandBuilder,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
+const { parseWhen, createReminder, formatDue } = require('../../reminders');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('remindme')
-        .setDescription('Set a reminder for a specific date')
+        .setDescription('Set a reminder')
         .setContexts(
             InteractionContextType.Guild,
             InteractionContextType.BotDM,
@@ -15,72 +17,34 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('date')
-                .setDescription('Reminder date in MM-DD-YYYY format')
+                .setDescription('When: 10m, 2h30m, 3d, 1w, or MM-DD-YYYY')
                 .setRequired(true)
         )
         .addStringOption((opt) =>
             opt
                 .setName('reason')
-                .setDescription('What to remind you about')
+                .setDescription('What it is for')
                 .setRequired(false)
+                .setMaxLength(1000)
         ),
 
     async execute(interaction) {
-        const dateArg = interaction.options.getString('date');
-        const reason = interaction.options.getString('reason') || 'No reason provided';
+        const when = parseWhen(interaction.options.getString('date', true));
+        if (when.error) return interaction.reply({ content: when.error, flags: MessageFlags.Ephemeral });
 
-        const [month, day, year] = dateArg.split('-').map(Number);
-
-        if (!month || !day || !year) {
-            return interaction.reply({
-                content: 'Invalid date format. Use `MM-DD-YYYY`.',
-                ephemeral: true
-            });
-        }
-
-        const targetDate = new Date(year, month - 1, day);
-
-        if (
-            isNaN(targetDate.getTime()) ||
-            targetDate.getMonth() !== month - 1 ||
-            targetDate.getDate() !== day ||
-            targetDate.getFullYear() !== year
-        ) {
-            return interaction.reply({
-                content: 'Invalid date.',
-                ephemeral: true
-            });
-        }
-
-        const now = new Date();
-
-        if (targetDate <= now) {
-            return interaction.reply({
-                content: 'That date is in the past.',
-                ephemeral: true
-            });
-        }
-
-        const delay = targetDate.getTime() - now.getTime();
-
-        if (delay > 2147483647) {
-            return interaction.reply({
-                content: 'That reminder is too far in the future.',
-                ephemeral: true
-            });
-        }
-
-        await interaction.reply({
-            content: `Reminder set for ${dateArg}. I’ll DM you when it’s time.`,
-            ephemeral: true
+        const result = await createReminder({
+            userId: interaction.user.id,
+            guildId: interaction.guildId,
+            channelId: interaction.channelId,
+            kind: 'reminder',
+            reason: interaction.options.getString('reason'),
+            dueAt: when.dueAt,
         });
+        if (result.error) return interaction.reply({ content: result.error, flags: MessageFlags.Ephemeral });
 
-        setTimeout(async () => {
-            try {
-                await interaction.user.send(`⏰ Reminder: ${reason}`);
-            } catch (err) {
-                console.error('Failed to send reminder DM:', err);
-            }
-        }, delay);
+        return interaction.reply({
+            content: `⏰ I'll remind you ${formatDue(result.dueAt)}. I'll DM you.`,
+            flags: MessageFlags.Ephemeral
+        });
     }
 };

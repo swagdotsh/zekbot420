@@ -2,8 +2,9 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('./paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const LEGACY_MODLOG_CONFIG_PATH = path.join(DATA_DIR, 'modlogConfig.json');
 const CLEARED_DIR = path.join(DATA_DIR, 'cleared_messages');
 

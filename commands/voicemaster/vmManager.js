@@ -1,6 +1,9 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs');
 const { ManagedChannelMap, loadManagedChannels } = require('../../voicemasterStore');
 const path = require('path');
+const { writeJsonAtomic } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR, ASSETS_DIR: PROJECT_ASSETS_DIR } = require('../../paths');
 const {
     ActionRowBuilder,
     AttachmentBuilder,
@@ -11,12 +14,13 @@ const {
     PermissionsBitField,
     TextInputBuilder,
     TextInputStyle,
+    MessageFlags,
 } = require('discord.js');
 
-const dataDir = path.resolve(process.cwd(), 'data');
+const dataDir = PROJECT_DATA_DIR;
 const OWNER_GRACE_MS = 5 * 60 * 1000;
 const JOIN_TO_CREATE_NAME = 'Join to create';
-const COPY_CHANNEL_ID_GIF = path.resolve(process.cwd(), 'assets', 'copychannelid.gif');
+const COPY_CHANNEL_ID_GIF = path.join(PROJECT_ASSETS_DIR, 'copychannelid.gif');
 
 function guildDir(guildId) {
     return path.join(dataDir, String(guildId));
@@ -73,7 +77,7 @@ async function readConfig(guildId) {
 async function writeConfig(guildId, config) {
     const dir = guildDir(guildId);
     await fs.promises.mkdir(dir, { recursive: true });
-    await fs.promises.writeFile(configPath(guildId), JSON.stringify(config, null, 2), 'utf8');
+    await writeJsonAtomic(configPath(guildId), config);
 }
 
 async function deleteConfig(guildId) {
@@ -151,7 +155,7 @@ async function getManagedInteractionTarget(interaction, channelId) {
     if (!managed) {
         await interaction.reply({
             content: 'That VoiceMaster VC no longer exists or is not managed by me.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return null;
     }
@@ -161,7 +165,7 @@ async function getManagedInteractionTarget(interaction, channelId) {
     if (!isVoiceMasterOrStaff(member, managed)) {
         await interaction.reply({
             content: 'Only the VC owner or staff with **Manage Channels** can use this control panel.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return null;
     }
@@ -171,7 +175,7 @@ async function getManagedInteractionTarget(interaction, channelId) {
     if (!channel || channel.type !== ChannelType.GuildVoice) {
         await interaction.reply({
             content: 'I could not find that voice channel anymore.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return null;
     }
@@ -204,7 +208,7 @@ async function handleVoiceMasterButton(interaction) {
 
         await interaction.reply({
             content: isLocked ? '🔓 Your VC has been unlocked.' : '🔒 Your VC has been locked.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
 
         return true;
@@ -257,7 +261,7 @@ async function handleVoiceMasterButton(interaction) {
     if (action === 'delete') {
         await interaction.reply({
             content: '🗑️ Deleting your VoiceMaster VC...',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
 
         await deleteManagedChannel(
@@ -287,7 +291,7 @@ async function handleVoiceMasterModal(interaction) {
         if (!name) {
             await interaction.reply({
                 content: 'Please enter a valid VC name.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return true;
         }
@@ -296,7 +300,7 @@ async function handleVoiceMasterModal(interaction) {
 
         await interaction.reply({
             content: `✏️ Your VC has been renamed to **${name}**.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
 
         return true;
@@ -309,7 +313,7 @@ async function handleVoiceMasterModal(interaction) {
         if (!Number.isInteger(limit) || limit < 0 || limit > 99 || limit === 1) {
             await interaction.reply({
                 content: 'Please enter `0` for no limit, or a number from `2` to `99`.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return true;
         }
@@ -320,7 +324,7 @@ async function handleVoiceMasterModal(interaction) {
             content: limit === 0
                 ? '👥 Your VC user limit has been removed.'
                 : `👥 Your VC user limit has been set to **${limit}**.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
 
         return true;
@@ -377,93 +381,90 @@ async function askForCategoryId(message) {
     return categoryId;
 }
 
-async function setupVoiceMaster(message) {
-    const guild = message.guild;
+const SMIRK = '<:smirk2:1498272372539785286>';
+
+async function createJoinChannel(client, guild, category, actorTag) {
     const me = guild.members.me;
+    if (!me) return { error: `Could not verify my permissions. ${SMIRK}` };
 
-    if (!me) {
-        return message.reply('Could not verify my permissions. <:smirk2:1498272372539785286>');
-    }
-
-    const botPerms = message.channel.permissionsFor(me);
-
-    if (!botPerms?.has(PermissionsBitField.Flags.ManageChannels)) {
-        return message.reply('I need **Manage Channels** permission to set up VoiceMaster. <:smirk2:1498272372539785286>');
-    }
-
-    const existingConfig = await getConfig(message.client, guild.id);
-
+    const existingConfig = await getConfig(client, guild.id);
     if (existingConfig.joinChannelId) {
-        const existingChannel = guild.channels.cache.get(existingConfig.joinChannelId);
+        const existingChannel = guild.channels.cache.get(existingConfig.joinChannelId)
+            ?? await guild.channels.fetch(existingConfig.joinChannelId).catch(() => null);
         if (existingChannel) {
-            return message.reply(
-                `VoiceMaster is already set up: ${existingChannel}. Use \`,lvc\`, \`,dvc\`, \`,kvc\`, \`,rmvc\`, or \`,unsetupvm\` to manage it. <:smirk2:1498272372539785286>`
-            );
+            return { error: `VoiceMaster is already set up: ${existingChannel}. Remove it first (\`/disable voicemaster\` or \`${currentPrefix()}unsetupvm\`) to move it. ${SMIRK}` };
         }
     }
 
-    const categoryId = await askForCategoryId(message);
-    if (!categoryId) return;
-
-    const category = guild.channels.cache.get(categoryId);
-
     if (!category || category.type !== ChannelType.GuildCategory) {
-        return message.reply('That is not a valid category ID.');
+        return { error: 'That is not a valid category.' };
     }
 
-    const categoryPerms = category.permissionsFor(me);
-
-    if (!categoryPerms?.has(PermissionsBitField.Flags.ManageChannels)) {
-        return message.reply('I need **Manage Channels** permission in that category. <:smirk2:1498272372539785286>');
+    if (!category.permissionsFor(me)?.has(PermissionsBitField.Flags.ManageChannels)) {
+        return { error: `I need **Manage Channels** permission in that category. ${SMIRK}` };
     }
 
     const joinChannel = await guild.channels.create({
         name: JOIN_TO_CREATE_NAME,
         type: ChannelType.GuildVoice,
         parent: category.id,
-        reason: `VoiceMaster setup by ${message.author.tag}`,
+        reason: `VoiceMaster setup by ${actorTag}`,
     });
 
-    await setConfig(message.client, guild.id, {
-        joinChannelId: joinChannel.id,
-        categoryId: category.id,
-    });
-
-    return message.reply(`VoiceMaster has been set up. Users can join ${joinChannel} to create a temporary VC.`);
+    await setConfig(client, guild.id, { joinChannelId: joinChannel.id, categoryId: category.id });
+    return { joinChannel };
 }
 
-async function unsetupVoiceMaster(message) {
-    const guild = message.guild;
-    const state = ensureState(message.client);
-    const config = await getConfig(message.client, guild.id);
+async function removeVoiceMaster(client, guild, actorTag) {
+    const state = ensureState(client);
+    const config = await getConfig(client, guild.id);
+    if (!config.joinChannelId) return false;
 
-    if (!config.joinChannelId) {
-        return message.reply('VoiceMaster is not currently set up on this server.');
-    }
-
+    const reason = `VoiceMaster unsetup by ${actorTag}`;
     const joinChannel = guild.channels.cache.get(config.joinChannelId)
         ?? await guild.channels.fetch(config.joinChannelId).catch(() => null);
+    if (joinChannel) await joinChannel.delete(reason).catch(() => null);
 
-    if (joinChannel) {
-        await joinChannel.delete(`VoiceMaster unsetup by ${message.author.tag}`).catch(() => null);
-    }
-
-    for (const [channelId, managed] of state.channels.entries()) {
+    for (const [channelId, managed] of [...state.channels.entries()]) {
         if (managed.guildId !== guild.id) continue;
-
-        const timer = state.ownerLeaveTimers.get(channelId);
-        if (timer) {
-            clearTimeout(timer);
-            state.ownerLeaveTimers.delete(channelId);
-        }
-
-        state.channels.delete(channelId);
+        await deleteManagedChannel(client, channelId, reason);
     }
 
     state.configs.delete(guild.id);
     await deleteConfig(guild.id);
+    return true;
+}
 
-    return message.reply('VoiceMaster has been unsetup and its configuration was deleted.');
+async function setupVoiceMaster(message) {
+    const me = message.guild.members.me;
+    if (!me) return message.reply(`Could not verify my permissions. ${SMIRK}`);
+
+    if (!message.channel.permissionsFor(me)?.has(PermissionsBitField.Flags.ManageChannels)) {
+        return message.reply(`I need **Manage Channels** permission to set up VoiceMaster. ${SMIRK}`);
+    }
+
+    const existingConfig = await getConfig(message.client, message.guild.id);
+    if (existingConfig.joinChannelId && message.guild.channels.cache.has(existingConfig.joinChannelId)) {
+        const P = currentPrefix();
+        return message.reply(
+            `VoiceMaster is already set up: <#${existingConfig.joinChannelId}>. Use \`${P}lvc\`, \`${P}dvc\`, \`${P}kvc\`, \`${P}rmvc\`, or \`${P}unsetupvm\` to manage it. ${SMIRK}`
+        );
+    }
+
+    const categoryId = await askForCategoryId(message);
+    if (!categoryId) return;
+
+    const result = await createJoinChannel(message.client, message.guild, message.guild.channels.cache.get(categoryId), message.author.tag);
+    if (result.error) return message.reply(result.error);
+
+    return message.reply(`VoiceMaster has been set up. Users can join ${result.joinChannel} to create a temporary VC.`);
+}
+
+async function unsetupVoiceMaster(message) {
+    const removed = await removeVoiceMaster(message.client, message.guild, message.author.tag);
+    return message.reply(removed
+        ? 'VoiceMaster has been unsetup, its temporary VCs were deleted, and its configuration was removed.'
+        : 'VoiceMaster is not currently set up on this server.');
 }
 
 async function createManagedChannelForMember(oldState, newState) {
@@ -534,6 +535,8 @@ async function createManagedChannelForMember(oldState, newState) {
         createdAt: Date.now(),
     });
 
+    const P = currentPrefix();
+
     try {
         await member.voice.setChannel(channel, '✅ VoiceMaster temporary VC created');
 
@@ -544,11 +547,11 @@ async function createManagedChannelForMember(oldState, newState) {
                     '**Control Panel:**\n' +
                     'Use the buttons below to manage your VC.\n\n' +
                     '**Commands still work too:**\n' +
-                    '` ,lvc ` - Lock/unlock your VC\n' +
-                    '` ,dvc ` - Delete your VC\n' +
-                    '` ,kvc @user ` - Kick someone from your VC\n' +
-                    '` ,sl [0/2-99] ` - Set user limit, or remove it with `,sl` / `,sl 0`\n' +
-                    '` ,rmvc new name ` - Rename your VC\n\n' +
+                    `\` ${P}lvc \` - Lock/unlock your VC\n` +
+                    `\` ${P}dvc \` - Delete your VC\n` +
+                    `\` ${P}kvc @user \` - Kick someone from your VC\n` +
+                    `\` ${P}sl [0/2-99] \` - Set user limit, or remove it with \`${P}sl\` / \`${P}sl 0\`\n` +
+                    `\` ${P}rmvc new name \` - Rename your VC\n\n` +
                     'Server staff with the **Manage Channels** can also use these controls.',
                 components: buildVoiceMasterPanel(channel.id),
                 allowedMentions: {
@@ -619,16 +622,41 @@ function scheduleOwnerLeaveCheck(client, channelId, managed) {
             return;
         }
 
-        const ownerStillInside = latest.members?.has(managed.ownerId);
+        state.ownerLeaveTimers.delete(channelId);
+        const current = state.channels.get(channelId) ?? managed;
+        if (latest.members?.has(current.ownerId)) return;
 
-        if (!ownerStillInside) {
-            await deleteManagedChannel(client, channelId, 'VoiceMaster owner left for more than 5 minutes');
-        } else {
-            state.ownerLeaveTimers.delete(channelId);
+        const heir = latest.members?.find(member => !member.user.bot);
+        if (heir) {
+            await transferOwnership(client, latest, current, heir).catch((error) => {
+                console.error('VoiceMaster ownership transfer failed:', error);
+            });
+            return;
         }
+
+        await deleteManagedChannel(client, channelId, 'VoiceMaster owner left for more than 5 minutes');
     }, OWNER_GRACE_MS);
 
     state.ownerLeaveTimers.set(channelId, timer);
+}
+
+const OWNER_PERMISSIONS = { Connect: true, ViewChannel: true, ManageChannels: true, MoveMembers: true };
+
+async function transferOwnership(client, channel, managed, newOwner) {
+    const state = ensureState(client);
+    const previousOwnerId = managed.ownerId;
+
+    state.channels.set(channel.id, { ...managed, ownerId: newOwner.id });
+
+    await channel.permissionOverwrites.edit(newOwner.id, OWNER_PERMISSIONS, { reason: 'VoiceMaster owner left, transferring ownership' });
+    await channel.permissionOverwrites.delete(previousOwnerId, 'VoiceMaster ownership transferred').catch(() => null);
+
+    if (channel.isTextBased?.()) {
+        await channel.send({
+            content: `👑 <@${previousOwnerId}> has been gone for a while, so ${newOwner} now owns this VC and can use the control panel.`,
+            allowedMentions: { users: [newOwner.id] },
+        }).catch(() => null);
+    }
 }
 
 async function restoreManagedChannels(client) {
@@ -697,6 +725,8 @@ async function handleVoiceStateUpdate(oldState, newState) {
 module.exports = {
     setupVoiceMaster,
     unsetupVoiceMaster,
+    createJoinChannel,
+    removeVoiceMaster,
     getManagedChannel,
     isManagedChannel,
     isVoiceMasterOrStaff,

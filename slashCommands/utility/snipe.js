@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
 module.exports = {
@@ -24,7 +25,7 @@ module.exports = {
         if (!snipes || snipes.length === 0) {
             return interaction.reply({
                 content: 'No message has been deleted recently in this channel.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -33,7 +34,7 @@ module.exports = {
         if (index < 1 || index > snipes.length) {
             return interaction.reply({
                 content: `Invalid snipe index. Please use a number between 1 and ${snipes.length}.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

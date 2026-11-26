@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
@@ -18,13 +19,13 @@ module.exports = {
         const targetMember = message.mentions.members.first();
 
         if (!targetMember) {
-            return message.reply(`Usage: \`${process.env.PREFIX || ','}role [user] [role]\``);
+            return message.reply(`Usage: \`${currentPrefix() || ','}role [user] [role]\``);
         }
 
         const roleInput = args.slice(1).join(' ');
 
         if (!roleInput) {
-            return message.reply(`Usage: \`${process.env.PREFIX || ','}role [user] [role]\``);
+            return message.reply(`Usage: \`${currentPrefix() || ','}role [user] [role]\``);
         }
 
         const roleId = roleInput.replace(/[<@&>]/g, '');

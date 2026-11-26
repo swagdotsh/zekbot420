@@ -1,9 +1,12 @@
+const { currentPrefix } = require('../../prefix');
 const fs = require('fs/promises');
 const path = require('path');
 const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { logWarn } = require('../../log');
+const { updateJson } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(DATA_DIR, String(guildId));
@@ -17,22 +20,7 @@ async function ensureGuildDirExists(guildId) {
     await fs.mkdir(guildDir(guildId), { recursive: true });
 }
 
-async function readWarns(guildId) {
-    try {
-        await ensureGuildDirExists(guildId);
-        const raw = await fs.readFile(warnsPath(guildId), 'utf8').catch(() => '');
-        if (!raw.trim()) return {};
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch {
-        return {};
-    }
-}
 
-async function writeWarns(guildId, data) {
-    await ensureGuildDirExists(guildId);
-    await fs.writeFile(warnsPath(guildId), JSON.stringify(data, null, 2), 'utf8');
-}
 
 module.exports = {
     name: 'warn',
@@ -45,7 +33,7 @@ module.exports = {
         }
 
         const target = message.mentions.members.first();
-        if (!target) return message.reply('Mention a user to warn. Example: `,warn @user spamming`');
+        if (!target) return message.reply(`Mention a user to warn. Example: \`${currentPrefix()}warn @user spamming\``);
 
         if (target.id === message.author.id) {
             return message.reply("You can't warn yourself.");
@@ -56,7 +44,6 @@ module.exports = {
         const guildId = message.guild.id;
         const userId = target.id;
 
-        const store = await readWarns(guildId);
         const entry = {
             moderatorId: message.author.id,
             moderatorTag: message.author.tag,
@@ -64,10 +51,11 @@ module.exports = {
             timestamp: Date.now(),
         };
 
-        if (!store[userId]) store[userId] = [];
-        store[userId].push(entry);
-
-        await writeWarns(guildId, store);
+        await ensureGuildDirExists(guildId);
+        const store = await updateJson(warnsPath(guildId), {}, (current) => {
+            if (!Array.isArray(current[userId])) current[userId] = [];
+            current[userId].push(entry);
+        });
 
         const warnCount = store[userId].length;
 

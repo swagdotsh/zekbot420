@@ -2,6 +2,7 @@ const {
     AutoModerationActionType,
     AutoModerationRuleEventType,
     AutoModerationRuleTriggerType,
+    MessageFlags
 } = require('discord.js');
 
 const SPAM_RULE_NAME = 'zekbot420 AutoMod Spam';
@@ -25,7 +26,7 @@ module.exports = {
 
     async execute(interaction) {
         const enabled = interaction.options.getString('enable', true) === 'yes';
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         try {
             const rules = await interaction.guild.autoModerationRules.fetch();

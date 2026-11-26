@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../prefix');
 const { PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
@@ -27,7 +28,7 @@ module.exports = {
             const messageId = args[0];
 
             if (!messageId) {
-                return message.reply(`Usage: \`${process.env.PREFIX || ','}removeallreacts [message ID]\` or reply to a message with \`${process.env.PREFIX || ','}removeallreacts\`.`);
+                return message.reply(`Usage: \`${currentPrefix() || ','}removeallreacts [message ID]\` or reply to a message with \`${currentPrefix() || ','}removeallreacts\`.`);
             }
 
             try {

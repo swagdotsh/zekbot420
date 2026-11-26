@@ -2,10 +2,11 @@ const axios = require('axios');
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
-const LIBRE_URL = 'https://translate.cutie.dating';
+const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
 const API_KEY = process.env.LIBRETRANSLATE_KEY;
 
 const POSSIBLE_LANGS = ['af','ar','az','bg','bn','ca','cs','cy','da','de','el','en','eo','es','et','fa','fi','fr','ga','gl','gu','he','hi','hr','ht','hu','id','it','ja','ka','kn','ko','lt','lv','mk','ml','mr','ms','mt','nl','no','pl','pt','ro','ru','sk','sl','sq','sr','sv','sw','ta','te','tg','th','tl','tr','uk','ur','uz','vi','zh'];
@@ -26,6 +27,7 @@ function splitText(text) {
 }
 
 module.exports = {
+    cooldown: 8,
     data: new SlashCommandBuilder()
         .setName('badtranslate')
         .setDescription('Badly translate text word-by-word')
@@ -62,21 +64,21 @@ module.exports = {
         if (!text) {
             return interaction.reply({
                 content: 'No text to mangle.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!POSSIBLE_LANGS.includes(source)) {
             return interaction.reply({
                 content: `Invalid source language code: \`${source}\``,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!POSSIBLE_LANGS.includes(target)) {
             return interaction.reply({
                 content: `Invalid destination language code: \`${target}\``,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -84,7 +86,7 @@ module.exports = {
         if (words.length > 30) {
             return interaction.reply({
                 content: 'Keep it under 30 words please!',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 

@@ -1,7 +1,7 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
-const { neon } = require("@neondatabase/serverless")
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 const PERIOD_MAP = {
     week: '7day',
@@ -44,7 +44,7 @@ module.exports = {
 
         if (!username) {
             return message.reply(
-                'Provide a Last.fm username or link yours first. e.g. `,toptracks username week` or `,top week`'
+                `Provide a last.fm username or link yours first. e.g. \`${currentPrefix()}toptracks username week\` or \`${currentPrefix()}top week\``
             );
         }
 
@@ -88,7 +88,7 @@ module.exports = {
                 author: { name: '📈 Top Tracks' },
                 title: `${username} • ${prettyPeriod}`,
                 description: lines.join('\n'),
-                footer: { text: 'Last.fm' }
+                footer: { text: 'last.fm' }
             };
 
             return message.reply({ embeds: [embed] });

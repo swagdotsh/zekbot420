@@ -1,13 +1,15 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../../paths');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 
 function guildDir(guildId) {
     return path.join(DATA_DIR, String(guildId));
@@ -61,21 +63,21 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'Could not find that user.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === interaction.user.id) {
             return interaction.reply({
                 content: "You can't reaction mute yourself.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === guild.ownerId) {
             return interaction.reply({
                 content: "You can't reaction mute the server owner.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -84,14 +86,14 @@ module.exports = {
         if (!me) {
             return interaction.reply({
                 content: 'I could not verify my own permissions. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
                 content: 'I need the **Manage Roles** permission to reaction mute members. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -99,8 +101,8 @@ module.exports = {
 
         if (!config?.roleId) {
             return interaction.reply({
-                content: 'Reaction mute has not been set up yet. Run `/rmsetup` first.',
-                ephemeral: true
+                content: 'Reaction mute has not been set up yet. Run `/setup reactionmute` first.',
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -108,15 +110,15 @@ module.exports = {
 
         if (!role) {
             return interaction.reply({
-                content: 'The reaction mute role could not be found. Run `/rmsetup` again.',
-                ephemeral: true
+                content: 'The reaction mute role could not be found. Run `/setup reactionmute` again.',
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.roles.cache.has(role.id)) {
             return interaction.reply({
                 content: `${target.user.tag} is already reaction muted.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -126,21 +128,21 @@ module.exports = {
         ) {
             return interaction.reply({
                 content: "You can't reaction mute a member with the same or higher role than you.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (role.position >= me.roles.highest.position) {
             return interaction.reply({
                 content: 'I cannot assign the reaction mute role because it is higher than or equal to my highest role.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.roles.highest.position >= me.roles.highest.position) {
             return interaction.reply({
                 content: 'I cannot reaction mute that member because their top role is higher than or equal to my highest role.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -168,7 +170,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'There was an error applying the reaction mute.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

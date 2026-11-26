@@ -1,9 +1,8 @@
 const axios = require('axios');
 const { SlashCommandBuilder } = require('discord.js');
-const { neon } = require("@neondatabase/serverless")
 const sharp = require('sharp');
 
-const sql = neon(process.env.NEON_DATABASE_URL)
+const { sql } = require('../../db');
 
 async function getCoverArtColor(albumArt) {
     if (!albumArt) return 0xd51007;
@@ -54,11 +53,11 @@ function consecutivePlayStreak(tracks) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('nowplaying')
-        .setDescription('Show your current or most recently played track (Last.fm)')
+        .setDescription('Show your current or most recently played track (last.fm)')
         .addStringOption((opt) =>
             opt
                 .setName('username')
-                .setDescription('Last.fm username (optional if linked)')
+                .setDescription('last.fm username (optional if linked)')
                 .setRequired(false)
         )
         .setIntegrationTypes(0, 1)
@@ -75,7 +74,7 @@ module.exports = {
         }
 
         if (!username) {
-            return interaction.editReply('Provide a Last.fm username or link your account with `/linklastfm`.');
+            return interaction.editReply('Provide a last.fm username or link your account with `/fm connect`.');
         }
 
         const apiKey = process.env.LASTFM_API_KEY;
@@ -149,13 +148,13 @@ module.exports = {
                 url: trackUrl || undefined,
                 description: artist ? `**${artist}**${album ? ` • *${album}*` : ''}` : undefined,
                 thumbnail: albumArt ? { url: albumArt } : undefined,
-                footer: { text: footerParts.join(' • ') || 'Last.fm' }
+                footer: { text: footerParts.join(' • ') || 'last.fm' }
             };
 
             return interaction.editReply({ embeds: [embed] });
         } catch (e) {
             console.log(e.response?.data || e.message);
-            return interaction.editReply("Couldn't find that Last.fm user. Double-check the username!");
+            return interaction.editReply("Couldn't find that last.fm user. Double-check the username!");
         }
     }
 };

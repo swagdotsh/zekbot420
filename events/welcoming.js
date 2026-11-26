@@ -1,32 +1,48 @@
-const { EmbedBuilder } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
+const { PermissionFlagsBits } = require('discord.js');
+const { getMessageConfig, buildMemberMessage } = require('../welcomeStore');
+
+async function sendMemberMessage(guild, member, kind) {
+    const config = await getMessageConfig(guild.id, kind);
+    if (!config.channelId) return;
+
+    const channel = guild.channels.cache.get(config.channelId);
+    if (!channel?.isTextBased()) return;
+
+    const perms = channel.permissionsFor(guild.members.me);
+    if (!perms?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) return;
+
+    const payload = buildMemberMessage(member, config);
+    if (!payload.content && !payload.embeds.length) return;
+
+    if (kind === 'goodbye') payload.allowedMentions = { parse: [] };
+    await channel.send(payload);
+}
 
 module.exports = (client) => {
     client.on('guildMemberAdd', (member) => {
-        try {
-            const configPath = path.join(__dirname, '../data', member.guild.id, 'welcomeConfig.json');
-            if (!fs.existsSync(configPath)) return;
+        sendMemberMessage(member.guild, member, 'welcome').catch((err) => {
+            console.error('[welcoming] failed to send welcome:', err);
+        });
+    });
 
-            const { channelId } = JSON.parse(fs.readFileSync(configPath));
-            if (!channelId) return;
+    client.ws.on('GUILD_MEMBER_REMOVE', (data) => {
+        const guild = client.guilds.cache.get(data.guild_id);
+        if (!guild || !data.user || data.user.bot) return;
 
-            const channel = member.guild.channels.cache.get(channelId);
-            if (!channel) return;
+        const cached = guild.members.cache.get(data.user.id);
+        const user = client.users._add(data.user, false);
+        const member = {
+            id: user.id,
+            user,
+            guild,
+            displayName: cached?.displayName ?? user.globalName ?? user.username,
+            toString: () => `<@${user.id}>`,
+        };
 
-            const embed = new EmbedBuilder()
-                .setColor('#00ff88')
-                .setTitle(`Welcome ${member.user.username}!`)
-                .setDescription('Enjoy your stay!')
-                .setThumbnail(member.user.displayAvatarURL())
-                .setAuthor({ name: member.guild.name, iconURL: member.guild.iconURL() })
-                .setFooter({ text: `${member.guild.name} is now at ${member.guild.memberCount} members.` });
-
-            channel.send({ content: `Welcome ${member}!`, embeds: [embed] }).catch((err) => {
-                console.error('[welcoming] failed to send welcome:', err);
+        setImmediate(() => {
+            sendMemberMessage(guild, member, 'goodbye').catch((err) => {
+                console.error('[welcoming] failed to send goodbye:', err);
             });
-        } catch (err) {
-            console.error('[welcoming]', err);
-        }
+        });
     });
 };

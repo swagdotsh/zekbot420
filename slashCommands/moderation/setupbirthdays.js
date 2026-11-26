@@ -1,13 +1,17 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { writeJsonAtomic } = require('../../jsonStore');
+const { DATA_DIR: PROJECT_DATA_DIR } = require('../../paths');
 const {
     ChannelType,
     PermissionFlagsBits,
     SlashCommandBuilder,
     InteractionContextType,
+    MessageFlags
 } = require('discord.js');
+const { ok, fail } = require('../../ui');
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = PROJECT_DATA_DIR;
 const CONFIG_PATH = path.join(DATA_DIR, 'birthdayConfig.json');
 
 async function ensureConfigFile() {
@@ -16,7 +20,7 @@ async function ensureConfigFile() {
     try {
         await fs.access(CONFIG_PATH);
     } catch {
-        await fs.writeFile(CONFIG_PATH, JSON.stringify({}, null, 2), 'utf8');
+        await writeJsonAtomic(CONFIG_PATH, {});
     }
 }
 
@@ -33,7 +37,7 @@ async function loadConfig() {
 
 async function saveConfig(config) {
     await ensureConfigFile();
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
+    await writeJsonAtomic(CONFIG_PATH, config);
 }
 
 module.exports = {
@@ -55,7 +59,7 @@ module.exports = {
         ) {
             return interaction.reply({
                 content: 'You need the `Manage Server` and `Manage Roles` permissions to use this command. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -64,19 +68,19 @@ module.exports = {
         if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
             return interaction.reply({
                 content: 'I need the `Manage Roles` permission to create and give out the birthday role. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!botMember.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: 'I need the `Manage Channels` permission to create the birthday announcement channel. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         await interaction.deferReply({
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
 
         const config = await loadConfig();
@@ -84,7 +88,7 @@ module.exports = {
 
         if (existingGuildConfig.roleId || existingGuildConfig.channelId) {
             return interaction.editReply(
-                'Birthday system is already configured. Use `/setbirthday`, `/birthdays`, or `/removebirthday` to manage it. <:smirk2:1498272372539785286>'
+                'Birthday system is already configured. Members can use `/birthday set`, `/birthday list` and `/birthday remove`. <:smirk2:1498272372539785286>'
             );
         }
 
@@ -131,7 +135,7 @@ module.exports = {
         await saveConfig(config);
 
         return interaction.editReply(
-            `✅ Birthday system setup complete!\n` +
+            ok('Birthday system is set up!\n') +
             `Birthday role: ${birthdayRole}\n` +
             `Birthday announcement channel: ${birthdayChannel}`
         );

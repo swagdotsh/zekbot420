@@ -1,6 +1,7 @@
+const { currentPrefix } = require('../../prefix');
 const axios = require('axios');
 
-const LIBRE_URL = 'https://translate.cutie.dating';
+const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
 const API_KEY = process.env.LIBRETRANSLATE_KEY;
 
 const POSSIBLE_LANGS = ['af','ar','az','bg','bn','ca','cs','cy','da','de','el','en','eo','es','et','fa','fi','fr','ga','gl','gu','he','hi','hr','ht','hu','id','it','ja','ka','kn','ko','lt','lv','mk','ml','mr','ms','mt','nl','no','pl','pt','ro','ru','sk','sl','sq','sr','sv','sw','ta','te','tg','th','tl','tr','uk','ur','uz','vi','zh'];
@@ -31,6 +32,7 @@ function splitText(text) {
 
 module.exports = {
     name: 'badtranslate',
+    cooldown: 8,
     aliases: ['bt'],
     async execute(message, args) {
         const reply = message.reference
@@ -57,7 +59,7 @@ module.exports = {
         } else if (!reply && args.length >= 1) {
             text = args.join(' ');
         } else {
-            return message.reply('Usage:\n`,badtranslate [text]`\n`,badtranslate [source] [dest] [text]`\n`,badtranslate` (reply)\n`,badtranslate [dest]` (reply)\n`,badtranslate [source] [dest]` (reply)');
+            return message.reply(`Usage:\n\`${currentPrefix()}badtranslate [text]\`\n\`${currentPrefix()}badtranslate [source] [dest] [text]\`\n\`${currentPrefix()}badtranslate\` (reply)\n\`${currentPrefix()}badtranslate [dest]\` (reply)\n\`${currentPrefix()}badtranslate [source] [dest]\` (reply)`);
         }
 
         if (!text) return message.reply('No text to badly translate. <:smirk2:1498272372539785286>');

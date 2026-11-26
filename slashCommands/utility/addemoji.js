@@ -3,10 +3,12 @@ const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 const ffmpegPath = require('ffmpeg-static');
+const { fetchLimited } = require('../../safeFetch');
 const {
     AttachmentBuilder,
     PermissionFlagsBits,
     SlashCommandBuilder,
+    MessageFlags
 } = require('discord.js');
 
 const MAX_EMOJI_SIZE = 256 * 1024;
@@ -41,23 +43,7 @@ function getExtensionFromUrl(url) {
 }
 
 async function downloadFile(url, outputPath) {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error(`Failed to download file. HTTP ${response.status}`);
-    }
-
-    const contentLength = Number(response.headers.get('content-length') || 0);
-    if (contentLength > MAX_DOWNLOAD_SIZE) {
-        throw new Error('That file is too large to download.');
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    if (buffer.length > MAX_DOWNLOAD_SIZE) {
-        throw new Error('That file is too large to download.');
-    }
+    const buffer = await fetchLimited(url, { maxBytes: MAX_DOWNLOAD_SIZE });
 
     await fs.writeFile(outputPath, buffer);
 }
@@ -121,6 +107,7 @@ async function compressAnimatedEmoji(inputPath, outputPath) {
 }
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('addemoji')
         .setDescription('Add an emoji to the server from a link or attachment')
@@ -147,21 +134,21 @@ module.exports = {
         if (!interaction.guild) {
             return interaction.reply({
                 content: 'This command can only be used in a server.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions)) {
             return interaction.reply({
                 content: 'You need the **Create Expressions** or **Manage Expressions** permission to use this. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
         if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageGuildExpressions)) {
             return interaction.reply({
                 content: 'I need the **Create Expressions** or **Manage Expressions** permission to add emojis. <:smirk2:1498272372539785286>',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -172,7 +159,7 @@ module.exports = {
         if (!isValidEmojiName(emojiName)) {
             return interaction.reply({
                 content: 'Emoji names must be 2-32 characters and can only contain letters, numbers, and underscores.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 
@@ -181,7 +168,7 @@ module.exports = {
         if (!fileUrl || !isImageUrl(fileUrl)) {
             return interaction.reply({
                 content: 'Please provide a valid image/gif URL or attach a file.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
 

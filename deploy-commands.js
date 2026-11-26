@@ -1,6 +1,6 @@
 const fs = require('fs');
-const path = require('path');
 const {REST, Routes} = require('discord.js');
+const {loadSlashCommands, SLASH_DIR} = require('./slashLoader');
 
 require('dotenv').config();
 
@@ -11,30 +11,13 @@ if (missingDeployConfig.length) {
     throw new Error(`Missing required environment variable(s): ${missingDeployConfig.join(', ')}`);
 }
 
-function readSlashCommandFiles(dir) {
-    const out = [];
-    for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) out.push(...readSlashCommandFiles(full));
-        else if (entry.isFile() && entry.name.endsWith('.js') && !entry.name.startsWith('_')) out.push(full); // ignore helpr files
-    }
-    return out;
-}
-
 async function main() {
-    const slashDir = path.join(__dirname, 'slashCommands');
-    if (!fs.existsSync(slashDir)) {
+    if (!fs.existsSync(SLASH_DIR)) {
         console.error('Missing /slashCommands folder. Create it and add at least one slash command.');
         process.exit(1);
     }
 
-    const files = readSlashCommandFiles(slashDir);
-
-    const commands = files.map((file) => {
-        const cmd = require(file);
-        if (!cmd?.data?.toJSON) throw new Error("Slash command missing \"data\" (SlashCommandBuilder) in: "+file);
-        return cmd.data.toJSON();
-    });
+    const commands = loadSlashCommands().map((cmd) => cmd.data.toJSON());
 
     const rest = new REST({version: '10'}).setToken(process.env.TOKEN);
 
@@ -52,6 +35,13 @@ async function main() {
     );
 
     await rest.put(route, {body: commands});
+
+    if (!useGuild && process.env.GUILD_ID) {
+        await rest.put(Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, process.env.GUILD_ID), {body: []});
+        console.log(`Removed the copies registered to guild ${process.env.GUILD_ID}, so commands don't show up twice there.`);
+    } else if (useGuild) {
+        console.log('If this bot also has global commands, they show up twice in this server. Run with --global to use global commands only.');
+    }
     console.log('Done.');
 }
 

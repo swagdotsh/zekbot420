@@ -1,3 +1,4 @@
+const { currentPrefix } = require('../../../prefix');
 const {
     ChannelType,
     PermissionFlagsBits,
@@ -25,7 +26,7 @@ module.exports = {
 
         if (!args.length) {
             return message.reply(
-                `Usage: \`${process.env.PREFIX || ','}channel [channel-name] [optional category ID] [optional role mention/id/name]\``
+                `Usage: \`${currentPrefix() || ','}channel [channel-name] [optional category ID] [optional role mention/id/name]\``
             );
         }
 

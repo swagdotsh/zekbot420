@@ -1,14 +1,14 @@
-const { neon } = require('@neondatabase/serverless');
 const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    InteractionContextType
+    InteractionContextType,
+    MessageFlags
 } = require('discord.js');
 
-const sql = neon(process.env.NEON_DATABASE_URL);
+const { sql } = require('../../db');
 
 function disabledGiveawayButton(id) {
     return new ActionRowBuilder().addComponents(
@@ -37,7 +37,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.reply({
                 content: 'You need mod permissions to delete a giveaway. <:smirk2:1498272372539785286>',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -50,14 +50,14 @@ module.exports = {
         if (!giveaway) {
             return interaction.reply({
                 content: `No giveaway found with ID **${id}**.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (giveaway.ended) {
             return interaction.reply({
                 content: 'That giveaway has already ended.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -82,8 +82,7 @@ module.exports = {
         }
 
         return interaction.reply({
-            content: `Giveaway **${giveaway.title}** has been deleted. No winner was picked.`,
-            ephemeral: false
+            content: `Giveaway **${giveaway.title}** has been deleted. No winner was picked.`
         });
     }
 };

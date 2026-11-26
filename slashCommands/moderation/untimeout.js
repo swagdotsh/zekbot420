@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const { logUntimeout } = require('../../log');
 
@@ -26,21 +27,21 @@ module.exports = {
         if (!target) {
             return interaction.reply({
                 content: 'User not found in this server.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (target.id === interaction.user.id) {
             return interaction.reply({
                 content: "You can't untimeout yourself.",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (!target.communicationDisabledUntil) {
             return interaction.reply({
                 content: `**${target.user.tag}** is not currently timed out.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -70,7 +71,7 @@ module.exports = {
 
             return interaction.reply({
                 content: 'There was an error removing the timeout.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }
