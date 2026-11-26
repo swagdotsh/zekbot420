@@ -20,7 +20,8 @@ const IMPACT_LABELS = {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('status')
-        .setDescription('Check zekbot420 service status'),
+        .setDescription('Check zekbot420 service status')
+        .setContexts(0, 1),
 
     async execute(interaction) {
         await interaction.deferReply();

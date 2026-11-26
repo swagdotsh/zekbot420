@@ -1474,7 +1474,7 @@ Show information about zekbot420
 
 Check the bot latency
 
-<sub>Works in servers and DMs with the bot</sub>
+<sub>Works anywhere, including DMs and servers without the bot</sub>
 
 #### `/bot status`
 

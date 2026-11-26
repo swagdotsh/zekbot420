@@ -3,7 +3,8 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('uptime')
-        .setDescription('Show how long zekbot420 has been online'),
+        .setDescription('Show how long zekbot420 has been online')
+        .setContexts(0, 1),
 
     execute(interaction) {
         const uptime = formatUptime(process.uptime());

@@ -3,7 +3,9 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('Check the bot latency'),
+        .setDescription('Check the bot latency')
+        .setIntegrationTypes(0, 1)
+        .setContexts(0, 1, 2),
 
     async execute(interaction) {
         const sentAt = Date.now();
