@@ -86,7 +86,7 @@ function buildEmbed(profile) {
         .setFooter({ text: 'Roblox' });
 
     if (profile.groups.length) {
-        const list = profile.groups.slice(0, 5).map((g) => `[${g.group.name}](https://www.roblox.com/groups/${g.group.id}) · ${g.role.name}`);
+        const list = profile.groups.slice(0, 5).map((g) => `[${g.group.name}](https://www.roblox.com/groups/${g.group.id}) - ${g.role.name}`);
         if (profile.groups.length > 5) list.push(`…and ${profile.groups.length - 5} more`);
         embed.addFields({ name: `Groups (${profile.groups.length})`, value: list.join('\n').slice(0, 1024) });
     }

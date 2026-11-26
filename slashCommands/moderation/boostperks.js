@@ -144,7 +144,7 @@ async function list(interaction) {
     const embed = new EmbedBuilder()
         .setColor(0xf47fff)
         .setTitle('💎 Booster perks')
-        .setDescription(`${guild.premiumSubscriptionCount ?? 0} boosts · level ${guild.premiumTier}${boosterRole ? ` · ${boosterRole}` : ''}`)
+        .setDescription(`${guild.premiumSubscriptionCount ?? 0} boosts - level ${guild.premiumTier}${boosterRole ? ` - ${boosterRole}` : ''}`)
         .addFields(
             { name: 'Perk roles', value: roles.join('\n') || '*None. Add one with `/boostperks role add`.*', inline: true },
             { name: 'Booster-only channels', value: channels.join('\n') || '*None. Add one with `/boostperks channel add`.*', inline: true },

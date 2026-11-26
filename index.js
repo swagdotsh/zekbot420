@@ -92,6 +92,8 @@ const client = new Client({
     ws: gatewayPlatformOptions(),
 });
 
+let dashboardServer = null;
+
 client.commands = new Collection();
 client.slashCommands = new Collection();
 client.snipes = new Map();
@@ -297,6 +299,8 @@ client.once('clientReady', async () => {
     startBumpReminderLoop(client);
     startVcBanLoop();
     syncPerks(client).catch((error) => console.error('Failed to sync booster perks:', error));
+    require('./settings').setClient(client);
+    if (process.env.DASHBOARD_PORT) dashboardServer = require('./dashboard/server').start(client);
     await initDB();
     await initJailDB();
     await initStickyRoleDB();
@@ -603,6 +607,7 @@ async function shutdown(signal) {
     try {
         await flushXp();
         require('./esmbotMedia').shutdownWorker();
+        dashboardServer?.close();
     } catch (error) {
         console.error('Failed to save XP during shutdown:', error);
     }

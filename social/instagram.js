@@ -65,7 +65,7 @@ async function profile(input) {
         const lines = posts.slice(0, 3).map((post) => {
             const caption = post.edge_media_to_caption?.edges?.[0]?.node?.text?.replace(/\s+/g, ' ').trim();
             const when = post.taken_at_timestamp ? ` <t:${post.taken_at_timestamp}:R>` : '';
-            const likes = post.edge_liked_by?.count != null && !post.like_and_view_counts_disabled ? ` · ❤️ ${count(post.edge_liked_by.count)}` : '';
+            const likes = post.edge_liked_by?.count != null && !post.like_and_view_counts_disabled ? ` - ❤️ ${count(post.edge_liked_by.count)}` : '';
             return `[${post.is_video ? '🎬' : '📷'} ${clip(caption, 70) || 'Post'}](https://www.instagram.com/p/${post.shortcode}/)${when}${likes}`;
         });
         embed.addFields({ name: 'Latest posts', value: lines.join('\n') });

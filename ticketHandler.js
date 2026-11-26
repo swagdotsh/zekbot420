@@ -297,7 +297,7 @@ async function buildTranscript(channel, number) {
         filename,
         poweredBy: false,
         hydrate: true,
-        footerText: `Ticket ${ticketName(number)} · {number} message{s}`,
+        footerText: `Ticket ${ticketName(number)} - {number} message{s}`,
     };
 
     try {

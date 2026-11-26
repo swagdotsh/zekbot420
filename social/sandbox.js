@@ -72,7 +72,7 @@ function badgeText(badges = {}) {
 
 function postLine(post) {
     const text = clip(absoluteLinks(post.content).replace(/\s+/g, ' ').trim(), 80) || (post.files?.length ? '📷 Media' : 'Post');
-    return `[${text.replace(/[[\]]/g, '')}](${post.url}) <t:${ts(post.createdAt)}:R> · ❤️ ${count(post.counts?.likes)}`;
+    return `[${text.replace(/[[\]]/g, '')}](${post.url}) <t:${ts(post.createdAt)}:R> - ❤️ ${count(post.counts?.likes)}`;
 }
 
 async function profile(input) {
@@ -104,7 +104,7 @@ async function profile(input) {
     ];
     if (user.pronouns) fields.push({ name: 'Pronouns', value: clip(user.pronouns, 40), inline: true });
     const links = (user.links ?? []).filter((l) => /^https?:\/\//.test(l.url)).slice(0, 5);
-    if (links.length) fields.push({ name: 'Links', value: links.map((l) => `[${clip(l.label || l.url, 40).replace(/[[\]]/g, '')}](${l.url})`).join(' · ') });
+    if (links.length) fields.push({ name: 'Links', value: links.map((l) => `[${clip(l.label || l.url, 40).replace(/[[\]]/g, '')}](${l.url})`).join(' - ') });
 
     const posts = await request(`/users/${encodeURIComponent(user.username)}/posts?limit=3`).catch(() => null);
     if (posts?.data?.length) fields.push({ name: 'Latest posts', value: clip(posts.data.map(postLine).join('\n'), 1024) });
@@ -151,7 +151,7 @@ async function post(input) {
     const image = (data.files ?? []).find((f) => f.kind === 'image' && !f.spoiler);
     if (image) embed.setImage(image.url);
     const others = (data.files ?? []).filter((f) => f !== image);
-    if (others.length) embed.addFields({ name: 'Attachments', value: others.slice(0, 5).map((f, i) => `[${f.spoiler ? '⚠️ spoiler ' : ''}${f.kind} ${i + 1}](${f.url})`).join(' · ') });
+    if (others.length) embed.addFields({ name: 'Attachments', value: others.slice(0, 5).map((f, i) => `[${f.spoiler ? '⚠️ spoiler ' : ''}${f.kind} ${i + 1}](${f.url})`).join(' - ') });
 
     embed.setFooter({
         text: [
@@ -160,7 +160,7 @@ async function post(input) {
             `💬 ${count(data.counts?.replies)}`,
             `🔁 ${count(data.counts?.reposts)}`,
             data.editedAt ? 'edited' : null,
-        ].filter(Boolean).join(' · '),
+        ].filter(Boolean).join(' - '),
     });
 
     return { embeds: [embed], components: [linkRow(data.url, 'View post')] };

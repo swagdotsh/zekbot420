@@ -121,12 +121,12 @@ function createLeague(sport, league) {
             text: p.text,
         }));
 
-        // { teamAbbr, passingYards: 'Name · 21/35, 258 YDS', rushingYards, receivingYards }
+        // { teamAbbr, passingYards: 'Name - 21/35, 258 YDS', rushingYards, receivingYards }
         const leaders = (data.leaders ?? []).map(t => {
             const entry = { teamAbbr: t.team.abbreviation };
             for (const cat of t.leaders ?? []) {
                 const top = cat.leaders?.[0];
-                if (top) entry[cat.name] = `${top.athlete.displayName} · ${top.displayValue}`;
+                if (top) entry[cat.name] = `${top.athlete.displayName} - ${top.displayValue}`;
             }
             return entry;
         });

@@ -119,7 +119,7 @@ async function runList(interaction) {
         .setDescription(entries.length ? null : '*None yet. Post a panel with `/reactionrole post` or add one to any message with `/reactionrole add`.*');
 
     for (const [messageId, entry] of entries.slice(0, 25)) {
-        const roles = Object.values(entry.roles).map((r) => `${r.emoji} <@&${r.roleId}>`).join(' · ') || '*no roles yet*';
+        const roles = Object.values(entry.roles).map((r) => `${r.emoji} <@&${r.roleId}>`).join(' - ') || '*no roles yet*';
         embed.addFields({
             name: `${entry.panel ? entry.panel.title : 'Message'} in #${interaction.guild.channels.cache.get(entry.channelId)?.name ?? 'deleted-channel'}${entry.unique ? ' (one at a time)' : ''}`.slice(0, 256),
             value: `${roles}\n[Jump to message](${linkTo(interaction.guild.id, entry, messageId)})`.slice(0, 1024),

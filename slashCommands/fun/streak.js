@@ -25,7 +25,7 @@ module.exports = {
                 .setColor(0xff7a00)
                 .setTitle(`🔥 Streak leaderboard`)
                 .setDescription(rows.length
-                    ? rows.map((r, i) => `${medals[i] ?? `**${i + 1}.**`} <@${r.userId}> · **${r.count}** day${r.count === 1 ? '' : 's'} (best ${r.best})`).join('\n')
+                    ? rows.map((r, i) => `${medals[i] ?? `**${i + 1}.**`} <@${r.userId}> - **${r.count}** day${r.count === 1 ? '' : 's'} (best ${r.best})`).join('\n')
                     : '*Nobody has a streak going yet. Send a message to start one!*')
                 .setFooter({ text: 'Send at least one message a day to keep your streak.' });
             return interaction.reply({ embeds: [embed], allowedMentions: { parse: [] } });

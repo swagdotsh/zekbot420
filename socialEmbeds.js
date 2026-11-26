@@ -214,12 +214,12 @@ async function downloadMedia(post, guild) {
 function buildContent(post, skipped) {
     const icon = post.platform === 'X' ? EMOJI.x : EMOJI.instagram;
     const who = post.handle && post.author !== post.handle ? `**${post.author}** (@${post.handle})` : `**@${post.handle ?? 'unknown'}**`;
-    const header = `${icon} ${who} · [${post.platform}](<${post.url}>)`;
+    const header = `${icon} ${who} - [${post.platform}](<${post.url}>)`;
 
     const footerParts = [...post.stats];
     if (post.timestamp) footerParts.push(`<t:${post.timestamp}:R>`);
     const lines = [];
-    if (footerParts.length) lines.push(`-# ${footerParts.join(' · ')}`);
+    if (footerParts.length) lines.push(`-# ${footerParts.join(' - ')}`);
     if (post.note) lines.push(`-# ${post.note}`);
     if (skipped.length) {
         lines.push(`-# Too big to upload here: ${skipped.map((url, i) => `[media ${i + 1}](<${url}>)`).join(', ')}`);

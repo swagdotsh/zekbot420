@@ -114,7 +114,7 @@ function buildPayload(type, item, others = []) {
         rating && `**${rating}**`,
         type === 'movie' ? runtimeText(item.runtime) : (item.episode_run_time?.[0] ? `${runtimeText(item.episode_run_time[0])} episodes` : null),
         item.genres?.map((g) => g.name).slice(0, 3).join(', '),
-    ].filter(Boolean).join(' · ');
+    ].filter(Boolean).join(' - ');
 
     const embed = new EmbedBuilder()
         .setColor(COLOR)
@@ -180,7 +180,7 @@ function buildPayload(type, item, others = []) {
     if (others.length) {
         fields.push({
             name: 'Did you mean',
-            value: others.map((o) => `[${titleOf(type, o)}${yearOf(dateOf(type, o)) ? ` (${yearOf(dateOf(type, o))})` : ''}](https://www.themoviedb.org/${type}/${o.id})`).join(' · '),
+            value: others.map((o) => `[${titleOf(type, o)}${yearOf(dateOf(type, o)) ? ` (${yearOf(dateOf(type, o))})` : ''}](https://www.themoviedb.org/${type}/${o.id})`).join(' - '),
         });
     }
 

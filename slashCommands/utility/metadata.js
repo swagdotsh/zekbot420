@@ -46,7 +46,7 @@ function metadataEmbed(fileName, meta, title) {
         meta.audio.bitsPerSample && `${meta.audio.bitsPerSample}-bit`,
         meta.audio.channels && (meta.audio.channels === 1 ? 'mono' : meta.audio.channels === 2 ? 'stereo' : `${meta.audio.channels} ch`),
         meta.bitrate && `${Math.round(meta.bitrate / 1000)} kbps`,
-    ].filter(Boolean).join(' · ');
+    ].filter(Boolean).join(' - ');
 
     const embed = new EmbedBuilder()
         .setColor(0x1db954)

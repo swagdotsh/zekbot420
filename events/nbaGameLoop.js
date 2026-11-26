@@ -172,13 +172,13 @@ function scoreText(game, score = { home: game.home.score, away: game.away.score 
 }
 
 function footerText(game, event) {
-    return `${scoreText(game, event.score)} · ${periodLabel(event.period)} ${event.clock}`.trim();
+    return `${scoreText(game, event.score)} - ${periodLabel(event.period)} ${event.clock}`.trim();
 }
 
 function statLine(player) {
-    return `${player.points} PTS · ${player.rebounds} REB · ${player.assists} AST · ${player.threes} 3PM`
-        + (player.steals ? ` · ${player.steals} STL` : '')
-        + (player.blocks ? ` · ${player.blocks} BLK` : '');
+    return `${player.points} PTS - ${player.rebounds} REB - ${player.assists} AST - ${player.threes} 3PM`
+        + (player.steals ? ` - ${player.steals} STL` : '')
+        + (player.blocks ? ` - ${player.blocks} BLK` : '');
 }
 
 function buildEventEmbed(game, event) {
@@ -191,7 +191,7 @@ function buildEventEmbed(game, event) {
             .setTitle(event.milestone.title(event.player))
             .setDescription(statLine(event.player))
             .setThumbnail(event.player.headshot)
-            .setFooter({ text: `${scoreText(game)} · ${game.detail}` });
+            .setFooter({ text: `${scoreText(game)} - ${game.detail}` });
     }
 
     const tied = event.score.home === event.score.away;

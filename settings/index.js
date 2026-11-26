@@ -6,6 +6,9 @@ const { getMessageConfig, updateMessageConfig, DEFAULTS: MEMBER_MESSAGE_DEFAULTS
 const { store: bumpStore } = require('../bumpReminders');
 const { store: confessionStore } = require('../confessions');
 const { store: streakStore } = require('../streaks');
+const { PermissionFlagsBits } = require('discord.js');
+const colorRoles = require('../colorRoles');
+const { perkStore, grantPerks, revokePerks } = require('../boosts');
 
 defineSection({
     id: 'general',
@@ -116,6 +119,62 @@ defineSection({
     ],
     load: (guildId) => streakStore.get(guildId),
     save: (guildId, values) => streakStore.update(guildId, (data) => { Object.assign(data, values); }),
+});
+
+defineSection({
+    id: 'colorRoles',
+    label: 'Color roles',
+    description: 'The reaction panel members use to pick a name color. Add and remove colors with /colorrole.',
+    permission: 'ManageRoles',
+    fields: [
+        {
+            key: 'channelId', type: 'channel', label: 'Panel channel (empty = remove the panel)', default: null,
+            botNeeds: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.AddReactions, PermissionFlagsBits.ReadMessageHistory],
+        },
+    ],
+    load: async (guildId) => {
+        const config = await colorRoles.store.get(guildId);
+        return { channelId: config.channelId };
+    },
+    save: async (guildId, values, { guild }) => {
+        if (!('channelId' in values) || !guild) return;
+        if (values.channelId === null) await colorRoles.disablePanel(guild);
+        else await colorRoles.syncPanel(guild, { channel: guild.channels.cache.get(values.channelId) });
+    },
+});
+
+defineSection({
+    id: 'boostPerks',
+    label: 'Booster perks',
+    description: 'Roles boosters get while they boost. Booster-only channels are set up with /boostperks channel.',
+    fields: [
+        { key: 'roles', type: 'roles', label: 'Perk roles', default: [], maxItems: 10, assignable: true },
+    ],
+    load: async (guildId) => {
+        const perks = await perkStore.get(guildId);
+        return { roles: perks.roles };
+    },
+    save: async (guildId, values, { guild }) => {
+        if (!('roles' in values)) return;
+        const before = (await perkStore.get(guildId)).roles;
+        const added = values.roles.filter((id) => !before.includes(id));
+        const removed = before.filter((id) => !values.roles.includes(id));
+        await perkStore.update(guildId, (data) => { data.roles = values.roles; });
+        if (!guild || (!added.length && !removed.length)) return;
+
+        if (added.length) {
+            const members = await guild.members.fetch();
+            for (const member of members.values()) {
+                if (member.premiumSinceTimestamp && !member.user.bot) await grantPerks(member).catch(() => {});
+            }
+        }
+        if (removed.length) {
+            const { granted } = await perkStore.get(guildId);
+            for (const [userId, roleIds] of Object.entries(granted)) {
+                if (roleIds.some((id) => removed.includes(id))) await revokePerks(guild, userId, removed).catch(() => {});
+            }
+        }
+    },
 });
 
 module.exports = registry;

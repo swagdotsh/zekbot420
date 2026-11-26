@@ -24,6 +24,8 @@ Your favorite Discord bot's open-source alternative.
 
 ## Features
 
+The full list of slash commands, with every option and the permission each needs, is in [COMMANDS.md](COMMANDS.md).
+
 ### Moderation & management
 - Ban / unban
 - Kick
@@ -186,6 +188,12 @@ TMDB_READ_ACCESS_TOKEN=
 TMDB_API_KEY=
 # Optional: the country for age ratings and where-to-watch (default US)
 TMDB_REGION=US
+# Optional: the web dashboard API (see "Web dashboard" below)
+DASHBOARD_PORT=
+DASHBOARD_URL=https://zekbot420.swagrelated.com
+DASHBOARD_API_URL=https://api.zekbot420.swagrelated.com
+DASHBOARD_SECRET=
+DISCORD_CLIENT_SECRET=
 # Optional: a sandbox app token for /social sandbox (raises the limit from 120 to 600 lookups a minute)
 SANDBOX_API_TOKEN=
 # Optional: a GitHub token for /social github (raises the limit from 60 to 5000 lookups an hour)
@@ -224,6 +232,42 @@ node deploy-commands.js --global
 Without `--global`, the script uses `GUILD_ID` when configured. Browse the [command list](https://zekbot420.swagrelated.com/commands/) or the guides for [music](https://github.com/swagdotsh/zekbot420/wiki/Playing-Music), [TTS](https://github.com/swagdotsh/zekbot420/wiki/Text-to-Speech), [tickets](https://github.com/swagdotsh/zekbot420/wiki/Tickets), and [sports](https://github.com/swagdotsh/zekbot420/wiki/Sports).
 
 ---
+## Web dashboard
+
+The bot includes the API for a web dashboard. It runs inside the bot process, so settings changed on the dashboard take effect straight away, and it's checked with the same rules as the slash commands. The dashboard website itself is separate: any site can use this API.
+
+It starts when `DASHBOARD_PORT` is set, along with:
+
+| Variable | What it is |
+| --- | --- |
+| `DASHBOARD_PORT` | Port the API listens on, e.g. `3080` |
+| `DASHBOARD_HOST` | Address it listens on (default `127.0.0.1`; put it behind a reverse proxy like Caddy or nginx with HTTPS) |
+| `DASHBOARD_URL` | The dashboard website, e.g. `https://zekbot420.swagrelated.com`. Only this site can call the API, and logins send people back here |
+| `DASHBOARD_API_URL` | Where the API is reachable from the internet, e.g. `https://api.zekbot420.swagrelated.com` |
+| `DASHBOARD_SECRET` | At least 32 random characters, used to sign logins (e.g. `openssl rand -hex 32`). Changing it logs everyone out |
+| `DISCORD_CLIENT_SECRET` | From the Discord developer portal > your app > OAuth2 |
+| `DASHBOARD_TRUST_PROXY` | Set to `1` behind a reverse proxy so rate limits use the visitor's IP |
+
+The dashboard lives at `https://zekbot420.swagrelated.com`. That site is static hosting, so the API runs with the bot and needs its own address, for example `https://api.zekbot420.swagrelated.com` pointed at the bot's server through a reverse proxy. `GET /api/commands` can also feed the site's command list.
+
+In the Discord developer portal > your app > OAuth2, add `<DASHBOARD_API_URL>/auth/callback` as a redirect (with the example above, `https://api.zekbot420.swagrelated.com/auth/callback`).
+
+**Logging in:** send people to `<DASHBOARD_API_URL>/auth/login`. After Discord, they come back to `DASHBOARD_URL#token=...`. Read the token from the address, remove it from the address bar, and send it on every request as `Authorization: Bearer <token>`. Logins last 7 days. On a failed login the address has `#error=...` instead.
+
+**Endpoints**
+
+| Request | Login | Returns |
+| --- | --- | --- |
+| `GET /api/health` | no | Whether the bot is up |
+| `GET /api/commands` | no | Every slash and prefix command, for a commands page |
+| `GET /api/settings/schema` | no | Every settings section and field (type, label, limits), to build forms from |
+| `GET /api/me` | yes | The user and the servers you share with the bot, with `canManage` and the sections they can change |
+| `GET /api/guilds/:id` | yes | Server name, icon, channels and roles (for pickers), and the sections the user can change |
+| `GET /api/guilds/:id/settings` | yes | Current values for those sections |
+| `PATCH /api/guilds/:id/settings/:section` | yes | Saves the fields sent as JSON and returns the saved values. Bad input returns `400` with `error` and `field` |
+
+Permissions are checked against the member's current permissions in the server on every request, not just at login. Settings sections cover the prefix, social embeds, welcome, goodbye and boost messages, bump reminders, confessions, streaks, the color role panel channel and booster perk roles. Channels must be in that server and usable by the bot, and roles given out by the bot can't have moderator permissions.
+
 ## Data & Persistence
 
 Some features store data locally (for example: warnings/modlog/last.fm configuration/audio files) and others on a PostgreSQL-database. For the local data, you’ll see data files under the `data/` directory.
@@ -263,6 +307,8 @@ Some features store data locally (for example: warnings/modlog/last.fm configura
 - `reactionRoles.js` / `colorRoles.js` — reaction roles and the color role panel (`data/reactionRoles.json`, `data/colorRoles.json`)
 - `streaks.js` — daily message streaks (`data/streaks.json`)
 - `tmdb.js` — movie and TV lookups
+- `dashboard/` — the web dashboard API and Discord login
+- `commandCatalog.js` / `scripts/commands-doc.js` — the list of every command, used by the dashboard API and to write COMMANDS.md (`npm run docs:commands`)
 - `social/` — `/social` lookups, one file per platform (GitHub, X, Instagram, Roblox, sandbox)
 - `esmbotMedia.js` / `esmbotWorker.js` / `esmBot/` — `/image` effects, the background process that runs them (so a crash there can't take the bot down), and the vendored esmBot image natives
 - `storesnipe.js` / `snipe.js` — message snipe support

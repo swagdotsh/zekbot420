@@ -10,7 +10,7 @@ function effectLabel(name) {
     const e = media.EFFECTS[name];
     const needs = [e.text === 'required' && (e.textHint ? `text: ${e.textHint}` : 'text'), e.amount && `amount: ${e.amount}`]
         .filter(Boolean).join(', ');
-    return `${name} · ${e.desc}${needs ? ` (${needs})` : ''}`.slice(0, 100);
+    return `${name} - ${e.desc}${needs ? ` (${needs})` : ''}`.slice(0, 100);
 }
 
 function uploadLimit(interaction) {
@@ -107,7 +107,7 @@ module.exports = {
                 return interaction.editReply(fail('The edited image is too big to upload here. Try a smaller image.'));
             }
             return interaction.editReply({
-                content: `-# Modified with [esmBot](<https://github.com/esmBot/esmBot>) · \`${effectName}\``,
+                content: `-# Modified with [esmBot](<https://github.com/esmBot/esmBot>) - \`${effectName}\``,
                 files: [new AttachmentBuilder(buffer, { name: `${effectName}.${ext}` })],
             });
         } catch (error) {

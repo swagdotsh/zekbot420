@@ -90,7 +90,7 @@ async function profile(input) {
     if (top.length) {
         fields.push({
             name: 'Top repositories',
-            value: top.map((r) => `[${r.name}](${r.html_url}) ⭐ ${count(r.stargazers_count)}${r.language ? ` · ${r.language}` : ''}`).join('\n'),
+            value: top.map((r) => `[${r.name}](${r.html_url}) ⭐ ${count(r.stargazers_count)}${r.language ? ` - ${r.language}` : ''}`).join('\n'),
         });
     }
     embed.addFields(fields);
@@ -120,7 +120,7 @@ async function repository(input) {
         .setAuthor({ name: repo.owner.login, iconURL: repo.owner.avatar_url, url: repo.owner.html_url })
         .setTitle(repo.full_name)
         .setURL(repo.html_url)
-        .setDescription([badges.join(' · '), clip(repo.description?.trim(), 600) || '*No description*'].filter(Boolean).join('\n'));
+        .setDescription([badges.join(' - '), clip(repo.description?.trim(), 600) || '*No description*'].filter(Boolean).join('\n'));
 
     const fields = [
         { name: 'Stars', value: `⭐ ${count(repo.stargazers_count)}`, inline: true },
@@ -135,7 +135,7 @@ async function repository(input) {
     if (total) {
         const parts = Object.entries(languages).sort((a, b) => b[1] - a[1]).slice(0, 5)
             .map(([lang, bytes]) => `${lang} ${((bytes / total) * 100).toFixed(1)}%`);
-        fields.push({ name: 'Languages', value: parts.join(' · ') });
+        fields.push({ name: 'Languages', value: parts.join(' - ') });
     } else if (repo.language) {
         fields.push({ name: 'Language', value: repo.language, inline: true });
     }
