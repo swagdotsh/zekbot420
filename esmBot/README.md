@@ -1,7 +1,7 @@
 # esmBot image natives
 
 This folder is a copy of the image processing parts of
-[esmBot](https://github.com/esmBot/esmBot) by Essem, used by zekbot420's
+[esmBot](https://github.com/esmBot/esmBot) by TheEssem, used by zekbot420's
 `/image` command. esmBot is released under the MIT License; see [LICENSE](LICENSE).
 
 Copied from upstream commit `cde2dd9ced04cf01b0ed1e73a6e36fe0d4b70a7f`
