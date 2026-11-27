@@ -2,18 +2,26 @@ const path = require('path');
 const { AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const { readJson, updateJson } = require('./jsonStore');
 const { DATA_DIR } = require('./paths');
-const { fetchLimited } = require('./safeFetch');
+const { fetchLimited, fetchWithInfo } = require('./safeFetch');
+const { fitVideo, plan: planFit } = require('./videoFit');
 const { EMOJI, loading, fail } = require('./ui');
 
-const DEFAULTS = { enabled: false, x: true, instagram: true, hideOriginalEmbed: false };
+const DEFAULTS = { enabled: false, trigger: 'mention', x: true, instagram: true, tiktok: true, hideOriginalEmbed: false };
+const TRIGGERS = ['mention', 'auto'];
+const CALL_NAMES = ['zekbot420', 'zekbot', 'zkb', 'zk', '420'];
 const MAX_LINKS_PER_MESSAGE = 3;
 const MAX_ATTACHMENTS = 10;
 const MAX_CONTENT = 2000;
 const USER_COOLDOWN_MS = 5000;
 const USER_AGENT = 'zekbot420 (Discord bot; +https://github.com/swagdotsh/zekbot420)';
+const BROWSER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
+const MAX_SOURCE_BYTES = 120 * 1024 * 1024;
+const PHOTO_RESERVE = 1.5 * 1024 * 1024;
+const PLATFORM_NAMES = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok' };
 
 const X_LINK = /(?<!<)https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/(\w{1,15})\/status(?:es)?\/(\d{5,25})/gi;
 const IG_LINK = /(?<!<)https?:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(p|reels?|tv)\/([\w-]{5,40})/gi;
+const TT_LINK = /(?<!<)https?:\/\/(?:(?:www\.|m\.)?tiktok\.com\/(?:@([\w.-]{1,40})\/(video|photo)\/(\d{5,25})|t\/([\w-]{4,20}))|(?:vm|vt)\.tiktok\.com\/([\w-]{4,20}))/gi;
 
 const configCache = new Map();
 const configPath = (guildId) => path.join(DATA_DIR, String(guildId), 'socialEmbeds.json');
@@ -173,46 +181,159 @@ async function fetchInstagramPost(kind, shortcode) {
     };
 }
 
-async function downloadMedia(post, guild) {
-    const limit = uploadLimit(guild);
-    let remaining = limit;
-    const files = [];
-    const skipped = [];
+function tiktokItem(html) {
+    const json = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/)?.[1];
+    if (!json) throw new Error('TikTok returned an unexpected page.');
+    const detail = JSON.parse(json)?.__DEFAULT_SCOPE__?.['webapp.video-detail'];
+    const item = detail?.itemInfo?.itemStruct;
+    if (detail?.statusCode !== 0 || !item?.id) throw new Error(detail?.statusMsg || 'Post not found.');
+    return item;
+}
 
-    for (const [index, item] of post.media.slice(0, MAX_ATTACHMENTS).entries()) {
-        let downloaded = null;
-        for (const candidate of item.candidates) {
-            const url = typeof candidate === 'string' ? candidate : candidate.url;
-            const estimate = candidate.bitrate && item.duration ? (candidate.bitrate * item.duration) / 8 : 0;
-            if (estimate > remaining * 1.1) continue;
+async function fetchTikTokPost(link) {
+    const pageUrl = link.id ? `https://www.tiktok.com/@${link.handle}/${link.kind}/${link.id}` : link.url;
+    const page = await fetchWithInfo(pageUrl, {
+        maxBytes: 5 * 1024 * 1024,
+        timeoutMs: 10000,
+        headers: { 'User-Agent': BROWSER_AGENT, 'Accept-Language': 'en-US,en;q=0.8' },
+    });
+    const item = tiktokItem(page.body.toString('utf8'));
+    const headers = {
+        'User-Agent': BROWSER_AGENT,
+        Referer: 'https://www.tiktok.com/',
+        Cookie: page.cookies.map((cookie) => cookie.split(';')[0]).join('; '),
+    };
 
+    const images = item.imagePost?.images ?? [];
+    let media;
+    if (images.length) {
+        media = images.map((image) => ({ kind: 'photo', candidates: image.imageURL?.urlList ?? [], headers })).filter((m) => m.candidates.length);
+    } else {
+        const video = item.video ?? {};
+        const variants = (video.bitrateInfo ?? [])
+            .map((info) => ({
+                url: info.PlayAddr?.UrlList?.[0],
+                bitrate: info.Bitrate,
+                size: Number(info.PlayAddr?.DataSize) || undefined,
+                direct: /^h264$/i.test(info.CodecType ?? ''),
+            }))
+            .filter((variant) => variant.url)
+            .sort((a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0));
+        if (!variants.length && video.playAddr) variants.push({ url: video.playAddr, bitrate: video.bitrate });
+        media = variants.length ? [{ kind: 'video', candidates: variants, duration: video.duration, headers }] : [];
+    }
+
+    const handle = item.author?.uniqueId || link.handle || null;
+    const stats = item.stats ?? {};
+    return {
+        platform: 'TikTok',
+        url: `https://www.tiktok.com/@${handle ?? 'i'}/${images.length ? 'photo' : 'video'}/${item.id}`,
+        author: item.author?.nickname || handle,
+        handle,
+        text: item.desc ?? '',
+        quote: null,
+        timestamp: Number(item.createTime) || null,
+        stats: [
+            stats.playCount != null && `▶️ ${compact(Number(stats.playCount))}`,
+            stats.diggCount != null && `❤️ ${compact(Number(stats.diggCount))}`,
+            stats.commentCount != null && `💬 ${compact(Number(stats.commentCount))}`,
+        ].filter(Boolean),
+        sensitive: false,
+        media,
+    };
+}
+
+const candidateUrl = (candidate) => (typeof candidate === 'string' ? candidate : candidate?.url);
+
+async function fetchCandidate(item, candidate, maxBytes) {
+    return fetchLimited(candidateUrl(candidate), {
+        maxBytes,
+        timeoutMs: 60000,
+        headers: item.headers ?? { 'User-Agent': USER_AGENT },
+    });
+}
+
+async function downloadVideo(item, budget, onStatus) {
+    const candidates = item.candidates.map((c) => (typeof c === 'string' ? { url: c } : c));
+    const sizeOf = (c) => c.size ?? (c.bitrate && item.duration ? (c.bitrate * item.duration) / 8 : null);
+    const direct = candidates.filter((c) => c.direct !== false);
+    const fitting = direct.filter((c) => sizeOf(c) == null || sizeOf(c) <= budget * 1.1);
+    const bestSize = sizeOf(candidates[0]);
+
+    const settings = planFit(budget, item.duration);
+    const worthEncoding = settings && bestSize > budget
+        && (!fitting.length || settings.videoKbps * 1000 > (fitting[0].bitrate ?? 0) * 1.25);
+
+    if (worthEncoding) {
+        const source = candidates.find((c) => (sizeOf(c) ?? Infinity) <= MAX_SOURCE_BYTES);
+        if (source) {
             try {
-                const buffer = await fetchLimited(url, { maxBytes: remaining, timeoutMs: 30000, headers: { 'User-Agent': USER_AGENT } });
-                const ext = extensionFor(url, item.kind === 'video' ? 'mp4' : 'jpg');
-                downloaded = { buffer, name: `${post.sensitive ? 'SPOILER_' : ''}${post.platform.toLowerCase()}_${index + 1}.${ext}` };
-                break;
+                const input = await fetchCandidate(item, source, MAX_SOURCE_BYTES);
+                await onStatus?.('Compressing the video to fit here, this can take a minute...');
+                const output = await fitVideo(input, { maxBytes: budget, duration: item.duration });
+                if (output) return { buffer: output, ext: 'mp4' };
             } catch (error) {
-                if (!/too large/i.test(error.message)) {
-                    console.warn(`[socialEmbeds] media download failed (${url}):`, error.message);
-                    break;
-                }
+                console.warn('[socialEmbeds] video compression failed:', error.message);
             }
-        }
-
-        if (downloaded) {
-            remaining -= downloaded.buffer.length;
-            files.push(new AttachmentBuilder(downloaded.buffer, { name: downloaded.name }));
-        } else {
-            skipped.push(item.link ?? (typeof item.candidates[0] === 'string' ? item.candidates[0] : item.candidates[0]?.url));
         }
     }
 
-    if (post.media.length > MAX_ATTACHMENTS) skipped.push(...post.media.slice(MAX_ATTACHMENTS).map((m) => m.link ?? m.candidates[0]?.url ?? m.candidates[0]));
+    for (const candidate of fitting) {
+        try {
+            const buffer = await fetchCandidate(item, candidate, budget);
+            return { buffer, ext: extensionFor(candidate.url, 'mp4') };
+        } catch (error) {
+            if (!/too large/i.test(error.message)) console.warn(`[socialEmbeds] media download failed (${candidate.url}):`, error.message);
+        }
+    }
+    return null;
+}
+
+async function downloadPhoto(item, budget) {
+    for (const candidate of item.candidates) {
+        try {
+            const buffer = await fetchCandidate(item, candidate, budget);
+            return { buffer, ext: extensionFor(candidateUrl(candidate), 'jpg') };
+        } catch (error) {
+            if (!/too large/i.test(error.message)) console.warn(`[socialEmbeds] media download failed (${candidateUrl(candidate)}):`, error.message);
+        }
+    }
+    return null;
+}
+
+async function downloadMedia(post, guild, onStatus) {
+    let remaining = uploadLimit(guild);
+    const files = [];
+    const skipped = [];
+    const items = post.media.slice(0, MAX_ATTACHMENTS);
+
+    for (const [index, item] of items.entries()) {
+        const later = items.slice(index + 1);
+        const reserve = later.filter((m) => m.kind !== 'video').length * PHOTO_RESERVE;
+        const videosLeft = 1 + later.filter((m) => m.kind === 'video').length;
+        const budget = item.kind === 'video'
+            ? Math.max(0, Math.floor((remaining - reserve) / videosLeft))
+            : remaining;
+
+        const downloaded = budget > 0
+            ? await (item.kind === 'video' ? downloadVideo(item, budget, onStatus) : downloadPhoto(item, budget))
+            : null;
+
+        if (downloaded) {
+            remaining -= downloaded.buffer.length;
+            const name = `${post.sensitive ? 'SPOILER_' : ''}${post.platform.toLowerCase()}_${index + 1}.${downloaded.ext}`;
+            files.push(new AttachmentBuilder(downloaded.buffer, { name }));
+        } else {
+            skipped.push(item.link ?? candidateUrl(item.candidates[0]));
+        }
+    }
+
+    if (post.media.length > MAX_ATTACHMENTS) skipped.push(...post.media.slice(MAX_ATTACHMENTS).map((m) => m.link ?? candidateUrl(m.candidates[0])));
     return { files, skipped: skipped.filter(Boolean) };
 }
 
 function buildContent(post, skipped) {
-    const icon = post.platform === 'X' ? EMOJI.x : EMOJI.instagram;
+    const icon = { X: EMOJI.x, Instagram: EMOJI.instagram, TikTok: EMOJI.tiktok }[post.platform] ?? '';
     const who = post.handle && post.author !== post.handle ? `**${post.author}** (@${post.handle})` : `**@${post.handle ?? 'unknown'}**`;
     const header = `${icon} ${who} - [${post.platform}](<${post.url}>)`;
 
@@ -245,6 +366,13 @@ function findLinks(content, config) {
     if (config.instagram) {
         for (const match of content.matchAll(IG_LINK)) links.push({ type: 'instagram', kind: match[1].toLowerCase(), id: match[2], at: match.index });
     }
+    if (config.tiktok) {
+        for (const match of content.matchAll(TT_LINK)) {
+            links.push(match[3]
+                ? { type: 'tiktok', handle: match[1], kind: match[2].toLowerCase(), id: match[3], at: match.index }
+                : { type: 'tiktok', url: match[0], id: `short:${(match[4] ?? match[5]).toLowerCase()}`, at: match.index });
+        }
+    }
 
     const seen = new Set();
     return links
@@ -258,14 +386,23 @@ function findLinks(content, config) {
         .slice(0, MAX_LINKS_PER_MESSAGE);
 }
 
+function calledContent(content, botId) {
+    const names = [...CALL_NAMES, ...(botId ? [`<@!?${botId}>`] : [])].join('|');
+    const match = content.match(new RegExp(`^(?:${names})\\s+(?=https?:\\/\\/)`, 'i'));
+    return match ? content.slice(match[0].length) : null;
+}
+
 async function handleSocialEmbed(message) {
     if (!message.guild || message.author.bot || !message.content) return;
-    if (!/(?:x|twitter|instagram)\.com\//i.test(message.content)) return;
+    if (!/(?:x|twitter|instagram|tiktok)\.com\//i.test(message.content)) return;
 
     const config = await getConfig(message.guild.id);
     if (!config.enabled) return;
 
-    const links = findLinks(message.content, config);
+    const content = config.trigger === 'auto' ? message.content : calledContent(message.content, message.client.user?.id);
+    if (content === null) return;
+
+    const links = findLinks(content, config);
     if (!links.length) return;
 
     const me = message.guild.members.me;
@@ -284,7 +421,7 @@ async function handleSocialEmbed(message) {
 
     for (const link of links) {
         const status = await message.reply({
-            content: loading(`Fetching ${link.type === 'x' ? 'X' : 'Instagram'} post...`),
+            content: loading(`Fetching ${PLATFORM_NAMES[link.type]} post...`),
             allowedMentions: { repliedUser: false },
         }).catch(() => null);
         if (!status) return;
@@ -292,9 +429,14 @@ async function handleSocialEmbed(message) {
         try {
             const post = link.type === 'x'
                 ? await fetchXPost(link.handle, link.id)
-                : await fetchInstagramPost(link.kind, link.id);
+                : link.type === 'tiktok'
+                    ? await fetchTikTokPost(link)
+                    : await fetchInstagramPost(link.kind, link.id);
 
-            const { files, skipped } = canAttach ? await downloadMedia(post, message.guild) : { files: [], skipped: post.media.map((m) => m.link ?? m.candidates[0]?.url ?? m.candidates[0]) };
+            const onStatus = (text) => status.edit({ content: loading(text) }).catch(() => {});
+            const { files, skipped } = canAttach
+                ? await downloadMedia(post, message.guild, onStatus)
+                : { files: [], skipped: post.media.map((m) => m.link ?? candidateUrl(m.candidates[0])) };
 
             await status.edit({
                 content: buildContent(post, skipped),
@@ -316,12 +458,15 @@ setInterval(() => {
 
 module.exports = {
     handleSocialEmbed,
+    calledContent,
+    TRIGGERS,
     getConfig,
     setConfig,
     findLinks,
     parseInstagramEmbed,
     fetchXPost,
     fetchInstagramPost,
+    fetchTikTokPost,
     buildContent,
     downloadMedia,
     uploadLimit,

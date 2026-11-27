@@ -4,6 +4,7 @@ const EMOJI = {
     ok: '✅',
     x: '<:x_:1575426864107884574>',
     instagram: '<:insta:1575426628769808414>',
+    tiktok: '🎵',
     shazam: '<:shazam:1575439633863675934>',
     appleMusic: '<:am:1575440259355774997>',
     spotify: '<:spotify:1561887506117689394>',
