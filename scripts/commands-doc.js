@@ -54,6 +54,11 @@ const SECTIONS = [
         commands: ['social'],
     },
     {
+        title: 'Video downloads',
+        intro: 'Off until someone with Manage Server runs `/setup downloads` or turns it on in the dashboard. Works for YouTube, TikTok, X and most other video sites, up to 4 minutes; videos too big for the server\'s upload limit are compressed.',
+        commands: ['download'],
+    },
+    {
         title: 'Images',
         intro: 'Image effects are powered by [esmBot](https://github.com/esmBot/esmBot) (MIT, see `esmBot/LICENSE`). With no image or link, the bot uses the latest image in the channel. Some effects use `text` (put a comma between top and bottom text), `amount`, `font` or `option`; the effect list shows which.',
         commands: ['image'],

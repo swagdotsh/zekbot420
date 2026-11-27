@@ -217,6 +217,7 @@ Send `null` to clear a field (for example a channel, which turns that feature of
 | `streaks` | The streak channel and from which day streaks are announced | Manage Server |
 | `colorRoles` | The channel the color role panel is in. Changing it moves the panel, clearing it removes the panel. Colors are added with `/colorrole` | Manage Roles |
 | `boostPerks` | Roles boosters get. Adding a role gives it to current boosters, removing one takes it back from those who got it from boosting | Manage Server |
+| `downloads` | Whether members can download videos with `/download` (off by default) | Manage Server |
 | `modlog` | The mod log channel | Administrator |
 | `trap` | Roles that can post in the trap channel without being banned. The channel and ban count are read only | Manage Server |
 | `leveling` | On or off, level-up channel, XP per message, leaderboard and level roles (`roles` is a `list` of `{ level, roleId }`). Turning it off keeps XP and level roles but resets the other settings | Manage Server |

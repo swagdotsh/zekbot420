@@ -14,6 +14,7 @@ Every slash command added on the `features/new-commands` branch, grouped by feat
 - [Music](#music)
 - [Movies and TV](#movies-and-tv)
 - [Social profiles](#social-profiles)
+- [Video downloads](#video-downloads)
 - [Images](#images)
 - [Games](#games)
 - [Tools](#tools)
@@ -64,6 +65,12 @@ Pick the channel for the color role panel (or let me create #colors)
 Let members post anonymous confessions in a channel
 
 - `channel` (required, channel): The channel confessions are posted in
+
+<sub>Needs Manage Server - Works in servers</sub>
+
+#### `/setup downloads`
+
+Let members download videos from links with /download
 
 <sub>Needs Manage Server - Works in servers</sub>
 
@@ -176,6 +183,12 @@ Delete the color panel (the color roles and list are kept)
 #### `/disable confessions`
 
 Stop accepting anonymous confessions (numbering and bans are kept)
+
+<sub>Needs Manage Server - Works in servers</sub>
+
+#### `/disable downloads`
+
+Stop members downloading videos with /download
 
 <sub>Needs Manage Server - Works in servers</sub>
 
@@ -1265,6 +1278,22 @@ A sandbox post
 - `post` (required, text): Post link or number
 
 <sub>Works anywhere, including DMs and servers without the bot</sub>
+
+## Video downloads
+
+Off until someone with Manage Server runs `/setup downloads` or turns it on in the dashboard. Works for YouTube, TikTok, X and most other video sites, up to 4 minutes; videos too big for the server's upload limit are compressed.
+
+### /download
+
+Download a video (up to 4 minutes) from a link
+
+#### `/download`
+
+Download a video (up to 4 minutes) from a link
+
+- `url` (required, text): The video link
+
+<sub>Works in servers</sub>
 
 ## Images
 

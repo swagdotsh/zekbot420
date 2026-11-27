@@ -6,6 +6,7 @@ const { store: bumpStore } = require('../../bumpReminders');
 const { getMessageConfig, updateMessageConfig } = require('../../welcomeStore');
 const colorRoles = require('../../colorRoles');
 const { store: streakStore } = require('../../streaks');
+const { store: downloadStore } = require('../../downloads');
 const { ok, fail } = require('../../ui');
 
 const modlog = require('../moderation/modlog');
@@ -47,6 +48,12 @@ module.exports = defineGroup({
             if (!current.channelId) return interaction.reply({ content: fail('Confessions are not set up in this server.'), flags: MessageFlags.Ephemeral });
             await confessionStore.update(interaction.guild.id, (data) => { data.channelId = null; });
             return interaction.reply({ content: ok('Confessions are off. Existing confessions stay where they are.'), flags: MessageFlags.Ephemeral });
+        }),
+        simple('downloads', 'Stop members downloading videos with /download', PermissionFlagsBits.ManageGuild, async (interaction) => {
+            const current = await downloadStore.get(interaction.guild.id);
+            if (!current.enabled) return interaction.reply({ content: fail('Downloads are already off.'), flags: MessageFlags.Ephemeral });
+            await downloadStore.update(interaction.guild.id, (data) => { data.enabled = false; });
+            return interaction.reply({ content: ok('Downloads are off.'), flags: MessageFlags.Ephemeral });
         }),
         simple('goodbye', 'Stop sending goodbye messages (your custom message is kept)', PermissionFlagsBits.ManageGuild, async (interaction) => {
             const current = await getMessageConfig(interaction.guild.id, 'goodbye');

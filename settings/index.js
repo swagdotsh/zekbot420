@@ -20,6 +20,7 @@ const tts = require('../ttsHandler');
 const sticky = require('../stickyrolesDbHndlr');
 const sports = require('../nflHandler');
 const { getJailConfig } = require('../jailHandler');
+const downloads = require('../downloads');
 const { ChannelType } = require('discord.js');
 
 const guildFile = (guildId, name) => path.join(DATA_DIR, String(guildId), name);
@@ -198,6 +199,17 @@ defineSection({
             }
         }
     },
+});
+
+defineSection({
+    id: 'downloads',
+    label: 'Video downloads',
+    description: `Lets members download videos (up to ${downloads.MAX_DURATION / 60} minutes) from YouTube, TikTok, X and most other sites with /download. Off by default.`,
+    fields: [
+        { key: 'enabled', type: 'boolean', label: 'Enabled', default: false },
+    ],
+    load: (guildId) => downloads.store.get(guildId),
+    save: (guildId, values) => downloads.store.update(guildId, (data) => { Object.assign(data, values); }),
 });
 
 defineSection({

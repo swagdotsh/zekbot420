@@ -51,7 +51,7 @@ Every command, with its options and permissions, is in [COMMANDS.md](COMMANDS.md
 - Ping / uptime
 - Avatar lookup
 - Polls
-- Downloads (only on your own hosted instance, not main :/ ) 
+- Video downloads from YouTube, TikTok, X and more (opt-in per server with `/setup downloads` or the dashboard)
 - Help command
 - Basic server/user info
 - Translation (translate messages and text to almost any language)
@@ -146,7 +146,7 @@ Every command, with its options and permissions, is in [COMMANDS.md](COMMANDS.md
 - [**Neon**](https://neon.tech) (or another Postgres-compatible database; required by the current bot)
 
 ### Optional (depending on your use case)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (required for online music extraction and optional video downloads)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp/) (required for online music extraction and video downloads)
 - FFmpeg (a static binary installs with the dependencies) and `ffprobe` on your PATH for music metadata
 - [last.fm API key](https://www.last.fm/api) (for last.fm integration features)
 - [TMDB API read access token](https://www.themoviedb.org/settings/api) (for `/movie` and `/show`)
@@ -259,6 +259,7 @@ Some features store data locally (for example: warnings/modlog/last.fm configura
 - `slashCommands/` — slash command handlers/definitions
 - `welcomeStore.js` / `events/welcoming.js` — welcome message settings, placeholders and sending
 - `socialEmbeds.js` — opt-in X/Instagram/TikTok link embeds
+- `downloads.js` — opt-in `/download` video downloads with yt-dlp
 - `commandGroup.js` / `slashLoader.js` / `slashCommands/groups/` — groups existing commands under one name (`/setup`, `/disable`, ...) and loads slash commands
 - `platformIcon.js` — the `BOT_PLATFORM` status icon
 - `ui.js` — shared reply wording and emoji
