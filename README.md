@@ -188,7 +188,7 @@ TMDB_REGION=US
 # Optional: the web dashboard API (see "Web dashboard" below)
 DASHBOARD_PORT=
 DASHBOARD_URL=https://zekbot420.swagrelated.com
-DASHBOARD_API_URL=https://api.zekbot420.swagrelated.com
+DASHBOARD_API_URL=https://api-zekbot420.swagrelated.com
 DASHBOARD_SECRET=
 DISCORD_CLIENT_SECRET=
 # Optional: a sandbox app token for /social sandbox (raises the limit from 120 to 600 lookups a minute)
