@@ -16,10 +16,6 @@ Learn more at: [zekbot420.swagrelated.com](https://zekbot420.swagrelated.com)
 <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/swagdotsh/zekbot420?style=for-the-badge" />
 
 Your favorite Discord bot's favorite open-source Discord bot.
-<br><br><a href="https://top.gg/bot/939283468322484274">
-  <img src="https://top.gg/api/widget/939283468322484274.svg">
-</a>
-<br />
 </div>
 
 ## Features
@@ -30,7 +26,7 @@ Every command, with its options and permissions, is in [COMMANDS.md](COMMANDS.md
 - Ban / unban
 - Kick
 - Auto-Mod
-- Timeout / untimeout
+- Timeout / un-timeout
 - Clear messages
 - Warn system (warn, unwarn, list warnings)
 - Jail system
@@ -177,9 +173,6 @@ DB_POOL_MAX=10
 MUSIC_DEBUG=1
 # Optional: the device icon next to the bot's status: vr (default), mobile or desktop
 BOT_PLATFORM=vr
-# Optional: a LibreTranslate server for /translate (and its key, if it needs one)
-LIBRETRANSLATE_URL=https://your-libretranslate-server
-LIBRETRANSLATE_KEY=
 # Optional: TMDB for /movie and /show (the read access token, or the older API key)
 TMDB_READ_ACCESS_TOKEN=
 TMDB_API_KEY=
