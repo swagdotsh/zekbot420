@@ -1,13 +1,10 @@
-const axios = require('axios');
+const { detectLanguage, translateText } = require('../../libretranslate');
 const {
     SlashCommandBuilder,
     InteractionContextType,
     EmbedBuilder,
     MessageFlags
 } = require('discord.js');
-
-const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
-const API_KEY = process.env.LIBRETRANSLATE_KEY;
 
 const POSSIBLE_LANGS = [
     'af', 'ar', 'az', 'bg', 'bn', 'ca', 'cs', 'cy', 'da', 'de',
@@ -18,26 +15,6 @@ const POSSIBLE_LANGS = [
     'sw', 'ta', 'te', 'tg', 'th', 'tl', 'tr', 'uk', 'ur', 'uz',
     'vi', 'zh'
 ];
-
-async function detectLanguage(text) {
-    const res = await axios.post(`${LIBRE_URL}/detect`, {
-        q: text,
-        api_key: API_KEY
-    });
-
-    return res.data[0]?.language || 'auto';
-}
-
-async function translateText(text, source, target) {
-    const res = await axios.post(`${LIBRE_URL}/translate`, {
-        q: text,
-        source,
-        target,
-        api_key: API_KEY
-    });
-
-    return res.data.translatedText;
-}
 
 module.exports = {
     cooldown: 4,

@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { detectLanguage, translateText } = require('../../libretranslate');
 const {
     ContextMenuCommandBuilder,
     ApplicationCommandType,
@@ -6,52 +6,6 @@ const {
     EmbedBuilder,
     MessageFlags
 } = require('discord.js');
-
-const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
-const API_KEY = process.env.LIBRETRANSLATE_KEY;
-const REQUEST_TIMEOUT = 8000; // 8 second timeout
-
-async function detectLanguage(text) {
-    try {
-        const res = await axios.post(`${LIBRE_URL}/detect`, {
-            q: text,
-            api_key: API_KEY,
-        }, {
-            timeout: REQUEST_TIMEOUT
-        });
-
-        if (!res.data || !Array.isArray(res.data) || res.data.length === 0) {
-            throw new Error('Invalid detection response');
-        }
-
-        return res.data[0]?.language || 'auto';
-    } catch (error) {
-        console.error('Language detection error:', error.message);
-        throw error;
-    }
-}
-
-async function translateText(text, source, target) {
-    try {
-        const res = await axios.post(`${LIBRE_URL}/translate`, {
-            q: text,
-            source,
-            target,
-            api_key: API_KEY,
-        }, {
-            timeout: REQUEST_TIMEOUT
-        });
-
-        if (!res.data || !res.data.translatedText) {
-            throw new Error('Invalid translation response');
-        }
-
-        return res.data.translatedText;
-    } catch (error) {
-        console.error('Translation error:', error.message);
-        throw error;
-    }
-}
 
 module.exports = {
     data: new ContextMenuCommandBuilder()

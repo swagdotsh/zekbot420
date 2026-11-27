@@ -1,26 +1,5 @@
 const { currentPrefix } = require('../../prefix');
-const axios = require('axios');
-
-const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
-const API_KEY = process.env.LIBRETRANSLATE_KEY;
-
-async function detectLanguage(text) {
-    const res = await axios.post(`${LIBRE_URL}/detect`, {
-        q: text,
-        api_key: API_KEY
-    });
-    return res.data[0]?.language || 'auto';
-}
-
-async function translate(text, source, target) {
-    const res = await axios.post(`${LIBRE_URL}/translate`, {
-        q: text,
-        source,
-        target,
-        api_key: API_KEY
-    });
-    return res.data.translatedText;
-}
+const { detectLanguage, translateText } = require('../../libretranslate');
 
 module.exports = {
     name: 'translate',
@@ -58,7 +37,7 @@ module.exports = {
 
         try {
             if (source === 'auto') source = await detectLanguage(text);
-            const translated = await translate(text, source, target);
+            const translated = await translateText(text, source, target);
 
             await message.reply({
                 embeds: [{
