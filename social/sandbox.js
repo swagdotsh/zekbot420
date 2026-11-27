@@ -170,4 +170,4 @@ function linkRow(url, label) {
     return new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(url));
 }
 
-module.exports = { profile, post, parseUsername, parsePostId, SandboxError };
+module.exports = { profile, post, parseUsername, parsePostId, request, absoluteLinks, SandboxError, SITE };

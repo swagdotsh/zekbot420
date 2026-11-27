@@ -214,7 +214,7 @@ Send `null` to clear a field (for example a channel, which turns that feature of
 | Section | What it covers | Needs |
 | --- | --- | --- |
 | `general` | The prefix for message commands | Manage Server |
-| `socialEmbeds` | X, Instagram and TikTok link embeds: on or off, which platforms, hiding Discord's own preview, and `trigger`, which is `"mention"` (only `zekbot <link>`, `zekbot420`, `zkb`, `zk`, `420` or a ping, the default) or `"auto"` (every link) | Manage Server |
+| `socialEmbeds` | X, Instagram, TikTok and sandbox link embeds: on or off, which platforms, hiding Discord's own preview, and `trigger`, which is `"mention"` (only `zekbot <link>`, `zekbot420`, `zkb`, `zk`, `420` or a ping, the default) or `"auto"` (every link) | Manage Server |
 | `welcome`, `goodbye`, `boost` | The channel, text, embed, color, image and avatar of each message | Manage Server |
 | `bumpReminders` | Bump reminders: on or off, channel, role to ping and the reminder text | Manage Server |
 | `confessions` | The confession channel | Manage Server |

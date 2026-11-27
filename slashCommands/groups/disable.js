@@ -63,7 +63,7 @@ module.exports = defineGroup({
         }),
         { name: 'jail', description: 'Remove the jail role, channel and settings', module: require('../moderation/jail/unsetupjail') },
         simple('modlog', 'Stop sending moderation logs', PermissionFlagsBits.Administrator, (i) => modlog.runDisable(i)),
-        simple('socialembeds', 'Stop replying to X, Instagram and TikTok links', PermissionFlagsBits.ManageGuild, async (interaction) => {
+        simple('socialembeds', 'Stop replying to X, Instagram, TikTok and sandbox links', PermissionFlagsBits.ManageGuild, async (interaction) => {
             const current = await getSocialConfig(interaction.guild.id);
             if (!current.enabled) {
                 return interaction.reply({ content: fail('Social embeds are already off.'), flags: MessageFlags.Ephemeral });

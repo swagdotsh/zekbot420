@@ -4,8 +4,9 @@ const { readJson, updateJson } = require('./jsonStore');
 const { DATA_DIR } = require('./paths');
 const { fetchLimited, fetchWithInfo } = require('./safeFetch');
 const { EMOJI, loading, fail } = require('./ui');
+const sandbox = require('./social/sandbox');
 
-const DEFAULTS = { enabled: false, trigger: 'mention', x: true, instagram: true, tiktok: true, hideOriginalEmbed: false };
+const DEFAULTS = { enabled: false, trigger: 'mention', x: true, instagram: true, tiktok: true, sandbox: true, hideOriginalEmbed: false };
 const TRIGGERS = ['mention', 'auto'];
 const CALL_NAMES = ['zekbot420', 'zekbot', 'zkb', 'zk', '420'];
 const MAX_LINKS_PER_MESSAGE = 3;
@@ -14,11 +15,13 @@ const MAX_CONTENT = 2000;
 const USER_COOLDOWN_MS = 5000;
 const USER_AGENT = 'zekbot420 (Discord bot; +https://github.com/swagdotsh/zekbot420)';
 const BROWSER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
-const PLATFORM_NAMES = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok' };
+const PLATFORM_NAMES = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok', sandbox: 'sandbox' };
 
 const X_LINK = /(?<!<)https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/(\w{1,15})\/status(?:es)?\/(\d{5,25})/gi;
 const IG_LINK = /(?<!<)https?:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(p|reels?|tv)\/([\w-]{5,40})/gi;
 const TT_LINK = /(?<!<)https?:\/\/(?:(?:www\.|m\.)?tiktok\.com\/(?:@([\w.-]{1,40})\/(video|photo)\/(\d{5,25})|t\/([\w-]{4,20}))|(?:vm|vt)\.tiktok\.com\/([\w-]{4,20}))/gi;
+
+const SANDBOX_LINK = /(?<!<)https?:\/\/(?:www\.)?sandbox\.swagrelated\.com\/(?:[\w-]+\/)?post\/(\d{1,12})/gi;
 
 const configCache = new Map();
 const configPath = (guildId) => path.join(DATA_DIR, String(guildId), 'socialEmbeds.json');
@@ -240,6 +243,52 @@ async function fetchTikTokPost(link) {
     };
 }
 
+const quietLinks = (text) => sandbox.absoluteLinks(text).replace(/\]\((https?:\/\/[^)\s]+)\)/g, '](<$1>)');
+
+async function fetchSandboxPost(id) {
+    const data = await sandbox.request(`/posts/${id}`);
+    if (!data || data.forbidden) throw new Error("That post doesn't exist or isn't public.");
+
+    const author = data.author ?? {};
+    const files = data.files ?? [];
+    const media = files
+        .filter((file) => file.kind === 'image' || file.kind === 'video')
+        .map((file) => (file.kind === 'image'
+            ? { kind: 'photo', candidates: [file.url], spoiler: Boolean(file.spoiler) }
+            : { kind: 'video', candidates: [{ url: file.url }], link: file.url, spoiler: Boolean(file.spoiler) }));
+    const others = files.filter((file) => file.kind !== 'image' && file.kind !== 'video');
+
+    const quoted = data.quotedPost;
+    const quote = !quoted
+        ? null
+        : quoted.unavailable
+            ? 'Quoted post unavailable'
+            : `${quoted.author?.displayName || quoted.author?.username || ''} (@${quoted.author?.username ?? '?'}): ${quietLinks(quoted.content)}`;
+
+    const notes = [];
+    if (data.replyTo) notes.push('↩️ Reply to another post');
+    if (others.length) notes.push(`Attachments: ${others.slice(0, 5).map((file, i) => `[${file.kind} ${i + 1}](<${file.url}>)`).join(', ')}`);
+
+    const counts = data.counts ?? {};
+    return {
+        platform: 'sandbox',
+        url: data.url || `${sandbox.SITE}/post/${id}`,
+        author: author.displayName || author.username,
+        handle: author.username,
+        text: quietLinks(data.content),
+        quote,
+        timestamp: Math.floor(Date.parse(data.createdAt) / 1000) || null,
+        stats: [
+            counts.likes != null && `❤️ ${compact(counts.likes)}`,
+            counts.reposts != null && `🔁 ${compact(counts.reposts)}`,
+            counts.replies != null && `💬 ${compact(counts.replies)}`,
+        ].filter(Boolean),
+        sensitive: false,
+        note: notes.join(' - ') || null,
+        media,
+    };
+}
+
 const candidateUrl = (candidate) => (typeof candidate === 'string' ? candidate : candidate?.url);
 
 async function fetchCandidate(item, candidate, maxBytes) {
@@ -291,7 +340,7 @@ async function downloadMedia(post, guild) {
 
         if (downloaded) {
             remaining -= downloaded.buffer.length;
-            const name = `${post.sensitive ? 'SPOILER_' : ''}${post.platform.toLowerCase()}_${index + 1}.${downloaded.ext}`;
+            const name = `${post.sensitive || item.spoiler ? 'SPOILER_' : ''}${post.platform.toLowerCase()}_${index + 1}.${downloaded.ext}`;
             files.push(new AttachmentBuilder(downloaded.buffer, { name }));
         } else {
             skipped.push(item.link ?? candidateUrl(item.candidates[0]));
@@ -305,7 +354,7 @@ async function downloadMedia(post, guild) {
 function buildContent(post, skipped) {
     const icon = { X: EMOJI.x, Instagram: EMOJI.instagram, TikTok: EMOJI.tiktok }[post.platform] ?? '';
     const who = post.handle && post.author !== post.handle ? `**${post.author}** (@${post.handle})` : `**@${post.handle ?? 'unknown'}**`;
-    const header = `${icon} ${who} - [${post.platform}](<${post.url}>)`;
+    const header = `${[icon, who].filter(Boolean).join(' ')} - [${post.platform}](<${post.url}>)`;
 
     const footerParts = [...post.stats];
     if (post.timestamp) footerParts.push(`<t:${post.timestamp}:R>`);
@@ -344,6 +393,10 @@ function findLinks(content, config) {
         }
     }
 
+    if (config.sandbox) {
+        for (const match of content.matchAll(SANDBOX_LINK)) links.push({ type: 'sandbox', id: match[1], at: match.index });
+    }
+
     const seen = new Set();
     return links
         .sort((a, b) => a.at - b.at)
@@ -364,7 +417,7 @@ function calledContent(content, botId) {
 
 async function handleSocialEmbed(message) {
     if (!message.guild || message.author.bot || !message.content) return;
-    if (!/(?:x|twitter|instagram|tiktok)\.com\//i.test(message.content)) return;
+    if (!/(?:x|twitter|instagram|tiktok|sandbox\.swagrelated)\.com\//i.test(message.content)) return;
 
     const config = await getConfig(message.guild.id);
     if (!config.enabled) return;
@@ -401,7 +454,9 @@ async function handleSocialEmbed(message) {
                 ? await fetchXPost(link.handle, link.id)
                 : link.type === 'tiktok'
                     ? await fetchTikTokPost(link)
-                    : await fetchInstagramPost(link.kind, link.id);
+                    : link.type === 'sandbox'
+                        ? await fetchSandboxPost(link.id)
+                        : await fetchInstagramPost(link.kind, link.id);
 
             const { files, skipped } = canAttach
                 ? await downloadMedia(post, message.guild)
@@ -436,6 +491,7 @@ module.exports = {
     fetchXPost,
     fetchInstagramPost,
     fetchTikTokPost,
+    fetchSandboxPost,
     buildContent,
     downloadMedia,
     uploadLimit,

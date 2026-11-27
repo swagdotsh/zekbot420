@@ -181,19 +181,20 @@ module.exports = defineGroup({
         { name: 'reactionmute', module: require('../moderation/rm/rmsetup') },
         {
             name: 'socialembeds',
-            description: 'Reply to X, Instagram and TikTok links with the post text, photos and videos',
+            description: 'Reply to X, Instagram, TikTok and sandbox links with the post text, photos and videos',
             json: {
                 options: [
                     {
                         type: 3, name: 'trigger', description: 'When to embed (default: only when called)',
                         choices: [
                             { name: 'Only when called, like "zekbot <link>"', value: 'mention' },
-                            { name: 'Every X, Instagram and TikTok link', value: 'auto' },
+                            { name: 'Every X, Instagram, TikTok and sandbox link', value: 'auto' },
                         ],
                     },
                     { type: 5, name: 'x', description: 'Embed X/Twitter links (default: on)' },
                     { type: 5, name: 'instagram', description: 'Embed Instagram links (default: on)' },
                     { type: 5, name: 'tiktok', description: 'Embed TikTok links (default: on)' },
+                    { type: 5, name: 'sandbox', description: 'Embed sandbox links (default: on)' },
                     { type: 5, name: 'hide_original', description: 'Hide Discord\'s own link preview (needs Manage Messages)' },
                 ],
                 default_member_permissions: PermissionFlagsBits.ManageGuild.toString(),
@@ -203,16 +204,18 @@ module.exports = defineGroup({
                 const x = interaction.options.getBoolean('x');
                 const instagram = interaction.options.getBoolean('instagram');
                 const tiktok = interaction.options.getBoolean('tiktok');
+                const sandbox = interaction.options.getBoolean('sandbox');
                 const hide = interaction.options.getBoolean('hide_original');
                 const trigger = interaction.options.getString('trigger');
                 if (trigger) changes.trigger = trigger;
                 if (x !== null) changes.x = x;
                 if (instagram !== null) changes.instagram = instagram;
                 if (tiktok !== null) changes.tiktok = tiktok;
+                if (sandbox !== null) changes.sandbox = sandbox;
                 if (hide !== null) changes.hideOriginalEmbed = hide;
 
                 const config = await setSocialConfig(interaction.guild.id, changes);
-                const on = [config.x && 'X/Twitter', config.instagram && 'Instagram', config.tiktok && 'TikTok'].filter(Boolean);
+                const on = [config.x && 'X/Twitter', config.instagram && 'Instagram', config.tiktok && 'TikTok', config.sandbox && 'sandbox'].filter(Boolean);
                 const notes = [];
                 if (!on.length) notes.push('Every platform is off, so nothing will be embedded.');
                 if (config.hideOriginalEmbed && !interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {

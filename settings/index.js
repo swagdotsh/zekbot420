@@ -46,19 +46,20 @@ defineSection({
 defineSection({
     id: 'socialEmbeds',
     label: 'Social embeds',
-    description: 'Reply to X, Instagram and TikTok links with the post text, photos and videos. By default only links sent as "zekbot <link>" (or zekbot420, zkb, zk, 420 or a ping) are embedded.',
+    description: 'Reply to X, Instagram, TikTok and sandbox links with the post text, photos and videos. By default only links sent as "zekbot <link>" (or zekbot420, zkb, zk, 420 or a ping) are embedded.',
     fields: [
         { key: 'enabled', type: 'boolean', label: 'Enabled', default: false },
         {
             key: 'trigger', type: 'enum', label: 'When to embed', default: 'mention',
             options: [
                 { value: 'mention', label: 'Only when someone calls the bot, like "zekbot <link>"' },
-                { value: 'auto', label: 'Every X, Instagram and TikTok link' },
+                { value: 'auto', label: 'Every X, Instagram, TikTok and sandbox link' },
             ],
         },
         { key: 'x', type: 'boolean', label: 'X / Twitter links', default: true },
         { key: 'instagram', type: 'boolean', label: 'Instagram links', default: true },
         { key: 'tiktok', type: 'boolean', label: 'TikTok links', default: true },
+        { key: 'sandbox', type: 'boolean', label: 'sandbox links', default: true },
         { key: 'hideOriginalEmbed', type: 'boolean', label: 'Hide Discord\'s own link preview', default: false },
     ],
     load: (guildId) => social.getConfig(guildId),
