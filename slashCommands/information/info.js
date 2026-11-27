@@ -3,7 +3,8 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('info')
-        .setDescription('Show information about zekbot420'),
+        .setDescription('Show information about zekbot420')
+        .setContexts(0, 1),
 
     execute(interaction) {
         return interaction.reply({

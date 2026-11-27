@@ -167,11 +167,19 @@ module.exports = defineGroup({
         { name: 'reactionmute', module: require('../moderation/rm/rmsetup') },
         {
             name: 'socialembeds',
-            description: 'Reply to X and Instagram links with the post text, photos and videos',
+            description: 'Reply to X, Instagram and TikTok links with the post text, photos and videos',
             json: {
                 options: [
+                    {
+                        type: 3, name: 'trigger', description: 'When to embed (default: only when called)',
+                        choices: [
+                            { name: 'Only when called, like "zekbot <link>"', value: 'mention' },
+                            { name: 'Every X, Instagram and TikTok link', value: 'auto' },
+                        ],
+                    },
                     { type: 5, name: 'x', description: 'Embed X/Twitter links (default: on)' },
                     { type: 5, name: 'instagram', description: 'Embed Instagram links (default: on)' },
+                    { type: 5, name: 'tiktok', description: 'Embed TikTok links (default: on)' },
                     { type: 5, name: 'hide_original', description: 'Hide Discord\'s own link preview (needs Manage Messages)' },
                 ],
                 default_member_permissions: PermissionFlagsBits.ManageGuild.toString(),
@@ -180,21 +188,27 @@ module.exports = defineGroup({
                 const changes = { enabled: true };
                 const x = interaction.options.getBoolean('x');
                 const instagram = interaction.options.getBoolean('instagram');
+                const tiktok = interaction.options.getBoolean('tiktok');
                 const hide = interaction.options.getBoolean('hide_original');
+                const trigger = interaction.options.getString('trigger');
+                if (trigger) changes.trigger = trigger;
                 if (x !== null) changes.x = x;
                 if (instagram !== null) changes.instagram = instagram;
+                if (tiktok !== null) changes.tiktok = tiktok;
                 if (hide !== null) changes.hideOriginalEmbed = hide;
 
                 const config = await setSocialConfig(interaction.guild.id, changes);
-                const on = [config.x && 'X/Twitter', config.instagram && 'Instagram'].filter(Boolean);
+                const on = [config.x && 'X/Twitter', config.instagram && 'Instagram', config.tiktok && 'TikTok'].filter(Boolean);
                 const notes = [];
-                if (!on.length) notes.push('Both platforms are off, so nothing will be embedded.');
+                if (!on.length) notes.push('Every platform is off, so nothing will be embedded.');
                 if (config.hideOriginalEmbed && !interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageMessages)) {
                     notes.push('I need `Manage Messages` to hide the original link previews.');
                 }
 
                 return interaction.reply({
-                    content: ok(`Social embeds are on for ${on.join(' and ') || 'nothing'}. I'll reply to those links with the caption and media.`) +
+                    content: ok(`Social embeds are on for ${on.join(', ') || 'nothing'}. ${config.trigger === 'auto'
+                        ? "I'll reply to those links with the caption and media."
+                        : 'Send `zekbot <link>` (or `zekbot420`, `zkb`, `zk`, `420` or a ping) and I\'ll reply with the caption and media.'}`) +
                         '\n-# Instagram only shares the caption and cover image, so videos and extra photos link back to the post.' +
                         (notes.length ? `\n-# ${notes.join(' ')}` : ''),
                     flags: MessageFlags.Ephemeral,

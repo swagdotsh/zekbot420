@@ -108,10 +108,12 @@ Set up reaction mute
 
 #### `/setup socialembeds`
 
-Reply to X and Instagram links with the post text, photos and videos
+Reply to X, Instagram and TikTok links with the post text, photos and videos
 
+- `trigger` (optional, text, one of: Only when called, like "zekbot <link>", Every X, Instagram and TikTok link): When to embed (default: only when called)
 - `x` (optional, true/false): Embed X/Twitter links (default: on)
 - `instagram` (optional, true/false): Embed Instagram links (default: on)
+- `tiktok` (optional, true/false): Embed TikTok links (default: on)
 - `hide_original` (optional, true/false): Hide Discord's own link preview (needs Manage Messages)
 
 <sub>Needs Manage Server - Works in servers</sub>
@@ -199,7 +201,7 @@ Stop sending moderation logs
 
 #### `/disable socialembeds`
 
-Stop replying to X and Instagram links
+Stop replying to X, Instagram and TikTok links
 
 <sub>Needs Manage Server - Works in servers</sub>
 
@@ -1474,7 +1476,7 @@ Show information about zekbot420
 
 Check the bot latency
 
-<sub>Works in servers and DMs with the bot</sub>
+<sub>Works anywhere, including DMs and servers without the bot</sub>
 
 #### `/bot status`
 

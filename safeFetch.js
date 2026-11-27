@@ -28,13 +28,15 @@ async function assertPublicUrl(rawUrl) {
     return url;
 }
 
-async function fetchLimited(rawUrl, { maxBytes, timeoutMs = 15000, maxRedirects = 5, headers } = {}) {
+async function fetchWithInfo(rawUrl, { maxBytes, timeoutMs = 15000, maxRedirects = 5, headers } = {}) {
     const signal = AbortSignal.timeout(timeoutMs);
     let url = await assertPublicUrl(rawUrl);
     let response;
+    const cookies = [];
 
     for (let hop = 0; ; hop++) {
         response = await fetch(url, { redirect: 'manual', signal, headers });
+        cookies.push(...response.headers.getSetCookie());
         const location = response.headers.get('location');
         if (response.status < 300 || response.status >= 400 || !location) break;
         if (hop >= maxRedirects) throw new Error('Too many redirects.');
@@ -54,7 +56,11 @@ async function fetchLimited(rawUrl, { maxBytes, timeoutMs = 15000, maxRedirects 
         }
         chunks.push(chunk);
     }
-    return Buffer.concat(chunks.map(chunk => Buffer.from(chunk)));
+    return { body: Buffer.concat(chunks.map(chunk => Buffer.from(chunk))), url: url.href, cookies };
 }
 
-module.exports = { fetchLimited, assertPublicUrl, isBlockedAddress };
+async function fetchLimited(rawUrl, options) {
+    return (await fetchWithInfo(rawUrl, options)).body;
+}
+
+module.exports = { fetchLimited, fetchWithInfo, assertPublicUrl, isBlockedAddress };
