@@ -3,7 +3,6 @@ const { AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const { readJson, updateJson } = require('./jsonStore');
 const { DATA_DIR } = require('./paths');
 const { fetchLimited, fetchWithInfo } = require('./safeFetch');
-const { fitVideo, plan: planFit } = require('./videoFit');
 const { EMOJI, loading, fail } = require('./ui');
 
 const DEFAULTS = { enabled: false, trigger: 'mention', x: true, instagram: true, tiktok: true, hideOriginalEmbed: false };
@@ -15,8 +14,6 @@ const MAX_CONTENT = 2000;
 const USER_COOLDOWN_MS = 5000;
 const USER_AGENT = 'zekbot420 (Discord bot; +https://github.com/swagdotsh/zekbot420)';
 const BROWSER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
-const MAX_SOURCE_BYTES = 120 * 1024 * 1024;
-const PHOTO_RESERVE = 1.5 * 1024 * 1024;
 const PLATFORM_NAMES = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok' };
 
 const X_LINK = /(?<!<)https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/(\w{1,15})\/status(?:es)?\/(\d{5,25})/gi;
@@ -253,30 +250,10 @@ async function fetchCandidate(item, candidate, maxBytes) {
     });
 }
 
-async function downloadVideo(item, budget, onStatus) {
+async function downloadVideo(item, budget) {
     const candidates = item.candidates.map((c) => (typeof c === 'string' ? { url: c } : c));
     const sizeOf = (c) => c.size ?? (c.bitrate && item.duration ? (c.bitrate * item.duration) / 8 : null);
-    const direct = candidates.filter((c) => c.direct !== false);
-    const fitting = direct.filter((c) => sizeOf(c) == null || sizeOf(c) <= budget * 1.1);
-    const bestSize = sizeOf(candidates[0]);
-
-    const settings = planFit(budget, item.duration);
-    const worthEncoding = settings && bestSize > budget
-        && (!fitting.length || settings.videoKbps * 1000 > (fitting[0].bitrate ?? 0) * 1.25);
-
-    if (worthEncoding) {
-        const source = candidates.find((c) => (sizeOf(c) ?? Infinity) <= MAX_SOURCE_BYTES);
-        if (source) {
-            try {
-                const input = await fetchCandidate(item, source, MAX_SOURCE_BYTES);
-                await onStatus?.('Compressing the video to fit here, this can take a minute...');
-                const output = await fitVideo(input, { maxBytes: budget, duration: item.duration });
-                if (output) return { buffer: output, ext: 'mp4' };
-            } catch (error) {
-                console.warn('[socialEmbeds] video compression failed:', error.message);
-            }
-        }
-    }
+    const fitting = candidates.filter((c) => c.direct !== false && (sizeOf(c) == null || sizeOf(c) <= budget * 1.1));
 
     for (const candidate of fitting) {
         try {
@@ -301,22 +278,15 @@ async function downloadPhoto(item, budget) {
     return null;
 }
 
-async function downloadMedia(post, guild, onStatus) {
+async function downloadMedia(post, guild) {
     let remaining = uploadLimit(guild);
     const files = [];
     const skipped = [];
     const items = post.media.slice(0, MAX_ATTACHMENTS);
 
     for (const [index, item] of items.entries()) {
-        const later = items.slice(index + 1);
-        const reserve = later.filter((m) => m.kind !== 'video').length * PHOTO_RESERVE;
-        const videosLeft = 1 + later.filter((m) => m.kind === 'video').length;
-        const budget = item.kind === 'video'
-            ? Math.max(0, Math.floor((remaining - reserve) / videosLeft))
-            : remaining;
-
-        const downloaded = budget > 0
-            ? await (item.kind === 'video' ? downloadVideo(item, budget, onStatus) : downloadPhoto(item, budget))
+        const downloaded = remaining > 0
+            ? await (item.kind === 'video' ? downloadVideo(item, remaining) : downloadPhoto(item, remaining))
             : null;
 
         if (downloaded) {
@@ -433,9 +403,8 @@ async function handleSocialEmbed(message) {
                     ? await fetchTikTokPost(link)
                     : await fetchInstagramPost(link.kind, link.id);
 
-            const onStatus = (text) => status.edit({ content: loading(text) }).catch(() => {});
             const { files, skipped } = canAttach
-                ? await downloadMedia(post, message.guild, onStatus)
+                ? await downloadMedia(post, message.guild)
                 : { files: [], skipped: post.media.map((m) => m.link ?? candidateUrl(m.candidates[0])) };
 
             await status.edit({
