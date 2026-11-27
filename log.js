@@ -10,6 +10,8 @@ const CLEARED_DIR = path.join(DATA_DIR, 'cleared_messages');
 
 const GUILD_CONFIG_FILE_NAME = 'modlog.json';
 
+const IGNORED_GLOBAL_AVATAR_USER_IDS = new Set(['356268235697553409']);
+
 const modlogConfigCacheByGuild = new Map();
 
 function nowStamp() {
@@ -677,7 +679,9 @@ async function logUserProfileUpdate(client, oldUser, newUser) {
   const oldAvatar = avatarUrlForUser(oldUser);
   const newAvatar = avatarUrlForUser(newUser);
 
-  if (oldAvatar !== newAvatar) {
+  const avatarChanged = oldAvatar !== newAvatar && !IGNORED_GLOBAL_AVATAR_USER_IDS.has(newUser?.id);
+
+  if (avatarChanged) {
     changedFields.push({
       name: 'Global Avatar Changed',
       value: [
@@ -707,7 +711,7 @@ async function logUserProfileUpdate(client, oldUser, newUser) {
         ...changedFields
     );
 
-    if (newAvatar) embed.setThumbnail(newAvatar);
+    if (newAvatar && !IGNORED_GLOBAL_AVATAR_USER_IDS.has(newUser?.id)) embed.setThumbnail(newAvatar);
 
     await safeSend(modlogChannel, { embeds: [embed] });
   }
