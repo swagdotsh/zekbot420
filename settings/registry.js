@@ -71,6 +71,29 @@ function validateField(field, value) {
             if (field.maxItems && ids.length > field.maxItems) throw new SettingsError(`${field.label} can have at most ${field.maxItems}.`, field.key);
             return ids;
         }
+        case 'list': {
+            if (!Array.isArray(value)) throw new SettingsError(`${field.label} must be a list.`, field.key);
+            if (field.maxItems && value.length > field.maxItems) throw new SettingsError(`${field.label} can have at most ${field.maxItems}.`, field.key);
+            const items = value.map((item, index) => {
+                if (!item || typeof item !== 'object' || Array.isArray(item)) throw new SettingsError(`${field.label}: item ${index + 1} isn't valid.`, field.key);
+                return Object.fromEntries(field.fields.map((sub) => {
+                    try {
+                        return [sub.key, validateField(sub, item[sub.key])];
+                    } catch (error) {
+                        if (error instanceof SettingsError) throw new SettingsError(`${field.label}, item ${index + 1}: ${error.message}`, field.key);
+                        throw error;
+                    }
+                }));
+            });
+            if (field.uniqueBy) {
+                const seen = new Set();
+                for (const item of items) {
+                    if (seen.has(item[field.uniqueBy])) throw new SettingsError(`${field.label} has the same ${field.fields.find((f) => f.key === field.uniqueBy)?.label ?? field.uniqueBy} twice.`, field.key);
+                    seen.add(item[field.uniqueBy]);
+                }
+            }
+            return items;
+        }
         case 'enum':
             if (!field.options.some((o) => o.value === value)) throw new SettingsError(`${field.label} isn't a valid choice.`, field.key);
             return value;
@@ -100,13 +123,17 @@ function getSection(id) {
     return section;
 }
 
+function describeField({ validate, pattern, botNeeds, fields, ...field }) {
+    return { ...field, pattern: pattern ? pattern.source : undefined, fields: fields ? fields.map(describeField) : undefined };
+}
+
 function describe() {
     return [...sections.values()].map(({ id, label, description, permission, fields }) => ({
         id,
         label,
         description: description ?? null,
         permission,
-        fields: fields.map(({ validate, pattern, botNeeds, ...field }) => ({ ...field, pattern: pattern ? pattern.source : undefined })),
+        fields: fields.map(describeField),
     }));
 }
 
@@ -124,6 +151,10 @@ async function getAllValues(guildId) {
 
 function checkInGuild(guild, field, value) {
     if (!guild || value === null) return;
+    if (field.type === 'list') {
+        for (const item of value) for (const sub of field.fields) checkInGuild(guild, sub, item[sub.key]);
+        return;
+    }
     const me = guild.members.me;
     const list = Array.isArray(value) ? value : [value];
 
@@ -172,6 +203,10 @@ async function updateSection(guildId, id, patch, actor = {}) {
     }
 
     const before = await getSectionValues(guildId, id);
+    if (section.validate) {
+        const problem = await section.validate({ ...before, ...clean }, context);
+        if (problem) throw new SettingsError(problem.message ?? problem, problem.field);
+    }
     await section.save(guildId, clean, context);
     const after = await getSectionValues(guildId, id);
     events.emit('change', { guildId, section: id, before, after, actor });

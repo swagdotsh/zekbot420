@@ -224,12 +224,29 @@ async function removeLevelRole(guildId, level) {
     return rows[0]?.role_id || null;
 }
 
+async function disableLeveling(guildId) {
+    await sql`DELETE FROM level_config WHERE guild_id = ${guildId}`;
+    configCache.delete(guildId);
+}
+
+async function replaceLevelRoles(guildId, roles) {
+    await sql.begin(async (tx) => {
+        await tx`DELETE FROM level_roles WHERE guild_id = ${guildId}`;
+        if (roles.length) {
+            await tx`INSERT INTO level_roles ${tx(roles.map((r) => ({ guild_id: guildId, level: r.level, role_id: r.roleId })), 'guild_id', 'level', 'role_id')}`;
+        }
+    });
+    levelRoleCache.delete(guildId);
+}
+
 function getLevelRoles(guildId) {
     return cached(levelRoleCache, guildId, () => sql`SELECT * FROM level_roles WHERE guild_id = ${guildId} ORDER BY level ASC`);
 }
 
 module.exports = {
     initDB,
+    disableLeveling,
+    replaceLevelRoles,
     getConfig,
     setConfig,
     setLevelChannel,

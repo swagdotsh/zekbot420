@@ -10,6 +10,7 @@ const {
     MessageFlags,
     ModalBuilder,
     PermissionFlagsBits,
+    PermissionsBitField,
     TextInputBuilder,
     TextInputStyle,
 } = require('discord.js');
@@ -193,6 +194,34 @@ async function setupTickets(guild, { categoryId = null, logChannelId = null, sup
     `;
 
     return { category, logChannel, roles, createdCategory, createdLog };
+}
+
+async function updateTicketSettings(guild, { supportRoleIds, logChannelId, maxOpenPerUser }) {
+    const config = await getTicketConfig(guild.id);
+    if (!config) return null;
+
+    if (supportRoleIds) {
+        const removed = config.supportRoleIds.filter((id) => !supportRoleIds.includes(id));
+        const added = supportRoleIds.filter((id) => !config.supportRoleIds.includes(id));
+        const targets = [config.category_id, logChannelId ?? config.log_channel_id]
+            .map((id) => guild.channels.cache.get(id))
+            .filter(Boolean);
+        for (const channel of targets) {
+            for (const id of removed) await channel.permissionOverwrites.delete(id, 'Ticket support roles changed on the dashboard').catch(() => {});
+            for (const id of added) {
+                await channel.permissionOverwrites.edit(id, Object.fromEntries(new PermissionsBitField(STAFF_PERMS).toArray().map((name) => [name, true])), { reason: 'Ticket support roles changed on the dashboard' }).catch(() => {});
+            }
+        }
+    }
+
+    await sql`
+        UPDATE ticket_config SET
+            support_role_ids = ${supportRoleIds ? supportRoleIds.join(',') : config.support_role_ids},
+            log_channel_id = ${logChannelId ?? config.log_channel_id},
+            max_open_per_user = ${maxOpenPerUser ?? config.max_open_per_user}
+        WHERE guild_id = ${guild.id}
+    `;
+    return getTicketConfig(guild.id);
 }
 
 async function postPanel(channel) {
@@ -485,6 +514,7 @@ async function handleTicketInteraction(interaction) {
 
 module.exports = {
     initTicketDB,
+    updateTicketSettings,
     getTicketConfig,
     deleteTicketConfig,
     getOpenTicketByChannel,
