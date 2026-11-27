@@ -134,12 +134,12 @@ Built from the same definitions Discord gets, so it's always current. Use it for
 {
   "user": { "id": "1234", "name": "zekkie", "username": "zekkie", "avatar": "a1b2c3" },
   "guilds": [
-    { "id": "5678", "name": "My server", "icon": "https://cdn.discordapp.com/icons/...", "canManage": true, "sections": ["general", "welcome", "streaks"] }
+    { "id": "5678", "name": "My server", "icon": "https://cdn.discordapp.com/icons/...", "canManage": true, "sections": ["general", "welcome", "streaks"], "isOwner": false, "permissions": ["ManageGuild", "SendMessages"] }
   ]
 }
 ```
 
-The avatar image is `https://cdn.discordapp.com/avatars/<id>/<avatar>.png`. Servers the person can change something in come first. `sections` lists the settings sections they're allowed to change there.
+The avatar image is `https://cdn.discordapp.com/avatars/<id>/<avatar>.png`. Servers the person can change something in come first. `sections` lists the settings sections they're allowed to change there, and `permissions` is what they can do in that server.
 
 ### `GET /api/guilds/:id`
 
@@ -151,12 +151,16 @@ The avatar image is `https://cdn.discordapp.com/avatars/<id>/<avatar>.png`. Serv
   "memberCount": 1234,
   "boostLevel": 2,
   "channels": [{ "id": "1111", "name": "general", "type": 0, "parentId": null, "botCanSend": true }],
-  "roles": [{ "id": "2222", "name": "Pink", "color": "#ff66cc", "position": 12, "managed": false, "botCanAssign": true }],
-  "sections": ["general", "welcome", "streaks"]
+  "roles": [{ "id": "2222", "name": "Pink", "color": "#ff66cc", "position": 12, "managed": false, "botCanAssign": true, "permissions": ["ViewChannel", "SendMessages"], "permissionBits": "3072" }],
+  "sections": ["general", "welcome", "streaks"],
+  "member": { "id": "1234", "isOwner": false, "isAdmin": false, "permissions": ["ManageGuild", "SendMessages"], "permissionBits": "2080", "roles": ["2222"], "highestRolePosition": 12 },
+  "bot": { "id": "9999", "isOwner": false, "isAdmin": false, "permissions": ["ManageRoles", "SendMessages"], "permissionBits": "268437504", "roles": ["3333"], "highestRolePosition": 20 }
 }
 ```
 
 Use `channels` and `roles` for pickers. Channel `type` is Discord's channel type: `0` text, `2` voice, `4` category, `5` announcement, `13` stage, `15` forum. Show only channels with `botCanSend` for settings that post messages, and only roles with `botCanAssign` for roles the bot hands out.
+
+Permissions are Discord's permission names (`ManageGuild`, `BanMembers`, ...), and `permissionBits` is the same set as Discord's permission number, as a string. `member` is the person who's logged in and `bot` is the bot, both with their server-wide permissions (anyone with `Administrator`, and the owner, has every permission). Use them to hide or disable things the person can't do, or to warn when the bot is missing a permission it needs. `highestRolePosition` is the position of their highest role, which decides which roles they and the bot can manage.
 
 ### `GET /api/guilds/:id/settings`
 

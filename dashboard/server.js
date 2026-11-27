@@ -112,6 +112,18 @@ function channelList(guild) {
         }));
 }
 
+function permissionInfo(member) {
+    return {
+        id: member.id,
+        isOwner: member.id === member.guild.ownerId,
+        isAdmin: member.permissions.has(PermissionFlagsBits.Administrator),
+        permissions: member.permissions.toArray(),
+        permissionBits: member.permissions.bitfield.toString(),
+        roles: member.roles.cache.filter((r) => r.id !== member.guild.roles.everyone.id).map((r) => r.id),
+        highestRolePosition: member.roles.highest.position,
+    };
+}
+
 function roleList(guild) {
     const top = guild.members.me.roles.highest.position;
     return guild.roles.cache
@@ -124,6 +136,8 @@ function roleList(guild) {
             position: r.position,
             managed: r.managed,
             botCanAssign: !r.managed && r.position < top,
+            permissions: r.permissions.toArray(),
+            permissionBits: r.permissions.bitfield.toString(),
         }));
 }
 
@@ -180,7 +194,15 @@ async function handle(client, req, res) {
             const member = await memberFor(client, session, guildId);
             if (!member) continue;
             const sections = registry.sectionIds().filter((id) => registry.canAccess(member, id));
-            guilds.push({ id: member.guild.id, name: member.guild.name, icon: guildIcon(member.guild), canManage: sections.length > 0, sections });
+            guilds.push({
+                id: member.guild.id,
+                name: member.guild.name,
+                icon: guildIcon(member.guild),
+                canManage: sections.length > 0,
+                sections,
+                isOwner: member.id === member.guild.ownerId,
+                permissions: member.permissions.toArray(),
+            });
         }
         return send(res, 200, {
             user: { id: session.uid, name: session.name, username: session.username, avatar: session.avatar },
@@ -202,6 +224,8 @@ async function handle(client, req, res) {
                 channels: channelList(guild),
                 roles: roleList(guild),
                 sections,
+                member: permissionInfo(member),
+                bot: permissionInfo(guild.members.me),
             }, cors);
         }
 
