@@ -188,7 +188,7 @@ function tiktokItem(html) {
 }
 
 async function fetchTikTokPost(link) {
-    const pageUrl = link.id ? `https://www.tiktok.com/@${link.handle}/${link.kind}/${link.id}` : link.url;
+    const pageUrl = link.url ?? `https://www.tiktok.com/@${link.handle}/${link.kind}/${link.id}`;
     const page = await fetchWithInfo(pageUrl, {
         maxBytes: 5 * 1024 * 1024,
         timeoutMs: 10000,
