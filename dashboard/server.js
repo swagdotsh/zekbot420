@@ -207,7 +207,12 @@ async function handle(client, req, res) {
 
         if (req.method === 'GET' && parts[3] === 'settings' && parts.length === 4) {
             const values = {};
-            for (const id of sections) values[id] = await registry.getSectionValues(guildId, id);
+            await Promise.all(sections.map(async (id) => {
+                values[id] = await registry.getSectionValues(guildId, id).catch((error) => {
+                    console.error(`[dashboard] couldn't load ${id} for ${guildId}:`, error.message);
+                    return null;
+                });
+            }));
             return send(res, 200, values, cors);
         }
 

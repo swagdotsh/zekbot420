@@ -163,9 +163,12 @@ Use `channels` and `roles` for pickers. Channel `type` is Discord's channel type
 ```json
 {
   "general": { "prefix": "," },
-  "streaks": { "channelId": "1111", "minDays": 2 }
+  "streaks": { "channelId": "1111", "minDays": 2 },
+  "leveling": null
 }
 ```
+
+A section is `null` when it couldn't be loaded right now (for example the database is down). Show it as unavailable and let the rest of the page work.
 
 ### `PATCH /api/guilds/:id/settings/:section`
 
@@ -207,13 +210,23 @@ Send `null` to clear a field (for example a channel, which turns that feature of
 | Section | What it covers | Needs |
 | --- | --- | --- |
 | `general` | The prefix for message commands | Manage Server |
-| `socialEmbeds` | X, Instagram and TikTok link embeds, and whether they happen only on `zekbot <link>` (`trigger: "mention"`, the default) or for every link (`"auto"`) | Manage Server |
+| `socialEmbeds` | X, Instagram and TikTok link embeds: on or off, which platforms, hiding Discord's own preview, and `trigger`, which is `"mention"` (only `zekbot <link>`, `zekbot420`, `zkb`, `zk`, `420` or a ping, the default) or `"auto"` (every link) | Manage Server |
 | `welcome`, `goodbye`, `boost` | The channel, text, embed, color, image and avatar of each message | Manage Server |
 | `bumpReminders` | Bump reminders: on or off, channel, role to ping and the reminder text | Manage Server |
 | `confessions` | The confession channel | Manage Server |
 | `streaks` | The streak channel and from which day streaks are announced | Manage Server |
 | `colorRoles` | The channel the color role panel is in. Changing it moves the panel, clearing it removes the panel. Colors are added with `/colorrole` | Manage Roles |
 | `boostPerks` | Roles boosters get. Adding a role gives it to current boosters, removing one takes it back from those who got it from boosting | Manage Server |
+| `modlog` | The mod log channel | Administrator |
+| `trap` | Roles that can post in the trap channel without being banned. The channel and ban count are read only | Manage Server |
+| `leveling` | On or off, level-up channel, XP per message, leaderboard and level roles (`roles` is a `list` of `{ level, roleId }`). Turning it off keeps XP and level roles but resets the other settings | Manage Server |
+| `starboard` | Channel (empty turns it off), reactions needed, self-stars and the emoji | Manage Server |
+| `birthdays` | The announcement channel and birthday role | Manage Roles |
+| `tickets` | Support roles, transcript log channel and open tickets per member. Only works after `/ticket setup`; `setUp` and `categoryId` are read only. Changing support roles updates who can see the category and log channel | Manage Server |
+| `tts` | An extra text channel read out by `/tts`, besides the voice channel's chat | Manage Server |
+| `stickyRoles` | On or off and the roles members get back when they rejoin | Manage Roles |
+| `sportsAlerts` | Where NFL and NBA follow pings go for members who made this their home server (empty = DMs) | Manage Server |
+| `jail`, `reactionMute`, `voicemaster` | Read only: whether they're set up and the channels and roles they made. They're set up and removed with `/setup` and `/disable`, because that creates roles and channels | Manage Roles (VoiceMaster: Manage Channels) |
 
 Field types:
 
@@ -227,6 +240,9 @@ Field types:
 | `enum` | One of the `value`s in `options` |
 | `channel`, `role` | A channel or role ID from that server |
 | `channels`, `roles` | A list of IDs, at most `maxItems` |
+| `list` | A list of objects, at most `maxItems`. Each object's keys are described by the field's own `fields`, and no two objects can share the value of `uniqueBy` |
+
+Fields with `readOnly: true` are shown but can't be changed; sending one is a `400`. A `channel` field may have `channelTypes`, the channel types it can be. Without it, it's a text or announcement channel.
 
 The server owner and anyone with the section's permission can change it.
 
