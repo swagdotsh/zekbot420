@@ -16,7 +16,7 @@ The API starts when `DASHBOARD_PORT` is set in `.env`:
 ```dotenv
 DASHBOARD_PORT=3080
 DASHBOARD_URL=https://zekbot420.swagrelated.com
-DASHBOARD_API_URL=https://api.zekbot420.swagrelated.com
+DASHBOARD_API_URL=https://api-zekbot420.swagrelated.com
 DASHBOARD_SECRET=
 DISCORD_CLIENT_SECRET=
 # Optional
@@ -36,11 +36,11 @@ DASHBOARD_TRUST_PROXY=1
 
 Then:
 
-1. In the Discord developer portal > your app > OAuth2 > Redirects, add `https://api.zekbot420.swagrelated.com/auth/callback` (your `DASHBOARD_API_URL` followed by `/auth/callback`).
-2. Point `api.zekbot420.swagrelated.com` at the bot's server and put a reverse proxy with HTTPS in front of the port. With [Caddy](https://caddyserver.com), the whole config is:
+1. In the Discord developer portal > your app > OAuth2 > Redirects, add `https://api-zekbot420.swagrelated.com/auth/callback` (your `DASHBOARD_API_URL` followed by `/auth/callback`).
+2. Point `api-zekbot420.swagrelated.com` at the bot's server and put a reverse proxy with HTTPS in front of the port. With [Caddy](https://caddyserver.com), the whole config is:
 
    ```text
-   api.zekbot420.swagrelated.com {
+   api-zekbot420.swagrelated.com {
        reverse_proxy 127.0.0.1:3080
    }
    ```
@@ -51,7 +51,7 @@ Then:
 
 Logins use Discord. The API asks for the `identify` and `guilds` scopes, so it can see who the person is and which servers they share with the bot.
 
-1. Send people to `https://api.zekbot420.swagrelated.com/auth/login`.
+1. Send people to `https://api-zekbot420.swagrelated.com/auth/login`.
 2. After they approve on Discord, they come back to `https://zekbot420.swagrelated.com/#token=...`.
 3. Read the token from the address, remove it from the address bar, and keep it (for example in `localStorage`).
 4. Send it on every request as `Authorization: Bearer <token>`.
@@ -59,7 +59,7 @@ Logins use Discord. The API asks for the `identify` and `guilds` scopes, so it c
 If the login fails or is cancelled, the address has `#error=...` with a message to show instead. A login lasts 7 days; after that the API answers `401` and they log in again. To log out, delete the token.
 
 ```js
-const API = 'https://api.zekbot420.swagrelated.com';
+const API = 'https://api-zekbot420.swagrelated.com';
 
 const hash = new URLSearchParams(location.hash.slice(1));
 if (hash.get('token')) {
