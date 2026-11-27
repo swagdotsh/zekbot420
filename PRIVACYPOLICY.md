@@ -28,7 +28,7 @@ If you choose to link your last.fm account, zekbot420 may store:
 zekbot420 does not store your last.fm password or sensitive login credentials. The connection is done securely over at zekbot420.swagrelated.com using the last.fm API.
 
 ### c) Translation features
-If you use any translation related commands, the text you want translated is sent over to translate.cutie.dating, a community instance of LibreTranslate.
+If you use any translation related commands, the text you want translated is sent over to translate.tedomum.net, a community instance of LibreTranslate run by TeDomum.
 
 zekbot420 does not store or collect any data or text used for it's translation functions.
   

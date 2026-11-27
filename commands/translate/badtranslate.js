@@ -1,30 +1,7 @@
 const { currentPrefix } = require('../../prefix');
-const axios = require('axios');
-
-const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'https://translate.cutie.dating').replace(/\/+$/, '');
-const API_KEY = process.env.LIBRETRANSLATE_KEY;
+const { detectLanguage, translateText } = require('../../libretranslate');
 
 const POSSIBLE_LANGS = ['af','ar','az','bg','bn','ca','cs','cy','da','de','el','en','eo','es','et','fa','fi','fr','ga','gl','gu','he','hi','hr','ht','hu','id','it','ja','ka','kn','ko','lt','lv','mk','ml','mr','ms','mt','nl','no','pl','pt','ro','ru','sk','sl','sq','sr','sv','sw','ta','te','tg','th','tl','tr','uk','ur','uz','vi','zh'];
-
-async function detectLanguage(text) {
-    const res = await axios.post(`${LIBRE_URL}/detect`, {
-        q: text,
-        api_key: API_KEY
-    });
-
-    return res.data[0]?.language || 'auto';
-}
-
-async function translateWord(word, source, target) {
-    const res = await axios.post(`${LIBRE_URL}/translate`, {
-        q: word,
-        source,
-        target,
-        api_key: API_KEY
-    });
-
-    return res.data.translatedText;
-}
 
 function splitText(text) {
     return text.match(/\S+\s*/g) || [];
@@ -90,7 +67,7 @@ module.exports = {
                     const word = match[1];
                     const spacing = match[2];
 
-                    const translated = await translateWord(word, source, target).catch(() => word);
+                    const translated = await translateText(word, source, target).catch(() => word);
                     return translated + spacing;
                 })
             );
