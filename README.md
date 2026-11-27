@@ -87,7 +87,7 @@ Every command, with its options and permissions, is in [COMMANDS.md](COMMANDS.md
 - Image effects (powered by [esmBot](https://github.com/esmBot/esmBot))
 
 ### Social embeds (opt-in)
-- X/Twitter, Instagram and TikTok post embeds with captions and media, on demand with `zekbot <link>` or for every link
+- X/Twitter, Instagram, TikTok and sandbox post embeds with captions and media, on demand with `zekbot <link>` or for every link
 
 ### Integrations
 - last.fm login and commands (optional; requires API key)
@@ -258,7 +258,7 @@ Some features store data locally (for example: warnings/modlog/last.fm configura
 - `commands/` — message/prefix style commands (organized by category)
 - `slashCommands/` — slash command handlers/definitions
 - `welcomeStore.js` / `events/welcoming.js` — welcome message settings, placeholders and sending
-- `socialEmbeds.js` — opt-in X/Instagram/TikTok link embeds
+- `socialEmbeds.js` — opt-in X/Instagram/TikTok/sandbox link embeds
 - `downloads.js` — opt-in `/download` video downloads with yt-dlp
 - `commandGroup.js` / `slashLoader.js` / `slashCommands/groups/` — groups existing commands under one name (`/setup`, `/disable`, ...) and loads slash commands
 - `platformIcon.js` — the `BOT_PLATFORM` status icon
