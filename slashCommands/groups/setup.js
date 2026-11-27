@@ -6,6 +6,7 @@ const { store: bumpStore } = require('../../bumpReminders');
 const { updateMessageConfig } = require('../../welcomeStore');
 const colorRoles = require('../../colorRoles');
 const { store: streakStore } = require('../../streaks');
+const { store: downloadStore } = require('../../downloads');
 const { ok, fail, loading } = require('../../ui');
 
 const modlog = require('../moderation/modlog');
@@ -129,6 +130,19 @@ module.exports = defineGroup({
                 return interaction.reply({
                     content: ok(`Confessions will be posted in ${channel}. Members can use \`/confess\` or the Confess button.`) +
                         '\n-# Moderators can stop someone from confessing with `/confession ban <number>` without seeing who it was.',
+                    flags: MessageFlags.Ephemeral,
+                });
+            },
+        },
+        {
+            name: 'downloads',
+            description: 'Let members download videos from links with /download',
+            json: { options: [], default_member_permissions: MANAGE_GUILD },
+            async execute(interaction) {
+                await downloadStore.update(interaction.guild.id, (data) => { data.enabled = true; });
+                return interaction.reply({
+                    content: ok('Downloads are on. Members can use `/download <link>` to get a video from YouTube, TikTok, X and most other sites.') +
+                        '\n-# Videos can be up to 4 minutes. Ones too big for this server\'s upload limit get compressed. Turn it off with `/disable downloads`.',
                     flags: MessageFlags.Ephemeral,
                 });
             },
