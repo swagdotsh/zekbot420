@@ -15,7 +15,7 @@ Learn more at: [zekbot420.swagrelated.com](https://zekbot420.swagrelated.com)
 <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/swagdotsh/zekbot420?style=for-the-badge" />
 <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/swagdotsh/zekbot420?style=for-the-badge" />
 
-Your favorite Discord bot's open-source alternative.
+Your favorite Discord bot's favorite open-source Discord bot.
 <br><br><a href="https://top.gg/bot/939283468322484274">
   <img src="https://top.gg/api/widget/939283468322484274.svg">
 </a>
