@@ -2,6 +2,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('
 const { EMOJI, emojiUrl } = require('../ui');
 
 const TIMEOUT_MS = 10000;
+const ATTEMPTS = 5;
 const USER_AGENT = 'zekbot420 (Discord bot; +https://github.com/swagdotsh/zekbot420)';
 const COMPACT = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const HANDLE = /^\w{1,15}$/;
@@ -16,17 +17,24 @@ function parseHandle(input) {
     return HANDLE.test(handle) ? handle : null;
 }
 
+async function fetchUser(handle) {
+    for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+        const response = await fetch(`https://api.fxtwitter.com/2/profile/${handle}`, {
+            headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+            signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+        if (response.status !== 404 && !response.ok) throw new Error(`FxTwitter ${response.status}`);
+        const body = await response.json().catch(() => null);
+        if (body?.code !== 404 && body?.user) return body.user;
+    }
+    return null;
+}
+
 async function profile(input) {
     const handle = parseHandle(input);
     if (!handle) return { error: 'Give an X username or profile link, like `@github`.' };
 
-    const response = await fetch(`https://api.fxtwitter.com/${handle}`, {
-        headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-    if (response.status === 404) return { error: `There's no X account called **@${handle}**.` };
-    if (!response.ok) throw new Error(`FxTwitter ${response.status}`);
-    const { user } = await response.json();
+    const user = await fetchUser(handle);
     if (!user) return { error: `There's no X account called **@${handle}**.` };
 
     const url = user.url || `https://x.com/${user.screen_name}`;
@@ -45,7 +53,7 @@ async function profile(input) {
         .addFields(
             { name: 'Followers', value: count(user.followers), inline: true },
             { name: 'Following', value: count(user.following), inline: true },
-            { name: 'Posts', value: count(user.tweets), inline: true },
+            { name: 'Posts', value: count(user.statuses ?? user.tweets), inline: true },
             { name: 'Likes', value: count(user.likes), inline: true },
             { name: 'Media', value: count(user.media_count), inline: true },
             { name: 'Joined', value: Number.isFinite(joined) ? `<t:${Math.floor(joined / 1000)}:D>` : 'Unknown', inline: true },
